@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Grid2X2 } from '@lucide/vue';
-import type { CanvasSettings } from '../domain/model';
-defineProps<{ value: CanvasSettings; busy: boolean }>();
+import { computed } from 'vue';
+import { gridAppearance, type CanvasSettings } from '../domain/model';
+const props = defineProps<{ value: CanvasSettings; busy: boolean }>();
 const emit = defineEmits<{ change: [patch: Partial<CanvasSettings>] }>();
+const grid = computed(() => gridAppearance(props.value));
+const transparency = computed(() => Math.round((1 - grid.value.opacity) * 100));
 </script>
 <template>
   <details class="canvas-settings" @pointerdown.stop>
@@ -28,6 +31,34 @@ const emit = defineEmits<{ change: [patch: Partial<CanvasSettings>] }>();
           :disabled="busy || !value.grid"
           @change="emit('change', { gridSize: Number(($event.target as HTMLInputElement).value) })"
       /></label>
+      <label
+        ><span>线条颜色</span
+        ><input
+          type="color"
+          aria-label="网格线颜色"
+          :value="grid.color"
+          :disabled="busy || !value.grid"
+          @change="emit('change', { gridColor: ($event.target as HTMLInputElement).value })"
+      /></label>
+      <label title="0% 不透明，100% 完全透明"
+        ><span>线条透明度</span
+        ><span class="opacity-control"
+          ><input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            aria-label="网格线透明度"
+            :value="transparency"
+            :disabled="busy || !value.grid"
+            @change="
+              emit('change', {
+                gridOpacity: 1 - Number(($event.target as HTMLInputElement).value) / 100,
+              })
+            "
+          /><output>{{ transparency }}%</output></span
+        ></label
+      >
       <label
         ><span>透明背景</span
         ><input
@@ -112,5 +143,18 @@ const emit = defineEmits<{ change: [patch: Partial<CanvasSettings>] }>();
   color: #9aa8bb;
   font-size: 10px;
   margin: 12px 0 0;
+}
+.opacity-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.opacity-control input {
+  width: 75px;
+}
+.opacity-control output {
+  min-width: 30px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 </style>

@@ -1,5 +1,6 @@
 import {
   defaultCanvasSettings,
+  gridAppearance,
   documentSchema,
   emptyDocument,
   newEntity,
@@ -131,6 +132,17 @@ export function readFlow(
     gridSize: Number.isInteger(gridSize) && gridSize >= 5 && gridSize <= 100 ? gridSize : 20,
     background: /^#[0-9a-fA-F]{6}$/.test(background ?? '') ? background : null,
   };
+  const gridColor = graphSettings.getAttribute('gridColor'),
+    opacity = graphSettings.getAttribute('gridOpacity');
+  if (/^#[0-9a-fA-F]{6}$/.test(gridColor ?? '')) doc.canvas.gridColor = gridColor!;
+  if (
+    opacity !== null &&
+    opacity.trim() &&
+    Number.isFinite(Number(opacity)) &&
+    Number(opacity) >= 0 &&
+    Number(opacity) <= 1
+  )
+    doc.canvas.gridOpacity = Number(opacity);
   const cells = [...xml.getElementsByTagName('mxCell')];
   const cellId = (cell: Element) =>
     cell.getAttribute('id') || cell.parentElement?.getAttribute('id') || '';
@@ -508,6 +520,9 @@ export function writeFlow(
   const settings = doc.canvas ?? defaultCanvasSettings;
   xml.documentElement.setAttribute('grid', settings.grid ? '1' : '0');
   xml.documentElement.setAttribute('gridSize', String(settings.gridSize));
+  const grid = gridAppearance(settings);
+  xml.documentElement.setAttribute('gridColor', grid.color);
+  xml.documentElement.setAttribute('gridOpacity', String(grid.opacity));
   xml.documentElement.setAttribute('background', settings.background ?? 'none');
   const element = (tag: string, attrs: Record<string, string | number>) => {
     const el = xml.createElementNS(null, tag);

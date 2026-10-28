@@ -70,6 +70,7 @@ import { exportDiagramPng } from '../adapters/maxgraph/export';
 import { createAgentTools } from '../agent/tools';
 import {
   defaultCanvasSettings,
+  gridAppearance,
   emptyDocument,
   newId,
   type BusinessEntity,
@@ -210,10 +211,13 @@ const canvasStyle = computed(() => {
   const settings = canvasSettings.value,
     scale = zoom.value,
     translate = canvas?.graph.view.translate;
+  const grid = gridAppearance(settings),
+    hex = grid.color.slice(1);
+  const line = `rgba(${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}, ${grid.opacity})`;
   return {
     backgroundColor: settings.background ?? 'transparent',
     backgroundImage: settings.grid
-      ? 'linear-gradient(to right, #d5dce7 1px, transparent 1px), linear-gradient(to bottom, #d5dce7 1px, transparent 1px)'
+      ? `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`
       : 'none',
     backgroundSize: `${settings.gridSize * scale}px ${settings.gridSize * scale}px`,
     backgroundPosition: `${(translate?.x ?? 0) * scale}px ${(translate?.y ?? 0) * scale + (graphEl.value?.offsetTop ?? 0)}px`,

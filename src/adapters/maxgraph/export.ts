@@ -1,5 +1,5 @@
 import { Editor } from '../../application/editor';
-import { defaultCanvasSettings, type DiagramDocument } from '../../domain/model';
+import { defaultCanvasSettings, gridAppearance, type DiagramDocument } from '../../domain/model';
 import type { ShapeRegistry } from '../../shapes/registry';
 import { DiagramCanvas } from './canvas';
 
@@ -58,7 +58,9 @@ export async function exportDiagramPng(
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', `M ${settings.gridSize} 0 L 0 0 0 ${settings.gridSize}`);
       path.setAttribute('fill', 'none');
-      path.setAttribute('stroke', '#d5dce7');
+      const grid = gridAppearance(settings);
+      path.setAttribute('stroke', grid.color);
+      path.setAttribute('stroke-opacity', String(grid.opacity));
       path.setAttribute('stroke-width', '1');
       pattern.append(path);
       defs.append(pattern);

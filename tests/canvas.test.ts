@@ -34,14 +34,27 @@ describe('画布设置', () => {
     expect(() =>
       editor.dispatch('非法间距', [{ type: 'document.canvas.update', patch: { gridSize: 101 } }]),
     ).toThrow();
+    expect(() =>
+      editor.dispatch('非法透明度', [
+        { type: 'document.canvas.update', patch: { gridOpacity: 2 } },
+      ]),
+    ).toThrow();
     expect(editor.snapshot).toEqual(before);
   });
   it('XML 往返保留背景和网格，同时写入兼容属性', () => {
     const doc = demoDocument();
-    doc.canvas = { grid: true, gridSize: 30, background: '#f0f5fa' };
+    doc.canvas = {
+      grid: true,
+      gridSize: 30,
+      background: '#f0f5fa',
+      gridColor: '#112233',
+      gridOpacity: 0.5,
+    };
     const xml = writeFlow(doc, registry, 'cmd_canvas');
     expect(xml).toContain('background="#f0f5fa"');
     expect(xml).toContain('gridSize="30"');
+    expect(xml).toContain('gridColor="#112233"');
+    expect(xml).toContain('gridOpacity="0.5"');
     expect(
       readFlow({ id: 'flow', name: doc.title, version: 1, drawioXml: xml }, registry).document,
     ).toEqual(doc);

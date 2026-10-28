@@ -42,6 +42,8 @@ export const canvasSettingsSchema = z
   .object({
     grid: z.boolean(),
     gridSize: z.number().int().min(5).max(100),
+    gridColor: colorSchema.optional(),
+    gridOpacity: z.number().min(0).max(1).optional(),
     background: colorSchema.nullable(),
   })
   .strict();
@@ -51,6 +53,9 @@ export const defaultCanvasSettings: CanvasSettings = {
   gridSize: 20,
   background: null,
 };
+export function gridAppearance(settings: CanvasSettings) {
+  return { color: settings.gridColor ?? '#d5dce7', opacity: settings.gridOpacity ?? 1 };
+}
 export const appearanceSchema = z
   .object({
     accent: colorSchema,
