@@ -1,5 +1,11 @@
 import { commandSchema, type Command, type Operation } from './commands';
-import { newEntity, newId, type DiagramDocument, type DiagramNode } from '../domain/model';
+import {
+  defaultCanvasSettings,
+  newEntity,
+  newId,
+  type DiagramDocument,
+  type DiagramNode,
+} from '../domain/model';
 import { validateDocument } from '../domain/validation';
 import {
   addPoolLane,
@@ -64,6 +70,9 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
     if (doc.nodes[id] || doc.edges[id] || doc.entities[id]) throw new Error(`ID 已存在：${id}`);
   };
   switch (operation.type) {
+    case 'document.canvas.update':
+      doc.canvas = { ...defaultCanvasSettings, ...doc.canvas, ...operation.patch };
+      break;
     case 'node.create': {
       ensureFresh(operation.node.id);
       ensureFresh(operation.entity.id);

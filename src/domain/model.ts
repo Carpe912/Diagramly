@@ -38,6 +38,19 @@ export const entitySchema = z
   })
   .strict();
 export const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+export const canvasSettingsSchema = z
+  .object({
+    grid: z.boolean(),
+    gridSize: z.number().int().min(5).max(100),
+    background: colorSchema.nullable(),
+  })
+  .strict();
+export type CanvasSettings = z.infer<typeof canvasSettingsSchema>;
+export const defaultCanvasSettings: CanvasSettings = {
+  grid: false,
+  gridSize: 20,
+  background: null,
+};
 export const appearanceSchema = z
   .object({
     accent: colorSchema,
@@ -76,6 +89,7 @@ export const documentSchema = z
     title: z.string().trim().min(1).max(160),
     revision: z.number().int().nonnegative(),
     policies: z.object({ activityRequiresLane: z.boolean() }).strict(),
+    canvas: canvasSettingsSchema.optional(),
     nodes: z.record(idSchema, nodeSchema),
     edges: z.record(idSchema, edgeSchema),
     entities: z.record(idSchema, entitySchema),

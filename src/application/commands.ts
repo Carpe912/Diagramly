@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   appearanceSchema,
   boundsSchema,
+  canvasSettingsSchema,
   edgeSchema,
   entitySchema,
   idSchema,
@@ -101,6 +102,9 @@ export const operationSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('edge.delete'), id: idSchema }).strict(),
+  z
+    .object({ type: z.literal('document.canvas.update'), patch: canvasSettingsSchema.partial() })
+    .strict(),
   z
     .object({ type: z.literal('document.rename'), title: z.string().trim().min(1).max(160) })
     .strict(),

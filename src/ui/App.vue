@@ -45,6 +45,7 @@ import {
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
 import ActivityDetails from './ActivityDetails.vue';
+import CanvasSettingsPanel from './CanvasSettings.vue';
 import {
   absoluteBounds,
   childrenOf,
@@ -70,7 +71,14 @@ import { isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
 import { exportDiagramPng } from '../adapters/maxgraph/export';
 import { createAgentTools } from '../agent/tools';
-import { emptyDocument, newId, type BusinessEntity, type DiagramDocument } from '../domain/model';
+import {
+  defaultCanvasSettings,
+  emptyDocument,
+  newId,
+  type BusinessEntity,
+  type CanvasSettings,
+  type DiagramDocument,
+} from '../domain/model';
 import type { Command, Operation } from '../application/commands';
 
 const registry = createShapeRegistry();
@@ -196,6 +204,24 @@ const contextLane = computed(() =>
   selectedNode.value?.type === 'swimlane' ? selectedNode.value : undefined,
 );
 const viewportTick = ref(0);
+const canvasSettings = computed(() => doc.value.canvas ?? defaultCanvasSettings);
+const canvasStyle = computed(() => {
+  void viewportTick.value;
+  const settings = canvasSettings.value,
+    scale = zoom.value,
+    translate = canvas?.graph.view.translate;
+  return {
+    backgroundColor: settings.background ?? 'transparent',
+    backgroundImage: settings.grid
+      ? 'linear-gradient(to right, #d5dce7 1px, transparent 1px), linear-gradient(to bottom, #d5dce7 1px, transparent 1px)'
+      : 'none',
+    backgroundSize: `${settings.gridSize * scale}px ${settings.gridSize * scale}px`,
+    backgroundPosition: `${(translate?.x ?? 0) * scale}px ${(translate?.y ?? 0) * scale + (graphEl.value?.offsetTop ?? 0)}px`,
+  };
+});
+function updateCanvas(patch: Partial<CanvasSettings>) {
+  void run('修改画布设置', [{ type: 'document.canvas.update', patch }]);
+}
 const poolToolbarPosition = computed(() => {
   void viewportTick.value;
   void zoom.value;
@@ -926,7 +952,7 @@ onBeforeUnmount(() => {
         <div class="sidebar-footer"><span class="version-pill">v0.1</span>轻量内核 · 无限可能</div>
       </aside>
 
-      <main class="canvas-area">
+      <main class="canvas-area" :style="canvasStyle" data-testid="canvas-area">
         <div v-if="editor.busy" class="remote-saving">正在提交远程操作…</div>
         <div class="canvas-topbar">
           <div>
@@ -937,6 +963,11 @@ onBeforeUnmount(() => {
             >
           </div>
           <div class="canvas-file-actions">
+            <CanvasSettingsPanel
+              :value="canvasSettings"
+              :busy="editor.busy"
+              @change="updateCanvas"
+            />
             <button
               class="quiet-button"
               :disabled="!!remoteSession || editor.busy"

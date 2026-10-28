@@ -1,4 +1,5 @@
 import {
+  defaultCanvasSettings,
   documentSchema,
   emptyDocument,
   newEntity,
@@ -121,6 +122,15 @@ export function readFlow(
     };
   const doc = emptyDocument();
   doc.title = flow.name || 'Coopwire 流程';
+  const graphSettings = xml.documentElement;
+  const background = graphSettings.getAttribute('background');
+  const gridSize = Number(graphSettings.getAttribute('gridSize') ?? 20);
+  doc.canvas = {
+    ...defaultCanvasSettings,
+    grid: graphSettings.getAttribute('grid') === '1',
+    gridSize: Number.isInteger(gridSize) && gridSize >= 5 && gridSize <= 100 ? gridSize : 20,
+    background: /^#[0-9a-fA-F]{6}$/.test(background ?? '') ? background : null,
+  };
   const cells = [...xml.getElementsByTagName('mxCell')];
   const cellId = (cell: Element) =>
     cell.getAttribute('id') || cell.parentElement?.getAttribute('id') || '';
@@ -456,6 +466,10 @@ export function writeFlow(
   if (legacySource) xml.documentElement.setAttribute('diagramlyLegacySource', legacySource);
   xml.documentElement.setAttribute('diagramlyDocument', JSON.stringify(doc));
   xml.documentElement.setAttribute('diagramlyCommandId', commandId);
+  const settings = doc.canvas ?? defaultCanvasSettings;
+  xml.documentElement.setAttribute('grid', settings.grid ? '1' : '0');
+  xml.documentElement.setAttribute('gridSize', String(settings.gridSize));
+  xml.documentElement.setAttribute('background', settings.background ?? 'none');
   const element = (tag: string, attrs: Record<string, string | number>) => {
     const el = xml.createElementNS(null, tag);
     for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));

@@ -1,5 +1,5 @@
 import { Editor } from '../../application/editor';
-import type { DiagramDocument } from '../../domain/model';
+import { defaultCanvasSettings, type DiagramDocument } from '../../domain/model';
 import type { ShapeRegistry } from '../../shapes/registry';
 import { DiagramCanvas } from './canvas';
 
@@ -34,6 +34,36 @@ export async function exportDiagramPng(
     svg.setAttribute('width', String(Math.ceil(width * scale)));
     svg.setAttribute('height', String(Math.ceil(height * scale)));
     svg.setAttribute('viewBox', `${bounds.x - 16} ${bounds.y - 16} ${width} ${height}`);
+    const settings = documentData.canvas ?? defaultCanvasSettings;
+    const rect = (fill: string) => {
+      const element = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      for (const [key, value] of Object.entries({
+        x: bounds.x - 16,
+        y: bounds.y - 16,
+        width,
+        height,
+        fill,
+      }))
+        element.setAttribute(key, String(value));
+      return element;
+    };
+    if (settings.background) svg.append(rect(settings.background));
+    if (settings.grid) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+      pattern.setAttribute('id', 'diagramly-grid');
+      pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+      pattern.setAttribute('width', String(settings.gridSize));
+      pattern.setAttribute('height', String(settings.gridSize));
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${settings.gridSize} 0 L 0 0 0 ${settings.gridSize}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', '#d5dce7');
+      path.setAttribute('stroke-width', '1');
+      pattern.append(path);
+      defs.append(pattern);
+      svg.append(defs, rect('url(#diagramly-grid)'));
+    }
     svg.append(graph.view.getDrawPane().cloneNode(true));
     const source = new XMLSerializer()
       .serializeToString(svg)
@@ -47,8 +77,6 @@ export async function exportDiagramPng(
     output.height = Math.ceil(height * scale);
     const context = output.getContext('2d');
     if (!context) throw new Error('浏览器不支持预览图导出');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, output.width, output.height);
     context.drawImage(image, 0, 0);
     return await new Promise<Blob>((resolve, reject) =>
       output.toBlob(

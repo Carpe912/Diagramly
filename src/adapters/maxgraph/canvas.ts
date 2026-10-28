@@ -33,7 +33,13 @@ import { isManagedLane, nodeDepth, poolOf } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
 import type { Editor } from '../../application/editor';
 import type { Operation } from '../../application/commands';
-import { newId, type DiagramDocument, type DiagramNode, type Endpoint } from '../../domain/model';
+import {
+  defaultCanvasSettings,
+  newId,
+  type DiagramDocument,
+  type DiagramNode,
+  type Endpoint,
+} from '../../domain/model';
 
 function registerEngineFeatures() {
   EngineShapes.add('rectangle', RectangleShape);
@@ -289,6 +295,9 @@ export class DiagramCanvas {
     const doc = this.editor.snapshot,
       graph = this.graph,
       model = graph.getDataModel();
+    const settings = doc.canvas ?? defaultCanvasSettings;
+    graph.gridSize = settings.gridSize;
+    graph.setGridEnabled(settings.grid);
     graph.setEnabled(!this.editor.busy);
     const selected = graph
       .getSelectionCells()
