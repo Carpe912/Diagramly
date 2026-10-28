@@ -4,6 +4,7 @@ import { Activity, ArrowDownToLine, ArrowUpFromLine, ArrowUpRight, Check, Chevro
   Circle, CircleDot, Code2, Copy, Diamond, FileJson, FolderOpen, GitBranch, Grip, Hand, Layers,
   Maximize, Minus, MousePointer2, PanelTop, Plus, Redo2, Search, Sparkles, Square, Trash2, Undo2, X } from '@lucide/vue';
 import PoolToolbar from './PoolToolbar.vue';
+import LaneToolbar from './LaneToolbar.vue';
 import { absoluteBounds, childrenOf, isManagedLane, isPoolType, laneInsets, poolLanes, poolOf, poolOrientation } from '../domain/pools';
 import { Editor } from '../application/editor';
 import { demoDocument } from '../application/demo';
@@ -43,12 +44,14 @@ const filteredShapes = computed(() => registry.list().filter((shape) => shape.la
 const roots = computed(() => Object.values(doc.value.nodes).filter((node) => !node.parentId));
 const lanes = computed(() => Object.values(doc.value.nodes).filter((node) => node.type === 'swimlane'));
 const pools = computed(() => Object.values(doc.value.nodes).filter((node) => isPoolType(node.type)));
-const contextPool = computed(() => selectedNode.value && (isPoolType(selectedNode.value.type) || selectedNode.value.type === 'swimlane') ? poolOf(doc.value, selectedNode.value) : undefined);
+const contextPool = computed(() => selectedNode.value && isPoolType(selectedNode.value.type) ? selectedNode.value : undefined);
+const contextLane = computed(() => selectedNode.value?.type === 'swimlane' ? selectedNode.value : undefined);
 const viewportTick = ref(0);
 const poolToolbarPosition = computed(() => {
   void viewportTick.value; void zoom.value; void doc.value;
-  const bounds = contextPool.value ? canvas?.bounds(contextPool.value.id) : undefined;
-  const width = graphEl.value?.clientWidth ?? 900, toolbarWidth = Math.min(650, width - 24);
+  const target = contextPool.value ?? contextLane.value;
+  const bounds = target ? canvas?.bounds(target.id) : undefined;
+  const width = graphEl.value?.clientWidth ?? 900, toolbarWidth = Math.min(contextLane.value ? 340 : 650, width - 24);
   return { left: `${Math.max(12 + toolbarWidth / 2, Math.min(width - toolbarWidth / 2 - 12, (bounds?.x ?? 12) + (bounds?.width ?? toolbarWidth) / 2))}px`,
     top: `${Math.max(136, Math.min((graphEl.value?.offsetTop ?? 180) + (bounds?.y ?? 40) - 52, (graphEl.value?.parentElement?.clientHeight ?? 800) - 130))}px` };
 });
@@ -155,10 +158,13 @@ async function changePoolOrientation(orientation: 'horizontal' | 'vertical') {
 function poolAppearance(patch: { fill?: string; headerFill?: string; fontColor?: string }) {
   if (contextPool.value) void run('修改泳池主题', [{ type: 'node.appearance', id: contextPool.value.id, ...patch }]);
 }
+function laneAppearance(patch: { fill?: string; headerFill?: string; fontColor?: string }) {
+  if (contextLane.value) void run('修改泳道外观', [{ type: 'node.appearance', id: contextLane.value.id, ...patch }]);
+}
 function changeLanePool() { if (selectedNode.value?.type === 'swimlane' && form.parentId) void run('移动泳道到其他泳池', [{ type: 'pool.lane.move', laneId: selectedNode.value.id, poolId: form.parentId }]).then((result) => { if (result) canvas?.fit(); }); }
 function geometryDisabled(key: 'x' | 'y' | 'width' | 'height') {
   const node = selectedNode.value; if (!node || !isManagedLane(doc.value, node)) return false;
-  return key === 'x' || key === 'y' || (poolOf(doc.value, node)?.type === 'pool-vertical' ? key === 'height' : key === 'width');
+  return key === 'x' || key === 'y';
 }
 function dropShape(event: DragEvent) {
   event.preventDefault();
@@ -175,7 +181,7 @@ function updateBounds() {
   const node = selectedNode.value; if (!node) return;
   if (isManagedLane(doc.value, node)) {
     const vertical = poolOf(doc.value, node)?.type === 'pool-vertical';
-    void run('调整泳道尺寸', [{ type: 'pool.lane.resize', laneId: node.id, extent: Number(vertical ? form.width : form.height) }]);
+    void run('调整泳道尺寸', [{ type: 'pool.lane.resize', laneId: node.id, extent: Number(vertical ? form.width : form.height), crossExtent: Number(vertical ? form.height : form.width) }]);
   } else void run('调整位置与尺寸', [{ type: 'node.resize', id: node.id, bounds: { x: Number(form.x), y: Number(form.y), width: Number(form.width), height: Number(form.height) } }]);
 }
 function changeParent() {
@@ -346,6 +352,7 @@ onBeforeUnmount(() => { stopAutosave?.(); unsubscribe?.(); canvas?.destroy(); wi
       <main class="canvas-area"><div v-if="editor.busy" class="remote-saving">正在提交远程操作…</div>
         <div class="canvas-topbar"><div><span class="canvas-tag"><GitBranch :size="13" /> 流程图</span><span class="subtle">{{ nodeCount }} 个节点 <span class="middot">·</span> {{ Object.keys(doc.edges).length }} 条连线</span></div><div class="canvas-file-actions"><button class="quiet-button" :disabled="!!remoteSession || editor.busy" @click="showReset = 'empty'"><Plus :size="14" /> 新建画布</button><button class="quiet-button" :disabled="!!remoteSession || editor.busy" @click="showReset = 'sample'"><FolderOpen :size="14" /> 打开示例</button></div></div>
         <PoolToolbar v-if="contextPool" :document="doc" :pool="contextPool" :selected-lane-id="selectedNode?.type === 'swimlane' ? selectedNode.id : undefined" :busy="editor.busy" :position="poolToolbarPosition" @add="addLane(contextPool.id)" @remove="requestLaneRemoval" @orientation="changePoolOrientation" @appearance="poolAppearance" />
+        <LaneToolbar v-else-if="contextLane" :document="doc" :lane="contextLane" :organizations="remoteSession?.organizations ?? []" :busy="editor.busy" :position="poolToolbarPosition" @appearance="laneAppearance" @roles="patchEntity" />
         <div class="canvas-heading"><div class="eyebrow">DESIGN YOUR PROCESS</div><h1>{{ doc.title }}</h1><p>让复杂的业务，清晰地流动。</p></div>
         <div ref="graphEl" :class="['graph-container', `tool-${activeTool}`]" data-testid="graph" @dragover.prevent @drop="dropShape"></div>
         <div class="canvas-tools" role="toolbar" aria-label="画布工具">

@@ -75,7 +75,7 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
       apply(doc, { type: 'node.delete', id: lane.id }, registry); break;
     }
     case 'pool.lane.move': movePoolLane(doc, operation.laneId, operation.poolId); break;
-    case 'pool.lane.resize': resizePoolLane(doc, operation.laneId, operation.extent); break;
+    case 'pool.lane.resize': resizePoolLane(doc, operation.laneId, operation.extent, operation.crossExtent); break;
     case 'node.delete': {
       const node = getNode(operation.id), parentPool = node.type === 'swimlane' ? poolOf(doc, node) : undefined;
       if (parentPool && poolLanes(doc, parentPool.id).length <= 1) throw new Error('泳池至少保留一条泳道');

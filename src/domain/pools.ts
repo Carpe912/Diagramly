@@ -117,11 +117,19 @@ export function movePoolLane(doc: DiagramDocument, laneId: string, poolId: strin
   if (source) layoutPool(doc, source.id);
   layoutPool(doc, target.id);
 }
-export function resizePoolLane(doc: DiagramDocument, laneId: string, extent: number) {
+export function resizePoolLane(doc: DiagramDocument, laneId: string, extent: number, crossExtent?: number) {
   const lane = doc.nodes[laneId], pool = lane && poolOf(doc, lane);
   if (!lane || lane.type !== 'swimlane' || !pool) throw new Error('请选择泳池中的泳道');
   const minimum = laneMinimum(doc, lane), horizontal = poolOrientation(pool) === 'horizontal';
   if (extent < (horizontal ? minimum.height : minimum.width)) throw new Error('泳道尺寸不足，无法容纳现有活动');
+  if (crossExtent !== undefined) {
+    const crossMinimum = Math.max(...poolLanes(doc, pool.id).map((n) => {
+      const min = laneMinimum(doc, n); return horizontal ? min.width : min.height;
+    }));
+    if (crossExtent < crossMinimum) throw new Error('共享尺寸不足，无法容纳其他泳道中的活动');
+    if (horizontal) pool.bounds.width = crossExtent + POOL_HEADER;
+    else pool.bounds.height = crossExtent + POOL_HEADER;
+  }
   if (horizontal) { pool.bounds.height += extent - lane.bounds.height; lane.bounds.height = extent; }
   else { pool.bounds.width += extent - lane.bounds.width; lane.bounds.width = extent; }
   layoutPool(doc, pool.id, false);

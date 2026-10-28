@@ -14,7 +14,7 @@ export const operationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('pool.lane.add'), poolId: idSchema, laneId: idSchema, entityId: idSchema, name: z.string().trim().min(1).max(160), index: z.number().int().nonnegative().optional() }).strict(),
   z.object({ type: z.literal('pool.lane.remove'), poolId: idSchema, laneId: idSchema }).strict(),
   z.object({ type: z.literal('pool.lane.move'), laneId: idSchema, poolId: idSchema }).strict(),
-  z.object({ type: z.literal('pool.lane.resize'), laneId: idSchema, extent: z.number().finite().min(140).max(10000) }).strict(),
+  z.object({ type: z.literal('pool.lane.resize'), laneId: idSchema, extent: z.number().finite().min(140).max(10000), crossExtent: z.number().finite().min(140).max(10000).optional() }).strict(),
   z.object({ type: z.literal('edge.create'), edge: edgeSchema }).strict(),
   z.object({ type: z.literal('edge.update'), id: idSchema, patch: edgeSchema.omit({ id: true }).partial() }).strict(),
   z.object({ type: z.literal('edge.delete'), id: idSchema }).strict(),

@@ -99,3 +99,34 @@ test('drops a business activity into the content area of a nested vertical lane'
   expect(activity.bounds.x).toBeGreaterThanOrEqual(12); expect(activity.bounds.y).toBeGreaterThanOrEqual(52);
   await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue('业务活动');
 });
+test('lane selection has its own toolbar, appearance and role controls', async ({ page }) => {
+  await poolSelection(page);
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await expect(page.getByRole('toolbar', { name: '泳池工具栏' })).toHaveCount(0);
+  await expect(page.getByRole('toolbar', { name: '泳道工具栏' })).toBeVisible();
+  await setColor(page, '泳道背景色', '#ffeedd'); await setColor(page, '泳道文字颜色', '#993300');
+  await page.getByRole('toolbar', { name: '泳道工具栏' }).getByText('角色泳道', { exact: true }).click();
+  await page.getByLabel('泳道工具栏角色说明').fill('销售负责人');
+  await page.getByLabel('泳道工具栏角色说明').press('Tab');
+  const doc = await readDocument(page);
+  expect(doc.nodes.lane_sales.appearance).toMatchObject({ fill: '#ffeedd', fontColor: '#993300' });
+  expect(doc.nodes.lane_ops.appearance.fill).toBeUndefined(); expect(doc.nodes.pool_order.appearance.fill).toBeUndefined();
+  expect(doc.entities.entity_lane_sales.role).toBe('销售负责人');
+});
+for (const orientation of ['horizontal', 'vertical'] as const) test(`drags a real ${orientation} lane corner and adapts the entire pool`, async ({ page }) => {
+  await poolSelection(page);
+  if (orientation === 'vertical') await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  const before = await readDocument(page), lane = before.nodes.lane_sales, handle = page.locator('[data-lane-resize="lane_sales:7"]');
+  const bounds = await handle.boundingBox(); if (!bounds) throw Error('Missing lane resize handle');
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down(); await page.mouse.move(bounds.x + 48, bounds.y + 38, { steps: 12 }); await page.mouse.up();
+  await expect.poll(async () => (await readDocument(page)).nodes.lane_sales.bounds.width).toBeGreaterThan(lane.bounds.width);
+  const doc = await readDocument(page);
+  expect(doc.nodes.lane_sales.bounds.height).toBeGreaterThan(lane.bounds.height);
+  expect(doc.nodes.pool_order.bounds.width).toBeGreaterThan(before.nodes.pool_order.bounds.width);
+  expect(doc.nodes.pool_order.bounds.height).toBeGreaterThan(before.nodes.pool_order.bounds.height);
+  expect(doc.nodes.receive.bounds).toEqual(before.nodes.receive.bounds); expect(doc.edges).toEqual(before.edges);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  expect((await readDocument(page)).nodes).toEqual(before.nodes);
+});

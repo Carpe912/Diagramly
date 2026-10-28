@@ -1,12 +1,12 @@
 import {
   BaseGraph, Cell, CellEditorHandler, ConnectionConstraint, ConnectionHandler, ConnectorShape,
-  EdgeMarker, EdgeMarkerRegistry, EllipseShape, FitPlugin, Geometry, HandleConfig, ImageBox, InternalEvent, VertexHandlerConfig,
+  EdgeMarker, EdgeMarkerRegistry, EllipseShape, FitPlugin, Geometry, HandleConfig, ImageBox, InternalEvent, VertexHandler, VertexHandlerConfig,
   PanningHandler, Perimeter, PerimeterRegistry, Point, RectangleShape, RhombusShape,
   RubberBandHandler, SelectionCellsHandler, SelectionHandler, ShapeRegistry as EngineShapes,
   registerOrthogonalEdgeStyle, type CellStyle,
 } from '@maxgraph/core';
 import '@maxgraph/core/css/common.css';
-import { isManagedLane, nodeDepth } from '../../domain/pools';
+import { isManagedLane, nodeDepth, poolOf } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
 import type { Editor } from '../../application/editor';
 import type { Operation } from '../../application/commands';
@@ -24,6 +24,15 @@ function registerEngineFeatures() {
   VertexHandlerConfig.selectionColor = '#7d91b7'; VertexHandlerConfig.selectionDashed = false;
 }
 interface CanvasCallbacks { select: (ids: string[]) => void; error: (error: unknown) => void; zoom: (scale: number) => void; viewport?: () => void }
+/** Lane origin belongs to the pool. Resize from the right/bottom without moving its children. */
+class LaneVertexHandler extends VertexHandler {
+  override isSizerVisible(index: number) { return [4, 6, 7].includes(index); }
+  override createSizer(cursor: string, index: number, size?: number, fillColor?: string) {
+    const shape = super.createSizer(cursor, index, size, fillColor);
+    shape.node?.setAttribute('data-lane-resize', `${this.state.cell.id}:${index}`);
+    return shape;
+  }
+}
 /** Sole owner of maxGraph. Cells are projections; only application commands mutate the document. */
 export class DiagramCanvas {
   readonly graph: BaseGraph;
@@ -65,7 +74,9 @@ export class DiagramCanvas {
     select.getInitialCellForEvent = (event) => this.ownerCell(event.getCell());
     graph.isCellSelectable = (cell) => this.cells.has(cell.id ?? '');
     graph.isCellMovable = (cell) => this.canMove(cell.id ?? '');
-    graph.isCellResizable = (cell) => this.canMove(cell.id ?? '');
+    graph.isCellResizable = (cell) => this.cells.has(cell.id ?? '') && !!this.editor.snapshot.nodes[cell.id ?? ''];
+    graph.getPlugin<SelectionCellsHandler>('SelectionCellsHandler')!.setVertexHandlerFactory((state) =>
+      isManagedLane(this.editor.snapshot, this.editor.snapshot.nodes[state.cell.id ?? '']) ? new LaneVertexHandler(state) : new VertexHandler(state));
     graph.isCellBendable = () => false;
     graph.isCellEditable = (cell) => !!this.ownerCell(cell);
     // Public per-instance extension hooks, never prototype patches.
@@ -123,8 +134,12 @@ export class DiagramCanvas {
       const cells = event.getProperty<Cell[]>('cells') ?? [], operations: Operation[] = [];
       for (const cell of cells) {
         const node = this.editor.snapshot.nodes[cell.id ?? ''], g = cell.getGeometry();
-        if (node && g) operations.push({ type: 'node.resize', id: node.id,
-          bounds: { x: g.x, y: g.y, width: g.width, height: g.height } });
+        if (node && g) {
+          if (isManagedLane(this.editor.snapshot, node)) {
+            const vertical = poolOf(this.editor.snapshot, node)?.type === 'pool-vertical';
+            operations.push({ type: 'pool.lane.resize', laneId: node.id, extent: vertical ? g.width : g.height, crossExtent: vertical ? g.height : g.width });
+          } else operations.push({ type: 'node.resize', id: node.id, bounds: { x: g.x, y: g.y, width: g.width, height: g.height } });
+        }
       }
       if (operations.length) this.commit('调整图形', operations);
     };

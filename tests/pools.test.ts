@@ -114,3 +114,24 @@ describe('pool content expansion', () => {
     expect(() => validateDocument(editor.snapshot, registry)).not.toThrow();
   });
 });
+describe('lane drag sizing contract', () => {
+  it.each(['horizontal', 'vertical'] as const)('resizes both dimensions of a %s lane and its pool atomically', (orientation) => {
+    const editor = make();
+    if (orientation === 'vertical') editor.dispatch('转为垂直', [{ type: 'pool.orientation', id: 'pool_order', orientation }]);
+    const before = structuredClone(editor.snapshot), lane = before.nodes.lane_sales, pool = before.nodes.pool_order;
+    const vertical = orientation === 'vertical', extent = (vertical ? lane.bounds.width : lane.bounds.height) + 80;
+    const crossExtent = (vertical ? lane.bounds.height : lane.bounds.width) + 100;
+    editor.dispatch('拖拽泳道', [{ type: 'pool.lane.resize', laneId: lane.id, extent, crossExtent }]);
+    const next = editor.snapshot;
+    expect(vertical ? next.nodes.pool_order.bounds.width : next.nodes.pool_order.bounds.height).toBe((vertical ? pool.bounds.width : pool.bounds.height) + 80);
+    expect(vertical ? next.nodes.pool_order.bounds.height : next.nodes.pool_order.bounds.width).toBe(crossExtent + 36);
+    for (const item of poolLanes(next, pool.id)) expect(vertical ? item.bounds.height : item.bounds.width).toBe(crossExtent);
+    expect(next.nodes.receive.bounds).toEqual(before.nodes.receive.bounds); expect(next.edges).toEqual(before.edges);
+    editor.undo(); expect(editor.snapshot.nodes).toEqual(before.nodes);
+  });
+  it('rejects shrinking shared space over a sibling activity with no partial changes', () => {
+    const editor = make(), before = structuredClone(editor.snapshot);
+    expect(() => editor.dispatch('遮挡其他泳道', [{ type: 'pool.lane.resize', laneId: 'lane_sales', extent: 300, crossExtent: 400 }])).toThrow('其他泳道');
+    expect(editor.snapshot).toEqual(before);
+  });
+});
