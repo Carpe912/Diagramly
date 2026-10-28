@@ -12,50 +12,86 @@ import { FakeCoopwire, MemoryJournal, testConfig, remoteFixture } from './suppor
 const registry = createShapeRegistry();
 const png = async () => new Blob(['png-test'], { type: 'image/png' });
 async function setup() {
-  const backend = new FakeCoopwire(), journal = new MemoryJournal();
-  const session = new CoopwireSession(new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch), registry, png, journal);
-  const editor = new Editor(await session.open(), registry); editor.attachTransport(session);
+  const backend = new FakeCoopwire(),
+    journal = new MemoryJournal();
+  const session = new CoopwireSession(
+    new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch),
+    registry,
+    png,
+    journal,
+  );
+  const editor = new Editor(await session.open(), registry);
+  editor.attachTransport(session);
   return { backend, session, editor, journal };
 }
-const makeCommand = (editor: Editor, operations: Command['operations'], commandId = 'cmd_remote_test'): Command => ({
-  commandId, expectedRevision: editor.snapshot.revision, origin: 'user', label: '远程编辑', operations,
+const makeCommand = (
+  editor: Editor,
+  operations: Command['operations'],
+  commandId = 'cmd_remote_test',
+): Command => ({
+  commandId,
+  expectedRevision: editor.snapshot.revision,
+  origin: 'user',
+  label: '远程编辑',
+  operations,
 });
 afterEach(() => configureCoopwireAuth({}));
 describe('Coopwire transport', () => {
   it('opens roles, the diagram and business details without any writes', async () => {
     const { backend, editor, session } = await setup();
-    expect(backend.writeCount).toBe(0); expect(session.organizations).toHaveLength(2);
+    expect(backend.writeCount).toBe(0);
+    expect(session.organizations).toHaveLength(2);
     expect(editor.snapshot.entities.entity_receive.externalRef?.version).toBe(1);
   });
   it('commits business edits and versioned multipart diagram data before local acceptance', async () => {
     const { backend, editor, session } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '远端新名称' } }]));
+    await editor.submit(
+      makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '远端新名称' } }]),
+    );
     expect(backend.activities.get('remote_receive')?.activity.actName).toBe('远端新名称');
-    expect(editor.snapshot.entities.entity_receive.name).toBe('远端新名称'); expect(session.remoteVersion).toBe(9);
+    expect(editor.snapshot.entities.entity_receive.name).toBe('远端新名称');
+    expect(session.remoteVersion).toBe(9);
     const save = backend.calls.find((c) => c.action === 'saveFlowDiagramRelation')!;
     expect(save.body).toMatchObject({ flowDiagramId: 'flow_test', version: 8 });
     expect(readFlow(backend.flow, registry).document).toEqual(editor.snapshot);
   });
   it('creates activities with stable client-assigned IDs and belongs to the selected flow', async () => {
-    const { editor, backend } = await setup(), op = editor.createNode('activity', 120, 45, 'lane_sales');
+    const { editor, backend } = await setup(),
+      op = editor.createNode('activity', 120, 45, 'lane_sales');
     await editor.submit(makeCommand(editor, [op]));
     const create = backend.calls.find((c) => c.action === 'addActs')!;
-    expect(create.body).toMatchObject([{ belongId: 'flow_test', belongType: 'tobeAct', orgId: ['role_sales'] }]);
+    expect(create.body).toMatchObject([
+      { belongId: 'flow_test', belongType: 'tobeAct', orgId: ['role_sales'] },
+    ]);
     expect((create.body as { id: string }[])[0].id).toMatch(/^[0-9a-f]{24}$/);
-    if (op.type === 'node.create') expect(editor.snapshot.entities[op.entity.id].externalRef?.provider).toBe('coopwire');
+    if (op.type === 'node.create')
+      expect(editor.snapshot.entities[op.entity.id].externalRef?.provider).toBe('coopwire');
   });
   it('copies remote activities once and keeps independent identities', async () => {
     const { editor, backend } = await setup();
-    const command = makeCommand(editor, [{ type: 'node.duplicate', id: 'receive', newId: 'copy', newEntityId: 'entity_copy', offset: { x: 30, y: 30 } }]);
+    const command = makeCommand(editor, [
+      {
+        type: 'node.duplicate',
+        id: 'receive',
+        newId: 'copy',
+        newEntityId: 'entity_copy',
+        offset: { x: 30, y: 30 },
+      },
+    ]);
     const [a, b] = await Promise.all([editor.submit(command), editor.submit(command)]);
-    expect(a).toEqual(b); expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
+    expect(a).toEqual(b);
+    expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
     expect(editor.snapshot.entities.entity_copy.externalRef?.id).not.toBe('remote_receive');
   });
   it('uses compensating remote updates for undo and redo', async () => {
     const { editor, backend } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '更新' } }]));
-    await editor.undoAsync(); expect(backend.activities.get('remote_receive')?.activity.actName).toBe('接收客户订单');
-    await editor.redoAsync(); expect(backend.activities.get('remote_receive')?.activity.actName).toBe('更新');
+    await editor.submit(
+      makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '更新' } }]),
+    );
+    await editor.undoAsync();
+    expect(backend.activities.get('remote_receive')?.activity.actName).toBe('接收客户订单');
+    await editor.redoAsync();
+    expect(backend.activities.get('remote_receive')?.activity.actName).toBe('更新');
     expect(editor.snapshot.revision).toBe(3);
   });
   it('removes diagram relations without deleting business objects, and restores them on undo', async () => {
@@ -69,168 +105,374 @@ describe('Coopwire transport', () => {
   });
   it('does not copy/create again after undoing and redoing creation', async () => {
     const { editor, backend } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'node.duplicate', id: 'receive', newId: 'copy', newEntityId: 'entity_copy', offset: { x: 30, y: 30 } }]));
+    await editor.submit(
+      makeCommand(editor, [
+        {
+          type: 'node.duplicate',
+          id: 'receive',
+          newId: 'copy',
+          newEntityId: 'entity_copy',
+          offset: { x: 30, y: 30 },
+        },
+      ]),
+    );
     const id = editor.snapshot.entities.entity_copy.externalRef?.id;
-    await editor.undoAsync(); await editor.redoAsync();
+    await editor.undoAsync();
+    await editor.redoAsync();
     expect(editor.snapshot.entities.entity_copy.externalRef?.id).toBe(id);
     expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
   });
   it('rejects external diagram or activity version conflicts before writing', async () => {
-    const { editor, backend } = await setup(); backend.flow.version++;
-    await expect(editor.submit(makeCommand(editor, [{ type: 'document.rename', title: '冲突' }]))).rejects.toThrow('版本');
-    expect(backend.writeCount).toBe(0); expect(editor.snapshot.revision).toBe(0);
-    backend.flow.version--; backend.activities.get('remote_receive')!.activity.version++;
-    await expect(editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '冲突' } }], 'cmd_conflict_2'))).rejects.toThrow('活动');
+    const { editor, backend } = await setup();
+    backend.flow.version++;
+    await expect(
+      editor.submit(makeCommand(editor, [{ type: 'document.rename', title: '冲突' }])),
+    ).rejects.toThrow('版本');
+    expect(backend.writeCount).toBe(0);
+    expect(editor.snapshot.revision).toBe(0);
+    backend.flow.version--;
+    backend.activities.get('remote_receive')!.activity.version++;
+    await expect(
+      editor.submit(
+        makeCommand(
+          editor,
+          [{ type: 'node.update', id: 'receive', patch: { name: '冲突' } }],
+          'cmd_conflict_2',
+        ),
+      ),
+    ).rejects.toThrow('活动');
     expect(backend.writeCount).toBe(0);
   });
   it('retains local state on a rejected save and resumes acknowledged steps without duplicate writes', async () => {
-    const { editor, backend } = await setup(); backend.fail = { action: 'saveFlowDiagramRelation', kind: 'rejected' };
-    const command = makeCommand(editor, [{ type: 'node.duplicate', id: 'receive', newId: 'copy', newEntityId: 'entity_copy', offset: { x: 30, y: 30 } }]);
-    await expect(editor.submit(command)).rejects.toThrow('业务拒绝'); expect(editor.snapshot.nodes.copy).toBeUndefined();
+    const { editor, backend } = await setup();
+    backend.fail = { action: 'saveFlowDiagramRelation', kind: 'rejected' };
+    const command = makeCommand(editor, [
+      {
+        type: 'node.duplicate',
+        id: 'receive',
+        newId: 'copy',
+        newEntityId: 'entity_copy',
+        offset: { x: 30, y: 30 },
+      },
+    ]);
+    await expect(editor.submit(command)).rejects.toThrow('业务拒绝');
+    expect(editor.snapshot.nodes.copy).toBeUndefined();
     await editor.retryRemote();
-    expect(editor.snapshot.nodes.copy).toBeDefined(); expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
+    expect(editor.snapshot.nodes.copy).toBeDefined();
+    expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
   });
   it('blocks blind retries when a copy committed but its response was lost', async () => {
-    const { editor, backend, journal } = await setup(); backend.fail = { action: 'copyAct', kind: 'lost', after: true };
-    const command = makeCommand(editor, [{ type: 'node.duplicate', id: 'receive', newId: 'copy', newEntityId: 'entity_copy', offset: { x: 30, y: 30 } }]);
-    await expect(editor.submit(command)).rejects.toThrow('确认'); await expect(editor.retryRemote()).rejects.toThrow('禁止重发');
-    expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1); expect(journal.data.size).toBe(1);
+    const { editor, backend, journal } = await setup();
+    backend.fail = { action: 'copyAct', kind: 'lost', after: true };
+    const command = makeCommand(editor, [
+      {
+        type: 'node.duplicate',
+        id: 'receive',
+        newId: 'copy',
+        newEntityId: 'entity_copy',
+        offset: { x: 30, y: 30 },
+      },
+    ]);
+    await expect(editor.submit(command)).rejects.toThrow('确认');
+    await expect(editor.retryRemote()).rejects.toThrow('禁止重发');
+    expect(backend.calls.filter((c) => c.action === 'copyAct')).toHaveLength(1);
+    expect(journal.data.size).toBe(1);
     expect(editor.snapshot.nodes.copy).toBeUndefined();
   });
   it('preserves the journal across sessions and requires explicit read reconciliation', async () => {
-    const { editor, backend, journal } = await setup(); backend.fail = { action: 'saveFlowDiagramRelation', kind: 'rejected' };
-    await expect(editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '待核对' } }]))).rejects.toThrow();
-    const session = new CoopwireSession(new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch), registry, png, journal);
-    await session.open(); const doc = await session.reloadAndReconcile();
+    const { editor, backend, journal } = await setup();
+    backend.fail = { action: 'saveFlowDiagramRelation', kind: 'rejected' };
+    await expect(
+      editor.submit(
+        makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: '待核对' } }]),
+      ),
+    ).rejects.toThrow();
+    const session = new CoopwireSession(
+      new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch),
+      registry,
+      png,
+      journal,
+    );
+    await session.open();
+    const doc = await session.reloadAndReconcile();
     expect(Object.values(doc.entities).some((e) => e.name === '待核对')).toBe(true);
     expect([...journal.data.keys()].some((key) => key.endsWith(':recovery'))).toBe(true);
   });
   it('preserves rich IO fields while editing text, and removes IO with its own endpoint', async () => {
     const { editor, backend } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { inputs: ['更新输入'], outputs: [] } }]));
+    await editor.submit(
+      makeCommand(editor, [
+        { type: 'node.update', id: 'receive', patch: { inputs: ['更新输入'], outputs: [] } },
+      ]),
+    );
     const io = backend.activities.get('remote_receive')!.activity.ioputs!;
-    expect(io.find((i) => i.type === 'input')).toMatchObject({ desc: '更新输入', attachments: ['preserved_attachment'] });
+    expect(io.find((i) => i.type === 'input')).toMatchObject({
+      desc: '更新输入',
+      attachments: ['preserved_attachment'],
+    });
     expect(io.some((i) => i.type === 'output')).toBe(false);
     expect(backend.calls.some((c) => c.action === 'delIoput')).toBe(true);
   });
   it('writes description multipart and changes role membership with version checks', async () => {
     const { editor, backend } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { description: '新说明', critical: true } },
-      { type: 'node.move', id: 'receive', parentId: 'lane_ops', x: 120, y: 55 }]));
-    expect(backend.activities.get('remote_receive')?.activity).toMatchObject({ actDetailDesc: '新说明', isKeyStep: true, orgId: ['role_ops'] });
+    await editor.submit(
+      makeCommand(editor, [
+        { type: 'node.update', id: 'receive', patch: { description: '新说明', critical: true } },
+        { type: 'node.move', id: 'receive', parentId: 'lane_ops', x: 120, y: 55 },
+      ]),
+    );
+    expect(backend.activities.get('remote_receive')?.activity).toMatchObject({
+      actDetailDesc: '新说明',
+      isKeyStep: true,
+      orgId: ['role_ops'],
+    });
   });
   it('prevents unbound roles and direct local bypasses in remote mode', async () => {
     const { editor, backend } = await setup();
-    expect(() => editor.execute(makeCommand(editor, [{ type: 'document.rename', title: '绕过' }]))).toThrow('submit');
-    await expect(editor.submit(makeCommand(editor, [editor.createNode('activity', 10, 10)]))).rejects.toThrow('组织角色');
+    expect(() =>
+      editor.execute(makeCommand(editor, [{ type: 'document.rename', title: '绕过' }])),
+    ).toThrow('submit');
+    await expect(
+      editor.submit(makeCommand(editor, [editor.createNode('activity', 10, 10)])),
+    ).rejects.toThrow('组织角色');
     expect(backend.writeCount).toBe(0);
   });
   it('routes Agent apply through the same actual remote adapter', async () => {
-    const { editor, backend } = await setup(), tools = createAgentTools(editor);
-    const command = { ...makeCommand(editor, [{ type: 'node.update', id: 'receive', patch: { name: 'Agent 远程活动' } }]), origin: 'agent' };
-    tools.preview(command); expect(backend.writeCount).toBe(0);
-    await tools.apply(command); expect(backend.activities.get('remote_receive')?.activity.actName).toBe('Agent 远程活动');
+    const { editor, backend } = await setup(),
+      tools = createAgentTools(editor);
+    const command = {
+      ...makeCommand(editor, [
+        { type: 'node.update', id: 'receive', patch: { name: 'Agent 远程活动' } },
+      ]),
+      origin: 'agent',
+    };
+    tools.preview(command);
+    expect(backend.writeCount).toBe(0);
+    await tools.apply(command);
+    expect(backend.activities.get('remote_receive')?.activity.actName).toBe('Agent 远程活动');
   });
 });
 describe('HTTP and codec boundaries', () => {
   it('uses credentials, preserves multipart content type, and never automatically retries network failures', async () => {
     const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('network'));
     const api = new CoopwireApi(testConfig, fetcher);
-    await expect(api.copyActivity('a', 'copy')).rejects.toThrow('确认'); expect(fetcher).toHaveBeenCalledTimes(1);
+    await expect(api.copyActivity('a', 'copy')).rejects.toThrow('确认');
+    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1]?.credentials).toBe('include');
   });
   it('refreshes explicit expired-auth envelopes once using host-supplied memory headers', async () => {
-    const refresh = vi.fn(async () => {}), fetcher = vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(Response.json({ code: 1002 }))
-      .mockResolvedValueOnce(Response.json({ code: 0, results: 'new_remote_id' }));
-    configureCoopwireAuth({ headers: () => ({ Authorization: 'test-only-memory-value' }), refresh });
+    const refresh = vi.fn(async () => {}),
+      fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(Response.json({ code: 1002 }))
+        .mockResolvedValueOnce(Response.json({ code: 0, results: 'new_remote_id' }));
+    configureCoopwireAuth({
+      headers: () => ({ Authorization: 'test-only-memory-value' }),
+      refresh,
+    });
     const api = new CoopwireApi(testConfig, fetcher);
-    expect(await api.copyActivity('a', 'copy')).toBe('new_remote_id'); expect(refresh).toHaveBeenCalledTimes(1);
-    expect(new Headers(fetcher.mock.calls[1][1]?.headers).get('Authorization')).toBe('test-only-memory-value');
+    expect(await api.copyActivity('a', 'copy')).toBe('new_remote_id');
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(new Headers(fetcher.mock.calls[1][1]?.headers).get('Authorization')).toBe(
+      'test-only-memory-value',
+    );
   });
   it('rejects authentication, partial batch success and malformed envelopes', async () => {
-    for (const response of [new Response('', { status: 403 }), Response.json({ code: -100000 }), Response.json({ unexpected: true })]) {
+    for (const response of [
+      new Response('', { status: 403 }),
+      Response.json({ code: -100000 }),
+      Response.json({ unexpected: true }),
+    ]) {
       const api = new CoopwireApi(testConfig, vi.fn<typeof fetch>().mockResolvedValue(response));
       await expect(api.copyActivity('a', 'copy')).rejects.toThrow();
     }
   });
   it('round-trips canonical metadata and exports the old flow relation shape', () => {
-    const doc = remoteFixture(), xml = writeFlow(doc, registry, 'cmd_codec');
+    const doc = remoteFixture(),
+      xml = writeFlow(doc, registry, 'cmd_codec');
     const loaded = readFlow({ id: 'f', name: 'n', version: 1, drawioXml: xml }, registry);
     expect(loaded.document).toEqual(doc);
-    const relations = flowRelations(doc); expect(relations.acts).toHaveLength(4); expect(relations.swimlanes).toHaveLength(2);
-    expect(relations.acts.find((a) => a.xmlId === 'receive')).toMatchObject({ actId: 'remote_receive', orgId: ['role_sales'] });
+    const relations = flowRelations(doc);
+    expect(relations.acts).toHaveLength(4);
+    expect(relations.swimlanes).toHaveLength(2);
+    expect(relations.acts.find((a) => a.xmlId === 'receive')).toMatchObject({
+      actId: 'remote_receive',
+      orgId: ['role_sales'],
+    });
   });
   it('migrates vertical legacy swimlanes, normalizes business roots and retains relation-only activities', () => {
     const xml = `<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="lane" value="角色" parent="1" vertex="1" style="swimlane;swimlaneLane;roleId=role_sales;"><mxGeometry width="240" height="500"/></mxCell><object id="act" data-id="remote_a" data-act-type="manualOnline" data-act-name="旧活动"><mxCell parent="lane" vertex="1" style="active;"><mxGeometry y="100" width="150" height="100"/></mxCell></object></root></mxGraphModel>`;
-    const result = readFlow({ id: 'f', name: 'n', version: 1, drawioXml: xml, flowObj: { acts: [{ actId: 'remote_missing', xmlId: 'absent', orgId: ['role_sales'] }] } }, registry);
-    expect(Object.values(result.document.nodes).filter((n) => n.type === 'activity')).toHaveLength(2);
+    const result = readFlow(
+      {
+        id: 'f',
+        name: 'n',
+        version: 1,
+        drawioXml: xml,
+        flowObj: { acts: [{ actId: 'remote_missing', xmlId: 'absent', orgId: ['role_sales'] }] },
+      },
+      registry,
+    );
+    expect(Object.values(result.document.nodes).filter((n) => n.type === 'activity')).toHaveLength(
+      2,
+    );
     expect(result.warnings.some((w) => w.includes('仅存在于流程关系'))).toBe(true);
   });
   it('refuses unsupported legacy cells and unsafe XML instead of silently dropping them', () => {
-    expect(() => readFlow({ id: 'f', name: 'n', version: 1, drawioXml: '<!DOCTYPE x><mxGraphModel/>' }, registry)).toThrow();
-    expect(() => readFlow({ id: 'f', name: 'n', version: 1, drawioXml: '<mxGraphModel><root><mxCell id="x" vertex="1" style="customUnknown"/></root></mxGraphModel>' }, registry)).toThrow('尚未支持');
+    expect(() =>
+      readFlow(
+        { id: 'f', name: 'n', version: 1, drawioXml: '<!DOCTYPE x><mxGraphModel/>' },
+        registry,
+      ),
+    ).toThrow();
+    expect(() =>
+      readFlow(
+        {
+          id: 'f',
+          name: 'n',
+          version: 1,
+          drawioXml:
+            '<mxGraphModel><root><mxCell id="x" vertex="1" style="customUnknown"/></root></mxGraphModel>',
+        },
+        registry,
+      ),
+    ).toThrow('尚未支持');
   });
 });
 describe('legacy business metadata preservation', () => {
   it('does not rewrite activities on geometry-only changes when API uses orgRelation rather than orgId', async () => {
-    const backend = new FakeCoopwire(); for (const detail of backend.activities.values()) { delete detail.activity.orgId; detail.activity.orgRelation = []; }
-    const session = new CoopwireSession(new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch), registry, png, new MemoryJournal());
-    const editor = new Editor(await session.open(), registry); editor.attachTransport(session);
+    const backend = new FakeCoopwire();
+    for (const detail of backend.activities.values()) {
+      delete detail.activity.orgId;
+      detail.activity.orgRelation = [];
+    }
+    const session = new CoopwireSession(
+      new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch),
+      registry,
+      png,
+      new MemoryJournal(),
+    );
+    const editor = new Editor(await session.open(), registry);
+    editor.attachTransport(session);
     await editor.submit(makeCommand(editor, [{ type: 'node.move', id: 'receive', x: 225, y: 45 }]));
-    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual(['saveFlowDiagramRelation']);
+    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+      'saveFlowDiagramRelation',
+    ]);
   });
   it('copies without overwriting rich descriptions, IO or manualOffline type', async () => {
-    const backend = new FakeCoopwire(), original = backend.activities.get('remote_receive')!;
-    original.activity.actType = 'manualOffline'; original.activity.actDetailDesc = '<p>保留<strong>富文本</strong></p>';
-    const session = new CoopwireSession(new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch), registry, png, new MemoryJournal());
-    const editor = new Editor(await session.open(), registry); editor.attachTransport(session);
-    await editor.submit(makeCommand(editor, [{ type: 'node.duplicate', id: 'receive', newId: 'copy', newEntityId: 'entity_copy', offset: { x: 30, y: 30 } }]));
+    const backend = new FakeCoopwire(),
+      original = backend.activities.get('remote_receive')!;
+    original.activity.actType = 'manualOffline';
+    original.activity.actDetailDesc = '<p>保留<strong>富文本</strong></p>';
+    const session = new CoopwireSession(
+      new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch),
+      registry,
+      png,
+      new MemoryJournal(),
+    );
+    const editor = new Editor(await session.open(), registry);
+    editor.attachTransport(session);
+    await editor.submit(
+      makeCommand(editor, [
+        {
+          type: 'node.duplicate',
+          id: 'receive',
+          newId: 'copy',
+          newEntityId: 'entity_copy',
+          offset: { x: 30, y: 30 },
+        },
+      ]),
+    );
     const copy = backend.activities.get('remote_copy_1')!;
-    expect(copy.activity.actType).toBe('manualOffline'); expect(copy.activity.actDetailDesc).toBe(original.activity.actDetailDesc);
-    expect(backend.calls.filter((c) => ['updateActDetailDesc', 'saveIoput', 'delIoput'].includes(c.action))).toHaveLength(0);
+    expect(copy.activity.actType).toBe('manualOffline');
+    expect(copy.activity.actDetailDesc).toBe(original.activity.actDetailDesc);
+    expect(
+      backend.calls.filter((c) =>
+        ['updateActDetailDesc', 'saveIoput', 'delIoput'].includes(c.action),
+      ),
+    ).toHaveLength(0);
   });
   it('rejects remote identity injection through newly created Agent nodes', async () => {
-    const { editor, backend } = await setup(), operation = editor.createNode('activity', 120, 45, 'lane_sales');
+    const { editor, backend } = await setup(),
+      operation = editor.createNode('activity', 120, 45, 'lane_sales');
     if (operation.type !== 'node.create') throw Error();
     operation.entity.externalRef = { provider: 'coopwire', id: 'unrelated_business_id' };
     await expect(editor.submit(makeCommand(editor, [operation]))).rejects.toThrow('注入');
     expect(backend.writeCount).toBe(0);
   });
   it('keeps the original XML backup when canonical metadata is saved repeatedly', () => {
-    const original = '<mxGraphModel><root><mxCell id="0"/></root></mxGraphModel>', doc = remoteFixture();
-    const first = readFlow({ id: 'f', name: 'n', version: 1, drawioXml: writeFlow(doc, registry, 'cmd_a', original) }, registry);
-    const second = readFlow({ id: 'f', name: 'n', version: 2, drawioXml: writeFlow(first.document, registry, 'cmd_b', first.legacySource) }, registry);
+    const original = '<mxGraphModel><root><mxCell id="0"/></root></mxGraphModel>',
+      doc = remoteFixture();
+    const first = readFlow(
+      { id: 'f', name: 'n', version: 1, drawioXml: writeFlow(doc, registry, 'cmd_a', original) },
+      registry,
+    );
+    const second = readFlow(
+      {
+        id: 'f',
+        name: 'n',
+        version: 2,
+        drawioXml: writeFlow(first.document, registry, 'cmd_b', first.legacySource),
+      },
+      registry,
+    );
     expect(second.legacySource).toBe(original);
   });
 });
 describe('remote pools', () => {
   it('persists pool orientation, nested lane ownership and colors without touching business activities', async () => {
     const { editor, backend } = await setup();
-    await editor.submit(makeCommand(editor, [{ type: 'pool.orientation', id: 'pool_order', orientation: 'vertical' },
-      { type: 'node.appearance', id: 'pool_order', fill: '#edf7f0', fontColor: '#335544' }]));
-    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual(['saveFlowDiagramRelation']);
+    await editor.submit(
+      makeCommand(editor, [
+        { type: 'pool.orientation', id: 'pool_order', orientation: 'vertical' },
+        { type: 'node.appearance', id: 'pool_order', fill: '#edf7f0', fontColor: '#335544' },
+      ]),
+    );
+    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+      'saveFlowDiagramRelation',
+    ]);
     const restored = readFlow(backend.flow, registry).document;
-    expect(restored.nodes.pool_order.type).toBe('pool-vertical'); expect(restored.nodes.lane_sales.parentId).toBe('pool_order');
-    expect(restored.nodes.pool_order.appearance.fill).toBe('#edf7f0'); expect(backend.flow.drawioXml).toContain('verticalSwimlane');
+    expect(restored.nodes.pool_order.type).toBe('pool-vertical');
+    expect(restored.nodes.lane_sales.parentId).toBe('pool_order');
+    expect(restored.nodes.pool_order.appearance.fill).toBe('#edf7f0');
+    expect(backend.flow.drawioXml).toContain('verticalSwimlane');
     expect(flowRelations(restored).otherCells.some((n) => n.xmlId === 'pool_order')).toBe(false);
   });
   it('preserves pool direction, organization IDs and colors from the old XML container structure', () => {
-    const xml = '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="p" parent="1" vertex="1" style="swimlane;verticalSwimlane;swimlaneContainer;fillColor=#23324A;fontColor=#FFF;"><mxGeometry x="40" y="70" width="480" height="600"/></mxCell><mxCell id="l1" value="角色一" parent="p" vertex="1" style="swimlane;swimlaneLane;roleId=role_sales;fillColor=#5D6D86;fontColor=#FFF;"><mxGeometry y="28" width="240" height="572"/></mxCell><mxCell id="l2" value="角色二" parent="p" vertex="1" style="swimlane;swimlaneLane;"><mxGeometry x="240" y="28" width="240" height="572"/></mxCell></root></mxGraphModel>';
-    const result = readFlow({ id: 'f', name: '测试泳池', version: 1, drawioXml: xml }, registry).document;
+    const xml =
+      '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="p" parent="1" vertex="1" style="swimlane;verticalSwimlane;swimlaneContainer;fillColor=#23324A;fontColor=#FFF;"><mxGeometry x="40" y="70" width="480" height="600"/></mxCell><mxCell id="l1" value="角色一" parent="p" vertex="1" style="swimlane;swimlaneLane;roleId=role_sales;fillColor=#5D6D86;fontColor=#FFF;"><mxGeometry y="28" width="240" height="572"/></mxCell><mxCell id="l2" value="角色二" parent="p" vertex="1" style="swimlane;swimlaneLane;"><mxGeometry x="240" y="28" width="240" height="572"/></mxCell></root></mxGraphModel>';
+    const result = readFlow(
+      { id: 'f', name: '测试泳池', version: 1, drawioXml: xml },
+      registry,
+    ).document;
     const pool = Object.values(result.nodes).find((n) => n.type === 'pool-vertical')!;
-    expect(pool).toBeDefined(); expect(pool.appearance).toMatchObject({ headerFill: '#23324A', fontColor: '#FFFFFF' });
+    expect(pool).toBeDefined();
+    expect(pool.appearance).toMatchObject({ headerFill: '#23324A', fontColor: '#FFFFFF' });
     const lanes = Object.values(result.nodes).filter((n) => n.parentId === pool.id);
-    expect(lanes).toHaveLength(2); expect(lanes[1].bounds.x).toBe(lanes[0].bounds.width);
+    expect(lanes).toHaveLength(2);
+    expect(lanes[1].bounds.x).toBe(lanes[0].bounds.width);
     expect(result.entities[lanes[0].entityId].roleIds).toEqual(['role_sales']);
   });
 });
 describe('pool relation ordering', () => {
   it('exports inserted lanes in visual order without exposing pools as business records', () => {
     const editor = new Editor(remoteFixture(), registry);
-    editor.dispatch('插入泳道', [{ type: 'pool.lane.add', poolId: 'pool_order', laneId: 'inserted_lane', entityId: 'inserted_entity', name: '中间泳道', index: 1 }]);
+    editor.dispatch('插入泳道', [
+      {
+        type: 'pool.lane.add',
+        poolId: 'pool_order',
+        laneId: 'inserted_lane',
+        entityId: 'inserted_entity',
+        name: '中间泳道',
+        index: 1,
+      },
+    ]);
     const relations = flowRelations(editor.snapshot);
-    expect(relations.swimlanes.map((lane) => lane.xmlId)).toEqual(['lane_sales', 'inserted_lane', 'lane_ops']);
-    expect(relations.acts).toHaveLength(4); expect(relations.otherCells.some((cell) => cell.xmlId === 'pool_order')).toBe(false);
+    expect(relations.swimlanes.map((lane) => lane.xmlId)).toEqual([
+      'lane_sales',
+      'inserted_lane',
+      'lane_ops',
+    ]);
+    expect(relations.acts).toHaveLength(4);
+    expect(relations.otherCells.some((cell) => cell.xmlId === 'pool_order')).toBe(false);
   });
 });

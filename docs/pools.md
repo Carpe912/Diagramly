@@ -43,8 +43,20 @@ pool-horizontal / pool-vertical
   "label": "调整泳池",
   "operations": [
     { "type": "pool.orientation", "id": "pool_order", "orientation": "vertical" },
-    { "type": "pool.lane.add", "poolId": "pool_order", "laneId": "lane_review", "entityId": "entity_review", "name": "审核团队" },
-    { "type": "node.appearance", "id": "pool_order", "fill": "#eaf4ee", "headerFill": "#bddac8", "fontColor": "#315342" }
+    {
+      "type": "pool.lane.add",
+      "poolId": "pool_order",
+      "laneId": "lane_review",
+      "entityId": "entity_review",
+      "name": "审核团队"
+    },
+    {
+      "type": "node.appearance",
+      "id": "pool_order",
+      "fill": "#eaf4ee",
+      "headerFill": "#bddac8",
+      "fontColor": "#315342"
+    }
   ]
 }
 ```

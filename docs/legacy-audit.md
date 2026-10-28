@@ -19,43 +19,43 @@ python3 scripts/audit_legacy.py /path/to/coopwire-drawio
 ```
 
 | 年份 | 所有提交 | 非合并提交 |
-| --- | ---: | ---: |
-| 2020 | 73 | 65 |
-| 2021 | 191 | 134 |
-| 2022 | 231 | 160 |
-| 2023 | 512 | 359 |
-| 2024 | 226 | 162 |
-| 2025 | 372 | 267 |
-| 2026 | 160 | 133 |
+| ---- | -------: | ---------: |
+| 2020 |       73 |         65 |
+| 2021 |      191 |        134 |
+| 2022 |      231 |        160 |
+| 2023 |      512 |        359 |
+| 2024 |      226 |        162 |
+| 2025 |      372 |        267 |
+| 2026 |      160 |        133 |
 
 ## 改了哪些内容
 
-| 功能 | 代码/历史依据 | 新工程中的处理 |
-| --- | --- | --- |
-| 嵌入宿主、关闭、保存、草稿、CSV 导入、导出及字典图形库 | 2020 年开始修改 App、Api、EditorUi；2021 年导出/PDF 和资源 hash 改造 | 宿主、存储、导入导出应是独立 adapter，不属于图形内核 |
-| flowchart 模式、白名单图形库、角色泳道、活动详情侧栏 | `ca9a0f6`、`ed4aa2d`、`6a3a840`、`2755105`、`68c92ef`，以及 `更新日志.md` | 注册表提供图形能力；角色数据来自业务 adapter；约束在领域层执行 |
-| 组合活动、标题/编号/图标/输入输出/底部信息、引用活动 | `CoopwireCreateCell.js`、`Sidebar.js`；活动拆成 header/content/footer/input/output 多个 mxCell | 一个业务节点，纯函数派生视图部件；不持久化部件身份 |
-| 活动周期/时间要求、异常、痛点、文档、功能清单、应用/设备/终端/接口 | `Api.js`、`Format.js`、`CoopwireComponents.js`；`CoopwireUtils.getActionDetail` 和 view watchers | 当前仅建立基础实体属性；详细业务模型和表单待逐项迁移 |
-| 泳道放置与跨泳道约束、禁止内部部件连接或旋转、删除规则 | `c492277`、`8512d17`、`de1e31c`、`062fd88`，Graph/Actions/Sidebar 多处拦截 | parentId + 相对坐标 + 容器一致性规则；UI 和 Agent 共用 |
-| 进度/阶段、自定义 sketch 图形、描述附属节点、关联标记与差异显示 | `CoopwireSketch.js`、`BatchPatchGraph.js`、`BatchUpdateGraphCell.js`、动态字典 XML | 图形插件定义 + 业务派生状态；不让样式字符串担当类型系统 |
-| 快照、草稿、编辑锁、版本与批量刷新 | `50095e6`（10109）、`HandleBatchRefresh.js`、`BatchUpdateGraphCell.js` | 独立远程保存与业务仓储；当前本机版本只做文档保存与 revision |
-| 流程关系与编号 | `79d307a`、`5006b8d`、`e4813d8`，`CoopwireCreateOrder.js` | 拓扑查询基于 nodes/edges；环显式处理；当前不迁移旧编号算法 |
-| 活动/普通图形复制粘贴、重复活动去重 | `c9f6156`、`1709118`、`dac5a9a`、`9d89294`、`ba1620e` | 创建时一次生成独立身份，外部业务复制另走明确命令；不靠 CHANGE 后扫描补救 |
-| Yjs 协同、断网操作缓存、用户与选中状态同步 | `dev-sketch-yjs` 分支的 `CoopwireCollab.js`、`CoopwireCollabOps.js`，`0a81a70`、`4cba1ea` | 是分支中的实现，不应误说当前 HEAD 已启用；新项目尚未迁移协同 |
+| 功能                                                               | 代码/历史依据                                                                                    | 新工程中的处理                                                           |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| 嵌入宿主、关闭、保存、草稿、CSV 导入、导出及字典图形库             | 2020 年开始修改 App、Api、EditorUi；2021 年导出/PDF 和资源 hash 改造                             | 宿主、存储、导入导出应是独立 adapter，不属于图形内核                     |
+| flowchart 模式、白名单图形库、角色泳道、活动详情侧栏               | `ca9a0f6`、`ed4aa2d`、`6a3a840`、`2755105`、`68c92ef`，以及 `更新日志.md`                        | 注册表提供图形能力；角色数据来自业务 adapter；约束在领域层执行           |
+| 组合活动、标题/编号/图标/输入输出/底部信息、引用活动               | `CoopwireCreateCell.js`、`Sidebar.js`；活动拆成 header/content/footer/input/output 多个 mxCell   | 一个业务节点，纯函数派生视图部件；不持久化部件身份                       |
+| 活动周期/时间要求、异常、痛点、文档、功能清单、应用/设备/终端/接口 | `Api.js`、`Format.js`、`CoopwireComponents.js`；`CoopwireUtils.getActionDetail` 和 view watchers | 当前仅建立基础实体属性；详细业务模型和表单待逐项迁移                     |
+| 泳道放置与跨泳道约束、禁止内部部件连接或旋转、删除规则             | `c492277`、`8512d17`、`de1e31c`、`062fd88`，Graph/Actions/Sidebar 多处拦截                       | parentId + 相对坐标 + 容器一致性规则；UI 和 Agent 共用                   |
+| 进度/阶段、自定义 sketch 图形、描述附属节点、关联标记与差异显示    | `CoopwireSketch.js`、`BatchPatchGraph.js`、`BatchUpdateGraphCell.js`、动态字典 XML               | 图形插件定义 + 业务派生状态；不让样式字符串担当类型系统                  |
+| 快照、草稿、编辑锁、版本与批量刷新                                 | `50095e6`（10109）、`HandleBatchRefresh.js`、`BatchUpdateGraphCell.js`                           | 独立远程保存与业务仓储；当前本机版本只做文档保存与 revision              |
+| 流程关系与编号                                                     | `79d307a`、`5006b8d`、`e4813d8`，`CoopwireCreateOrder.js`                                        | 拓扑查询基于 nodes/edges；环显式处理；当前不迁移旧编号算法               |
+| 活动/普通图形复制粘贴、重复活动去重                                | `c9f6156`、`1709118`、`dac5a9a`、`9d89294`、`ba1620e`                                            | 创建时一次生成独立身份，外部业务复制另走明确命令；不靠 CHANGE 后扫描补救 |
+| Yjs 协同、断网操作缓存、用户与选中状态同步                         | `dev-sketch-yjs` 分支的 `CoopwireCollab.js`、`CoopwireCollabOps.js`，`0a81a70`、`4cba1ea`        | 是分支中的实现，不应误说当前 HEAD 已启用；新项目尚未迁移协同             |
 
 ## 耦合集中在哪里
 
 以下是**非合并提交**中修改对应文件的提交数；避免把合并分支反复计作独立开发次数。
 
-| 文件 | 修改次数 | 观察 |
-| --- | ---: | --- |
-| `coopwire/CoopwireUtils.js` | 397 | 业务请求、DOM 状态、视图派生、事件与复制逻辑聚合 |
-| `js/diagramly/App.js` | 228 | 宿主生命周期、草稿、锁定、保存与业务数据交织 |
-| `js/mxgraph/Sidebar.js` | 184 | 图形工厂同时了解业务 ID、接口、布局和侧栏 UI |
-| `js/mxgraph/Format.js` | 129 | 原始通用属性与定制业务表单混合 |
-| `coopwire/BatchUpdateGraphCell.js` | 126 | 后续补丁与历史兼容逻辑持续累积 |
-| `js/diagramly/Api.js` | 106 | API、预置数据加载与 App 原型扩展混合 |
-| `js/mxgraph/Graph.js` | 94 | 通用引擎层被业务连接、复制与选择逻辑侵入 |
+| 文件                               | 修改次数 | 观察                                             |
+| ---------------------------------- | -------: | ------------------------------------------------ |
+| `coopwire/CoopwireUtils.js`        |      397 | 业务请求、DOM 状态、视图派生、事件与复制逻辑聚合 |
+| `js/diagramly/App.js`              |      228 | 宿主生命周期、草稿、锁定、保存与业务数据交织     |
+| `js/mxgraph/Sidebar.js`            |      184 | 图形工厂同时了解业务 ID、接口、布局和侧栏 UI     |
+| `js/mxgraph/Format.js`             |      129 | 原始通用属性与定制业务表单混合                   |
+| `coopwire/BatchUpdateGraphCell.js` |      126 | 后续补丁与历史兼容逻辑持续累积                   |
+| `js/diagramly/Api.js`              |      106 | API、预置数据加载与 App 原型扩展混合             |
+| `js/mxgraph/Graph.js`              |       94 | 通用引擎层被业务连接、复制与选择逻辑侵入         |
 
 这些修改并非“写错了”，而是功能长期叠加在已有编辑器上的结果。继续 fork draw.io 再裁剪，仍然会保留同样的升级边界问题。
 

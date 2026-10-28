@@ -12,19 +12,19 @@
 
 `{portrait}` = `/rest/quality/investigate/portrait/p/{projectId}`，`{scopeDefine}` = `/rest/quality/investigate/scopeDefine/p/{projectId}`。
 
-| 操作 | 请求 | 关键参数与格式 |
-| --- | --- | --- |
-| 组织字典 | GET `/rest/quality/investigate/scope/p/{projectId}/qryOrgs` | 按 index 排序，用 orgId/orgName 绑定泳道 |
-| 流程详情 | GET `{scopeDefine}/qryFlowDiagramDetail` | `id=flowchartId&showSimple=true`，读取 version、XML 与 flowObj |
-| 活动详情 | GET `{portrait}/queryActDetail` | `actId`，保留实体版本与复杂 IO 原字段 |
-| 创建活动 | POST `{portrait}/addActs` | JSON 单条数组，客户端分配稳定 24 位十六进制 ID，actName、actType、orgId、belongId、belongType |
-| 复制活动 | POST `{portrait}/copyAct` | `[{id,name}]`，读取真实新活动 ID；不靠模型 CHANGE 扫描补救 |
-| 修改活动 | POST `{portrait}/updateAct` | query: actId、version、updateDrawio、ignoreNameCheck；JSON 中仅发送变化的业务字段 |
-| 活动描述 | POST `{portrait}/updateActDetailDesc` | multipart `data` JSON Blob；query 带 actId、version、orgId |
-| 保存 IO | POST `{portrait}/saveIoput` | multipart `data` JSON Blob，保留已有 IO 的 id、附件等复杂字段 |
-| 删除 IO | POST `{portrait}/delIoput` | query: actId、version、ioputId、updateDrawio=false |
-| 保存图形/关系 | POST `{scopeDefine}/saveFlowDiagramRelation` | multipart `file` 为实际 PNG，`data` 为 JSON Blob，含 flowDiagramId、version、drawioXml、data |
-| 删除图形 | 上述完整流程关系保存 | 从 acts/nodes/edges 中移除关联；**不调用 portrait/delAct 永久删除业务活动** |
+| 操作          | 请求                                                        | 关键参数与格式                                                                                |
+| ------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 组织字典      | GET `/rest/quality/investigate/scope/p/{projectId}/qryOrgs` | 按 index 排序，用 orgId/orgName 绑定泳道                                                      |
+| 流程详情      | GET `{scopeDefine}/qryFlowDiagramDetail`                    | `id=flowchartId&showSimple=true`，读取 version、XML 与 flowObj                                |
+| 活动详情      | GET `{portrait}/queryActDetail`                             | `actId`，保留实体版本与复杂 IO 原字段                                                         |
+| 创建活动      | POST `{portrait}/addActs`                                   | JSON 单条数组，客户端分配稳定 24 位十六进制 ID，actName、actType、orgId、belongId、belongType |
+| 复制活动      | POST `{portrait}/copyAct`                                   | `[{id,name}]`，读取真实新活动 ID；不靠模型 CHANGE 扫描补救                                    |
+| 修改活动      | POST `{portrait}/updateAct`                                 | query: actId、version、updateDrawio、ignoreNameCheck；JSON 中仅发送变化的业务字段             |
+| 活动描述      | POST `{portrait}/updateActDetailDesc`                       | multipart `data` JSON Blob；query 带 actId、version、orgId                                    |
+| 保存 IO       | POST `{portrait}/saveIoput`                                 | multipart `data` JSON Blob，保留已有 IO 的 id、附件等复杂字段                                 |
+| 删除 IO       | POST `{portrait}/delIoput`                                  | query: actId、version、ioputId、updateDrawio=false                                            |
+| 保存图形/关系 | POST `{scopeDefine}/saveFlowDiagramRelation`                | multipart `file` 为实际 PNG，`data` 为 JSON Blob，含 flowDiagramId、version、drawioXml、data  |
+| 删除图形      | 上述完整流程关系保存                                        | 从 acts/nodes/edges 中移除关联；**不调用 portrait/delAct 永久删除业务活动**                   |
 
 创建时 `belongType = flowchartType + 'Act'`。人工、系统、接口、判断、子流程分别映射 manualOnline、systemOperate、interfaceDocking、decide、subAct。复制旧 manualOffline 活动保留原类型和富文本，不因前端统一显示“人工活动”而将其重写。
 
