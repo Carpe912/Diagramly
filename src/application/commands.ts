@@ -69,6 +69,23 @@ export const operationSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('pool.lane.move'), laneId: idSchema, poolId: idSchema }).strict(),
   z
     .object({
+      type: z.literal('lane.roles.set'),
+      laneId: idSchema,
+      roles: z
+        .array(
+          z
+            .object({ id: z.string().min(1).max(160), name: z.string().trim().min(1).max(160) })
+            .strict(),
+        )
+        .max(100)
+        .refine(
+          (roles) => new Set(roles.map((role) => role.id)).size === roles.length,
+          '不能重复选择角色',
+        ),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal('pool.lane.resize'),
       laneId: idSchema,
       extent: z.number().finite().min(140).max(10000),

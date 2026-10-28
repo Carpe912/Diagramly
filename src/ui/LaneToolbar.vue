@@ -14,11 +14,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   appearance: [patch: { fill?: string; headerFill?: string; fontColor?: string }];
   roles: [patch: Partial<BusinessEntity>];
+  assignRoles: [roleIds: string[]];
 }>();
 const entity = computed(() => props.document.entities[props.lane.entityId]);
 const assignedRoles = computed({
   get: () => entity.value.roleIds,
-  set: (roleIds: string[]) => emit('roles', { roleIds }),
+  set: (roleIds: string[]) => emit('assignRoles', roleIds),
 });
 const pool = computed(() => poolOf(props.document, props.lane));
 const color = (key: 'fill' | 'headerFill' | 'fontColor', fallback: string) =>

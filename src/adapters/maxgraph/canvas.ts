@@ -142,11 +142,15 @@ export class DiagramCanvas {
           : new VertexHandler(state),
       );
     graph.isCellBendable = () => false;
-    graph.isCellEditable = (cell) => !!this.ownerCell(cell);
+    graph.isCellEditable = (cell) => {
+      const owner = this.ownerCell(cell);
+      return !!owner && this.editor.snapshot.nodes[owner.id ?? '']?.type !== 'swimlane';
+    };
     // 使用实例级公开扩展点，不修改引擎原型。
     graph.labelChanged = (cell, value) => {
       const owner = this.ownerCell(cell),
         id = owner?.id;
+      if (id && this.editor.snapshot.nodes[id]?.type === 'swimlane') return cell;
       if (id)
         this.commit('编辑名称', [
           this.editor.snapshot.edges[id]

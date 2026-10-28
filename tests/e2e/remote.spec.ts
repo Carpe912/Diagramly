@@ -186,4 +186,29 @@ test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持�
       ),
   ).toEqual(['role_sales', 'role_ops']);
   await expect(page.getByRole('toolbar', { name: '泳池工具栏' })).toHaveCount(0);
+  await expect(page.getByLabel('节点名称', { exact: true })).toHaveValue('销售角色、交付角色');
+  await expect(page.locator('[data-part-id="lane_sales::lane-title"]').last()).toContainText(
+    '销售角色、交付角色',
+  );
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect.poll(() => backend.flow.version).toBe(10);
+  await expect(page.getByLabel('节点名称', { exact: true })).toHaveValue('销售团队');
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  await expect.poll(() => backend.flow.version).toBe(11);
+  await expect(page.getByLabel('节点名称', { exact: true })).toHaveValue('销售角色、交付角色');
+});
+
+test('属性面板选择角色也同步生成泳道名称', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await page.getByLabel('组织角色', { exact: true }).selectOption(['role_ops']);
+  await expect.poll(() => backend.flow.version).toBe(9);
+  await expect(page.getByLabel('节点名称', { exact: true })).toHaveValue('交付角色');
+  expect(backend.flow.flowObj?.swimlanes).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ xmlId: 'lane_sales', name: '交付角色', orgId: ['role_ops'] }),
+    ]),
+  );
 });

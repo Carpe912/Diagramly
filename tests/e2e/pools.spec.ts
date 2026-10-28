@@ -250,3 +250,24 @@ test('lane title has only a divider, and deselection clears every selection outl
   await expect(page.locator('[data-part-id="lane_sales::lane-divider"]').first()).toBeVisible();
   expect(await page.getByTestId('graph').locator('rect[stroke="#7d91b7"]').count()).toBe(0);
 });
+
+for (const orientation of ['horizontal', 'vertical'] as const)
+  test(`${orientation} 泳道双击与 F2 均不能改名，属性名称只读`, async ({ page }) => {
+    await poolSelection(page);
+    if (orientation === 'vertical')
+      await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+    const before = await readDocument(page);
+    const title = await page
+      .locator('[data-part-id="lane_sales::lane-title"]')
+      .first()
+      .boundingBox();
+    if (!title) throw Error('找不到泳道标题');
+    await page.mouse.dblclick(title.x + title.width / 2, title.y + title.height / 2);
+    await expect(page.getByLabel('节点名称', { exact: true })).toHaveValue('销售团队');
+    await expect(page.getByLabel('节点名称', { exact: true })).toHaveAttribute('readonly', '');
+    await expect(page.locator('.mxCellEditor')).not.toBeVisible();
+    await page.keyboard.press('F2');
+    await expect(page.locator('.mxCellEditor')).not.toBeVisible();
+    expect((await readDocument(page)).revision).toBe(before.revision);
+    await expect(page.getByRole('toolbar', { name: '泳道工具栏' })).toBeVisible();
+  });

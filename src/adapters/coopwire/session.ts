@@ -177,6 +177,17 @@ export class CoopwireSession implements EditorTransport {
     }
     const desired = validateDocument(request.document, this.registry),
       before = request.before;
+    if (request.kind === 'command')
+      for (const operation of request.command.operations) {
+        if (operation.type !== 'lane.roles.set') continue;
+        for (const role of operation.roles) {
+          if (
+            !this.organizations.some((org) => org.orgId === role.id && org.orgName === role.name)
+          ) {
+            throw new Error('泳道角色必须来自当前项目的角色选项');
+          }
+        }
+      }
     const business = Object.values(desired.nodes).filter(isBusinessNode);
     const ids = new Set<string>();
     for (const node of business) {

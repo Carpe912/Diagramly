@@ -82,7 +82,14 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
       break;
     }
     case 'node.update': {
-      const entity = doc.entities[getNode(operation.id).entityId],
+      const node = getNode(operation.id);
+      if (
+        node.type === 'swimlane' &&
+        (operation.patch.name !== undefined || operation.patch.roleIds !== undefined)
+      ) {
+        throw new Error('泳道名称由所选角色生成，请通过角色泳道选择角色');
+      }
+      const entity = doc.entities[node.entityId],
         { details, ...patch } = operation.patch;
       Object.assign(entity, patch);
       if (details)
@@ -93,6 +100,14 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
             ? { displaySetting: { ...entity.details?.displaySetting, ...details.displaySetting } }
             : {}),
         };
+      break;
+    }
+    case 'lane.roles.set': {
+      const lane = getNode(operation.laneId);
+      if (lane.type !== 'swimlane') throw new Error('只能为泳道选择角色');
+      const entity = doc.entities[lane.entityId];
+      entity.roleIds = operation.roles.map((role) => role.id);
+      entity.name = operation.roles.map((role) => role.name).join('、') || '角色泳道';
       break;
     }
     case 'node.move': {

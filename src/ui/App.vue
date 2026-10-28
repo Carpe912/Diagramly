@@ -481,7 +481,22 @@ function patchEntity(patch: Partial<Omit<BusinessEntity, 'id'>>) {
   if (selectedNode.value)
     run('编辑业务属性', [{ type: 'node.update', id: selectedNode.value.id, patch }]);
 }
+function assignLaneRoles(roleIds: string[]) {
+  const lane = selectedNode.value;
+  if (lane?.type !== 'swimlane') return;
+  const roles: { id: string; name: string }[] = [];
+  for (const id of roleIds) {
+    const role = remoteSession.value?.organizations.find((item) => item.orgId === id);
+    if (!role) {
+      showError(new Error('所选角色不存在，请重新读取项目角色'));
+      return;
+    }
+    roles.push({ id: role.orgId, name: role.orgName });
+  }
+  void run('选择泳道角色', [{ type: 'lane.roles.set', laneId: lane.id, roles }]);
+}
 function updateName() {
+  if (selectedNode.value?.type === 'swimlane') return;
   if (selectedEdge.value)
     run('编辑连线标签', [
       { type: 'edge.update', id: selectedEdge.value.id, patch: { label: form.name } },
@@ -958,6 +973,7 @@ onBeforeUnmount(() => {
           :position="poolToolbarPosition"
           @appearance="laneAppearance"
           @roles="patchEntity"
+          @assign-roles="assignLaneRoles"
         />
         <div class="canvas-heading">
           <div class="eyebrow">DESIGN YOUR PROCESS</div>
@@ -1097,7 +1113,11 @@ onBeforeUnmount(() => {
             <section class="property-section">
               <h3>基本信息</h3>
               <label
-                >名称<input v-model="form.name" aria-label="节点名称" @change="updateName" /></label
+                >名称<input
+                  v-model="form.name"
+                  aria-label="节点名称"
+                  :readonly="selectedNode.type === 'swimlane'"
+                  @change="updateName" /></label
               ><label v-if="selectedNode.type === 'activity'"
                 >活动编号<input
                   v-model="form.code"
@@ -1113,6 +1133,9 @@ onBeforeUnmount(() => {
                   @change="patchEntity({ description: form.description })"
                 ></textarea>
               </label>
+              <p v-if="selectedNode.type === 'swimlane'" class="field-help">
+                名称由所选角色生成，请通过「角色泳道」选择角色。
+              </p>
             </section>
             <section class="property-section">
               <h3>位置与尺寸<span>px</span></h3>
@@ -1209,7 +1232,7 @@ onBeforeUnmount(() => {
                   v-model="form.roleIds"
                   multiple
                   aria-label="组织角色"
-                  @change="patchEntity({ roleIds: [...form.roleIds] })"
+                  @change="assignLaneRoles([...form.roleIds])"
                 >
                   <option
                     v-for="org in remoteSession.organizations"

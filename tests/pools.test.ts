@@ -305,3 +305,51 @@ describe('lane drag sizing contract', () => {
     expect(editor.snapshot).toEqual(before);
   });
 });
+
+describe('泳道名称由角色选择维护', () => {
+  it('拒绝直接改名及绕过选择入口修改角色', () => {
+    const editor = make(),
+      before = structuredClone(editor.snapshot);
+    for (const patch of [{ name: '手动改名' }, { roleIds: ['role_sales'] }]) {
+      expect(() =>
+        editor.dispatch('手动修改泳道', [{ type: 'node.update', id: 'lane_sales', patch }]),
+      ).toThrow('通过角色泳道选择角色');
+    }
+    expect(editor.snapshot).toEqual(before);
+  });
+  it('多角色名称和角色引用一起更新，撤销与重做保持一致', () => {
+    const editor = make(),
+      before = structuredClone(editor.snapshot);
+    editor.dispatch('选择角色', [
+      {
+        type: 'lane.roles.set',
+        laneId: 'lane_sales',
+        roles: [
+          { id: 'role_sales', name: '销售' },
+          { id: 'role_audit', name: '审核' },
+        ],
+      },
+    ]);
+    expect(editor.snapshot.entities.entity_lane_sales).toMatchObject({
+      name: '销售、审核',
+      roleIds: ['role_sales', 'role_audit'],
+    });
+    expect(editor.snapshot.nodes).toEqual(before.nodes);
+    expect(editor.snapshot.edges).toEqual(before.edges);
+    editor.undo();
+    expect(editor.snapshot.entities.entity_lane_sales).toEqual(before.entities.entity_lane_sales);
+    editor.redo();
+    expect(editor.snapshot.entities.entity_lane_sales.name).toBe('销售、审核');
+  });
+  it('清空角色后显示默认名称，不能将角色绑定到其他图形', () => {
+    const editor = make();
+    editor.dispatch('清空角色', [{ type: 'lane.roles.set', laneId: 'lane_sales', roles: [] }]);
+    expect(editor.snapshot.entities.entity_lane_sales).toMatchObject({
+      name: '角色泳道',
+      roleIds: [],
+    });
+    expect(() =>
+      editor.dispatch('错误绑定', [{ type: 'lane.roles.set', laneId: 'receive', roles: [] }]),
+    ).toThrow('只能为泳道');
+  });
+});
