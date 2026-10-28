@@ -115,6 +115,13 @@ export const operationSchema = z.discriminatedUnion('type', [
       '至少指定一种外观属性',
     ),
   z
+    .object({
+      type: z.literal('nodes.align'),
+      ids: z.array(idSchema).min(1).max(500),
+      mode: z.enum(['left', 'center', 'right', 'top', 'middle', 'bottom', 'grid']),
+    })
+    .strict(),
+  z
     .object({ type: z.literal('document.canvas.update'), patch: canvasSettingsSchema.partial() })
     .strict(),
   z

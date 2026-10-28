@@ -48,6 +48,8 @@ import ActivityDetails from './ActivityDetails.vue';
 import CanvasSettingsPanel from './CanvasSettings.vue';
 import ResizableSidebar from './ResizableSidebar.vue';
 import StyleInspector from './StyleInspector.vue';
+import AlignmentInspector from './AlignmentInspector.vue';
+import type { Alignment } from '../domain/alignment';
 import { nodeStrokePatch } from '../shapes/styles';
 import {
   absoluteBounds,
@@ -151,6 +153,11 @@ function changePreset(colors: { fill: string; stroke: string; font: string }) {
     })),
   ];
   if (operations.length) void run('应用配色样式', operations);
+}
+function alignSelection(mode: Alignment) {
+  void run(mode === 'grid' ? '对齐到网格' : '对齐所选节点', [
+    { type: 'nodes.align', ids: styleNodes.value.map((n) => n.id), mode },
+  ]);
 }
 const remoteSession = shallowRef<CoopwireSession>();
 const businessOptions = shallowRef<ActivityOptions>(),
@@ -1510,6 +1517,13 @@ onBeforeUnmount(() => {
             :busy="editor.busy"
             @change="changeStyle"
             @preset="changePreset"
+          />
+          <AlignmentInspector
+            v-if="styleNodes.length"
+            :count="styleNodes.length"
+            :busy="editor.busy"
+            :managed-lane="styleNodes.some((node) => isManagedLane(doc, node))"
+            @align="alignSelection"
           />
           <section v-if="editor.activity.length" class="property-section activity-log">
             <h3>最近操作</h3>

@@ -7,6 +7,7 @@ import {
   type DiagramNode,
 } from '../domain/model';
 import { validateDocument } from '../domain/validation';
+import { alignNodes } from '../domain/alignment';
 import {
   addPoolLane,
   isManagedLane,
@@ -70,6 +71,9 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
     if (doc.nodes[id] || doc.edges[id] || doc.entities[id]) throw new Error(`ID 已存在：${id}`);
   };
   switch (operation.type) {
+    case 'nodes.align':
+      alignNodes(doc, operation.ids, operation.mode);
+      break;
     case 'document.canvas.update':
       doc.canvas = { ...defaultCanvasSettings, ...doc.canvas, ...operation.patch };
       break;

@@ -37,6 +37,33 @@ const makeCommand = (
 });
 afterEach(() => configureCoopwireAuth({}));
 describe('Coopwire transport', () => {
+  it('Agent 对齐预览不写入，应用与撤销仅同步流程位置并保留业务身份', async () => {
+    const { editor, backend } = await setup(),
+      before = editor.snapshot,
+      tools = createAgentTools(editor);
+    const input = {
+      ...makeCommand(
+        editor,
+        [{ type: 'nodes.align', ids: ['receive', 'confirm'], mode: 'left' }],
+        'agent_align',
+      ),
+      origin: 'agent',
+    };
+    const preview = tools.preview(input);
+    expect(preview.document.nodes.confirm.bounds.x).toBe(before.nodes.receive.bounds.x);
+    expect(backend.writeCount).toBe(0);
+    await tools.apply(input);
+    expect(readFlow(backend.flow, registry).document.nodes.confirm.bounds.x).toBe(
+      before.nodes.receive.bounds.x,
+    );
+    expect(editor.snapshot.entities).toEqual(before.entities);
+    await editor.undoAsync();
+    expect(readFlow(backend.flow, registry).document.nodes).toEqual(before.nodes);
+    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+      'saveFlowDiagramRelation',
+      'saveFlowDiagramRelation',
+    ]);
+  });
   it('样式仅保存流程关系，撤销后远程 XML 恢复，业务属性不被改写', async () => {
     const { editor, backend } = await setup(),
       before = editor.snapshot;
