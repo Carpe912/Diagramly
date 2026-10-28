@@ -2051,3 +2051,11 @@ div.mxCellEditor {
 .workspace-body {
   overflow: hidden;
 }
+.graph-container.space-panning,
+.graph-container.space-panning * {
+  cursor: grab !important;
+}
+.graph-container.is-panning,
+.graph-container.is-panning * {
+  cursor: grabbing !important;
+}

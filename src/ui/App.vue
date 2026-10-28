@@ -220,7 +220,7 @@ const canvasStyle = computed(() => {
       ? `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`
       : 'none',
     backgroundSize: `${settings.gridSize * scale}px ${settings.gridSize * scale}px`,
-    backgroundPosition: `${(translate?.x ?? 0) * scale}px ${(translate?.y ?? 0) * scale + (graphEl.value?.offsetTop ?? 0)}px`,
+    backgroundPosition: `${(translate?.x ?? 0) * scale + (canvas?.graph.getPanDx() ?? 0)}px ${(translate?.y ?? 0) * scale + (canvas?.graph.getPanDy() ?? 0) + (graphEl.value?.offsetTop ?? 0)}px`,
   };
 });
 function updateCanvas(patch: Partial<CanvasSettings>) {
@@ -314,12 +314,17 @@ function onSelection(ids: string[]) {
 function bindEditor() {
   if (!graphEl.value) return;
   doc.value = editor.value.snapshot;
-  canvas = new DiagramCanvas(graphEl.value, editor.value, {
-    select: onSelection,
-    error: showError,
-    zoom: (value) => (zoom.value = value),
-    viewport: () => viewportTick.value++,
-  });
+  canvas = new DiagramCanvas(
+    graphEl.value,
+    editor.value,
+    {
+      select: onSelection,
+      error: showError,
+      zoom: (value) => (zoom.value = value),
+      viewport: () => viewportTick.value++,
+    },
+    graphEl.value.parentElement ?? graphEl.value,
+  );
   unsubscribe = editor.value.subscribe(() => {
     doc.value = editor.value.snapshot;
     triggerRef(editor);
@@ -635,7 +640,7 @@ function setTool(tool: typeof activeTool.value) {
     const panning =
       canvas.graph.getPlugin<import('@maxgraph/core').PanningHandler>('PanningHandler');
     if (panning) {
-      panning.useLeftButtonForPanning = tool === 'hand';
+      panning.useLeftButtonForPanning = tool !== 'connect';
       panning.ignoreCell = tool === 'hand';
     }
     canvas.graph.setCellsMovable(tool === 'select');
@@ -1101,8 +1106,8 @@ onBeforeUnmount(() => {
           {{ connectSource ? '选择终点节点' : '选择起点节点' }}<span>Esc 退出</span>
         </div>
         <div v-else class="canvas-tip">
-          <Grip :size="12" /> 拖入图形开始创作 <span>·</span> 双击编辑名称
-          <span>·</span> 拖动端口连接
+          <Grip :size="12" /> 滚轮缩放 <span>·</span> 拖动空白处平移 <span>·</span> 空格拖拽 /
+          中键平移
         </div>
         <div class="zoom-control">
           <button aria-label="缩小" @click="canvas?.zoom(-1)"><Minus :size="14" /></button

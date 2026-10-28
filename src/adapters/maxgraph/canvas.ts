@@ -27,12 +27,15 @@ import {
   ShapeRegistry as EngineShapes,
   registerOrthogonalEdgeStyle,
   type CellStyle,
+  type EventSource,
+  type InternalMouseEvent,
 } from '@maxgraph/core';
 import '@maxgraph/core/css/common.css';
 import { isManagedLane, nodeDepth, poolOf } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
 import type { Editor } from '../../application/editor';
 import type { Operation } from '../../application/commands';
+import { MAX_ZOOM, MIN_ZOOM, zoomViewport } from './viewport';
 import {
   defaultCanvasSettings,
   newId,
@@ -62,6 +65,20 @@ interface CanvasCallbacks {
   zoom: (scale: number) => void;
   viewport?: () => void;
 }
+/** 当前引擎会忽略单轴平移；在实例插件中补齐提交，保留原有手势和结束事件。 */
+class ViewportPanningHandler extends PanningHandler {
+  override mouseUp(sender: EventSource, event: InternalMouseEvent) {
+    if (this.active && ((this.dx !== 0 && this.dy === 0) || (this.dx === 0 && this.dy !== 0))) {
+      const { scale, translate } = this.graph.view;
+      this.graph.panGraph(0, 0);
+      this.panGraph(translate.x + this.dx / scale, translate.y + this.dy / scale);
+      this.dx = 0;
+      this.dy = 0;
+      event.consume();
+    }
+    super.mouseUp(sender, event);
+  }
+}
 /** 泳道起点由泳池管理，从右侧和底部缩放时不移动内部节点。 */
 class LaneVertexHandler extends VertexHandler {
   override isSizerVisible(index: number) {
@@ -82,10 +99,12 @@ export class DiagramCanvas {
   private projectionIds = new Map<string, string>();
   private partSignatures = new Map<string, string>();
   private disposed = false;
+  private spacePressed = false;
   constructor(
     private container: HTMLElement,
     private editor: Editor,
     private callbacks: CanvasCallbacks,
+    private interactionSurface: HTMLElement = container,
   ) {
     registerEngineFeatures();
     InternalEvent.disableContextMenu(container);
@@ -96,7 +115,7 @@ export class DiagramCanvas {
         SelectionCellsHandler,
         ConnectionHandler,
         SelectionHandler,
-        PanningHandler,
+        ViewportPanningHandler,
         RubberBandHandler,
         FitPlugin,
       ],
@@ -104,6 +123,36 @@ export class DiagramCanvas {
     graph.view.setAllowEval(false);
     graph.setHtmlLabels(false);
     graph.setPanning(true);
+    graph.useScrollbarsForPanning = false;
+    graph.autoScroll = false;
+    graph.ignoreScrollbars = true;
+    const panning = graph.getPlugin<PanningHandler>('PanningHandler')!;
+    panning.useLeftButtonForPanning = true;
+    panning.minScale = MIN_ZOOM;
+    panning.maxScale = MAX_ZOOM;
+    const forcePanning = panning.isForcePanningEvent.bind(panning);
+    panning.isForcePanningEvent = (event) => {
+      const native = event.getEvent();
+      return (
+        native.button === 1 || (this.spacePressed && native.button === 0) || forcePanning(event)
+      );
+    };
+    const panningTrigger = panning.isPanningTrigger.bind(panning);
+    panning.isPanningTrigger = (event) => {
+      const native = event.getEvent();
+      if (
+        native.button === 0 &&
+        (native.shiftKey || native.altKey) &&
+        !native.ctrlKey &&
+        !this.spacePressed &&
+        !panning.ignoreCell
+      )
+        return false;
+      return panningTrigger(event);
+    };
+    panning.addListener(InternalEvent.PAN_START, () => container.classList.add('is-panning'));
+    panning.addListener(InternalEvent.PAN_END, () => container.classList.remove('is-panning'));
+    graph.addListener(InternalEvent.PAN, () => callbacks.viewport?.());
     graph.setConnectable(true);
     graph.setAllowDanglingEdges(false);
     graph.setCellsEditable(true);
@@ -275,6 +324,10 @@ export class DiagramCanvas {
         callbacks.viewport?.();
       });
     this.unsubscribe = editor.subscribe(() => this.render());
+    this.interactionSurface.addEventListener('wheel', this.onWheel, { passive: false });
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('blur', this.releaseSpace);
     this.render();
   }
   private ownerCell(cell: Cell | null): Cell | null {
@@ -479,7 +532,14 @@ export class DiagramCanvas {
   bounds(id: string) {
     const cell = this.cells.get(id),
       state = cell ? this.graph.view.getState(cell) : undefined;
-    return state ? { x: state.x, y: state.y, width: state.width, height: state.height } : undefined;
+    return state
+      ? {
+          x: state.x + this.graph.getPanDx(),
+          y: state.y + this.graph.getPanDy(),
+          width: state.width,
+          height: state.height,
+        }
+      : undefined;
   }
   select(ids: string[]) {
     this.graph.setSelectionCells(
@@ -490,14 +550,91 @@ export class DiagramCanvas {
     return this.graph.getPointForEvent(event, false);
   }
   zoom(direction: number) {
-    this.graph.zoomTo(Math.min(2, Math.max(0.25, this.graph.view.scale + direction * 0.1)));
+    this.zoomAt(
+      this.graph.view.scale * Math.pow(1.2, direction),
+      this.container.clientWidth / 2,
+      this.container.clientHeight / 2,
+    );
   }
+  private zoomAt(scale: number, x: number, y: number) {
+    const view = this.graph.view;
+    const next = zoomViewport(
+      { scale: view.scale, x: view.translate.x, y: view.translate.y },
+      scale,
+      { x, y },
+    );
+    if (next.scale !== view.scale) view.scaleAndTranslate(next.scale, next.x, next.y);
+  }
+  private panBy(x: number, y: number) {
+    const { scale, translate } = this.graph.view;
+    this.graph.view.setTranslate(translate.x + x / scale, translate.y + y / scale);
+  }
+  private onWheel = (event: WheelEvent) => {
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest(
+        'button, input, textarea, select, details, [role="toolbar"], [role="tablist"], .mxCellEditor',
+      )
+    )
+      return;
+    if (this.graph.isEditing() || this.graph.getPlugin<PanningHandler>('PanningHandler')?.active)
+      return;
+    const unit =
+      event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? this.container.clientHeight : 1;
+    const dx = event.deltaX * unit,
+      dy = event.deltaY * unit;
+    if (!dx && !dy) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.shiftKey) this.panBy(-(dx || dy), 0);
+    else if (!event.ctrlKey && !event.metaKey && Math.abs(dx) > Math.abs(dy)) this.panBy(-dx, -dy);
+    else {
+      const rect = this.container.getBoundingClientRect();
+      this.zoomAt(
+        this.graph.view.scale * Math.exp(Math.max(-4, Math.min(4, -dy * 0.002))),
+        Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+        Math.max(0, Math.min(rect.height, event.clientY - rect.top)),
+      );
+    }
+  };
+  private onKeyDown = (event: KeyboardEvent) => {
+    if (event.code !== 'Space' || this.graph.isEditing()) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest(
+        'input, textarea, select, button, summary, [contenteditable="true"], [role="separator"]',
+      )
+    )
+      return;
+    if (
+      !this.interactionSurface.matches(':hover') &&
+      !this.container.contains(document.activeElement)
+    )
+      return;
+    event.preventDefault();
+    this.spacePressed = true;
+    this.container.classList.add('space-panning');
+  };
+  private releaseSpace = () => {
+    this.spacePressed = false;
+    this.container.classList.remove('space-panning');
+  };
+  private onKeyUp = (event: KeyboardEvent) => {
+    if (event.code === 'Space') this.releaseSpace();
+  };
   fit() {
     this.graph.getPlugin<FitPlugin>('fit')?.fitCenter({ margin: 65 });
   }
   destroy() {
     this.disposed = true;
     this.unsubscribe();
+    this.releaseSpace();
+    this.container.classList.remove('is-panning');
+    this.interactionSurface.removeEventListener('wheel', this.onWheel);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('blur', this.releaseSpace);
     this.graph.destroy();
     this.container.replaceChildren();
   }
