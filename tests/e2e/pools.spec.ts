@@ -130,3 +130,13 @@ for (const orientation of ['horizontal', 'vertical'] as const) test(`drags a rea
   await page.getByRole('button', { name: '撤销', exact: true }).click();
   expect((await readDocument(page)).nodes).toEqual(before.nodes);
 });
+test('lane title has only a divider, and deselection clears every selection outline', async ({ page }) => {
+  await poolSelection(page);
+  for (const name of ['销售团队', '接收客户订单', '交付团队', '订单履约泳池']) await page.getByRole('button', { name, exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('toolbar', { name: '泳池工具栏' })).toHaveCount(0);
+  const title = page.locator('[data-part-id="lane_sales::lane-title"]').first().locator('rect').first();
+  await expect(title).not.toHaveAttribute('stroke', /#[a-f0-9]{6}/i);
+  await expect(page.locator('[data-part-id="lane_sales::lane-divider"]').first()).toBeVisible();
+  expect(await page.getByTestId('graph').locator('rect[stroke="#7d91b7"]').count()).toBe(0);
+});

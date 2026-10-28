@@ -20,7 +20,10 @@ export function nodePresentation(doc: DiagramDocument, node: DiagramNode, regist
     const vertical = pool?.type === 'pool-vertical';
     parts = [{ key: 'lane-title', bounds: vertical ? { x: 1, y: 1, width: b.width - 2, height: 39 }
       : { x: 1, y: 1, width: 78, height: b.height - 2 },
-      text: entity.name + (entity.role ? `\n${entity.role}` : ''), primitive: 'rectangle', fill: headerFill, stroke, color: fontColor, fontSize: 12 }];
+      text: entity.name + (entity.role ? `\n${entity.role}` : ''), primitive: 'rectangle', fill: headerFill, color: fontColor, fontSize: 12 },
+      // The lane body owns its perimeter. A single divider avoids a second closed outline around the title.
+      { key: 'lane-divider', bounds: vertical ? { x: 0, y: 40, width: b.width, height: 1 }
+        : { x: 79, y: 0, width: 1, height: b.height }, text: '', primitive: 'rectangle', fill: stroke }];
   } else {
     parts = shape.composite?.(node, entity) ?? [];
     parts = parts.map((part) => ({ ...part,
