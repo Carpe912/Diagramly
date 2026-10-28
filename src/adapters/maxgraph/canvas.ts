@@ -1,5 +1,6 @@
 import {
   BaseGraph,
+  ArrowConnectorShape,
   Cell,
   CellEditorHandler,
   ConnectionConstraint,
@@ -26,6 +27,8 @@ import {
   SelectionHandler,
   ShapeRegistry as EngineShapes,
   registerOrthogonalEdgeStyle,
+  registerElbowEdgeStyle,
+  registerEntityRelationEdgeStyle,
   type CellStyle,
   type EventSource,
   type InternalMouseEvent,
@@ -33,6 +36,15 @@ import {
 import '@maxgraph/core/css/common.css';
 import { isManagedLane, nodeDepth, poolOf } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
+import {
+  edgeLineAppearance,
+  edgePortOffsets,
+  edgeRenderStyle,
+  nodeLineAppearance,
+  strokeStyle,
+} from '../../shapes/styles';
+import { lineJumps } from '../../domain/lineJumps';
+import { JumpConnectorShape, LinkLineShape, SimpleArrowShape } from './lineShapes';
 import type { Editor } from '../../application/editor';
 import type { Operation } from '../../application/commands';
 import { MAX_ZOOM, MIN_ZOOM, zoomViewport } from './viewport';
@@ -49,11 +61,24 @@ function registerEngineFeatures() {
   EngineShapes.add('ellipse', EllipseShape);
   EngineShapes.add('rhombus', RhombusShape);
   EngineShapes.add('connector', ConnectorShape);
+  EngineShapes.add('diagramlyConnector', JumpConnectorShape);
+  EngineShapes.add('diagramlyLink', LinkLineShape);
+  EngineShapes.add('arrowConnector', ArrowConnectorShape);
+  EngineShapes.add('diagramlyArrow', SimpleArrowShape);
   PerimeterRegistry.add('rectanglePerimeter', Perimeter.RectanglePerimeter);
   PerimeterRegistry.add('ellipsePerimeter', Perimeter.EllipsePerimeter);
   PerimeterRegistry.add('rhombusPerimeter', Perimeter.RhombusPerimeter);
   EdgeMarkerRegistry.add('block', EdgeMarker.createArrow(2));
+  for (const type of ['classic', 'classicThin', 'blockThin'])
+    EdgeMarkerRegistry.add(type, EdgeMarker.createArrow(type.endsWith('Thin') ? 3 : 2));
+  EdgeMarkerRegistry.add('open', EdgeMarker.createOpenArrow(2));
+  EdgeMarkerRegistry.add('openThin', EdgeMarker.createOpenArrow(3));
+  EdgeMarkerRegistry.add('oval', EdgeMarker.oval);
+  EdgeMarkerRegistry.add('diamond', EdgeMarker.diamond);
+  EdgeMarkerRegistry.add('diamondThin', EdgeMarker.diamond);
   registerOrthogonalEdgeStyle();
+  registerElbowEdgeStyle();
+  registerEntityRelationEdgeStyle();
   HandleConfig.fillColor = '#ffffff';
   HandleConfig.strokeColor = '#7d91b7';
   VertexHandlerConfig.selectionColor = '#7d91b7';
@@ -100,6 +125,7 @@ export class DiagramCanvas {
   private partSignatures = new Map<string, string>();
   private disposed = false;
   private spacePressed = false;
+  private updatingJumps = false;
   constructor(
     private container: HTMLElement,
     private editor: Editor,
@@ -168,6 +194,11 @@ export class DiagramCanvas {
     graph.isCellFoldable = () => false;
     graph.recursiveResize = false;
     graph.setResizeContainer(false);
+    const validateView = graph.view.validate.bind(graph.view);
+    graph.view.validate = (...args) => {
+      validateView(...args);
+      this.updateLineJumps();
+    };
     const createShape = graph.cellRenderer.createShape.bind(graph.cellRenderer);
     graph.cellRenderer.createShape = (state) => {
       const shape = createShape(state);
@@ -396,12 +427,8 @@ export class DiagramCanvas {
             .get(doc.nodes[edge.target.nodeId].type)
             .ports.find((p) => p.id === edge.target.portId)!;
           model.setStyle(cell, {
-            edgeStyle: 'orthogonalEdgeStyle',
-            rounded: true,
-            strokeColor: '#8e99ad',
-            strokeWidth: 1.5,
-            endArrow: 'block',
-            endSize: 7,
+            ...edgeRenderStyle(edge),
+            ...edgePortOffsets(edge, sourcePort, targetPort),
             fontColor: '#7a8292',
             fontSize: 11,
             labelBackgroundColor: '#ffffff',
@@ -453,9 +480,7 @@ export class DiagramCanvas {
       shape: definition.primitive,
       perimeter: `${definition.primitive}Perimeter`,
       fillColor: presentation.fill,
-      strokeColor: presentation.stroke,
-      strokeWidth: definition.container ? 1 : 1.5,
-      rounded: node.type === 'rectangle' || node.type === 'activity',
+      ...strokeStyle(nodeLineAppearance(node)),
       arcSize: 8,
       fontSize: 12,
       fontColor: presentation.fontColor,
@@ -484,7 +509,7 @@ export class DiagramCanvas {
     cell.setConnectable(definition.ports.length > 0);
     const parts = presentation.parts;
     model.setValue(cell, parts.length ? '' : entity.name);
-    const signature = JSON.stringify(parts);
+    const signature = JSON.stringify([parts, node.appearance.opacity ?? 100]);
     if (this.partSignatures.get(node.id) !== signature) {
       for (const child of [...cell.getChildren()]) {
         if (this.projectionIds.has(child.id ?? '')) {
@@ -517,6 +542,8 @@ export class DiagramCanvas {
             resizable: false,
             editable: false,
             deletable: false,
+            opacity: node.appearance.opacity ?? 100,
+            textOpacity: node.appearance.opacity ?? 100,
           },
         });
         child.setConnectable(false);
@@ -528,6 +555,40 @@ export class DiagramCanvas {
   canMove(id: string) {
     const node = this.editor.snapshot.nodes[id];
     return !!node && !isManagedLane(this.editor.snapshot, node);
+  }
+  private updateLineJumps() {
+    if (this.updatingJumps || this.disposed) return;
+    this.updatingJumps = true;
+    try {
+      const routed = Object.values(this.editor.snapshot.edges).map((edge) => {
+        const state = this.graph.view.getState(this.cells.get(edge.id)!),
+          a = edgeLineAppearance(edge);
+        return {
+          id: edge.id,
+          points: (state?.absolutePoints ?? [])
+            .filter((p) => !!p)
+            .map((p) => ({ x: p!.x / this.graph.view.scale, y: p!.y / this.graph.view.scale })),
+          jump: a.shape === 'line' && a.corner !== 'curved' && a.jumpStyle !== 'none',
+          visible: a.strokeEnabled && a.opacity > 0 && a.corner !== 'curved',
+        };
+      });
+      const jumps = lineJumps(routed);
+      for (const line of routed) {
+        const state = this.graph.view.getState(this.cells.get(line.id)!);
+        const shape = state?.shape;
+        if (!(shape instanceof JumpConnectorShape)) continue;
+        const points = jumps.get(line.id) ?? [],
+          signature = JSON.stringify(points);
+        if (shape.jumpSignature !== signature) {
+          shape.jumpPoints = points;
+          shape.jumpSignature = signature;
+          this.graph.cellRenderer.redraw(state!, true);
+        }
+        shape.node?.setAttribute('data-line-jumps', String(points.length));
+      }
+    } finally {
+      this.updatingJumps = false;
+    }
   }
   bounds(id: string) {
     const cell = this.cells.get(id),

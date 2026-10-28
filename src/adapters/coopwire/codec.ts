@@ -17,6 +17,15 @@ import {
   upgradeStandaloneLanes,
 } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
+import {
+  edgeRenderStyle,
+  edgePortOffsets,
+  lineStyleFromXml,
+  nodeLineAppearance,
+  nodeStrokePatch,
+  strokeStyle,
+  styleToXml,
+} from '../../shapes/styles';
 import { validateDocument } from '../../domain/validation';
 import type { ShapeRegistry } from '../../shapes/registry';
 import type { ActivityDetail, FlowDetail } from './api';
@@ -215,6 +224,7 @@ export function readFlow(
     );
   const importContainerColors = (cell: Element, node: DiagramNode) => {
     const style = styleValues(cell);
+    Object.assign(node.appearance, nodeStrokePatch(lineStyleFromXml(style, false)));
     for (const [field, key] of [
       ['accent', 'strokeColor'],
       ['headerFill', 'fillColor'],
@@ -330,6 +340,7 @@ export function readFlow(
       node.bounds.x = pos.x;
       node.bounds.y = pos.y;
     }
+    Object.assign(node.appearance, nodeStrokePatch(lineStyleFromXml(styleValues(cell), false)));
     const businessId = attrs(cell, 'data-id');
     if (businessId && isBusinessNode(node))
       doc.entities[node.entityId].externalRef = { provider: 'coopwire', id: businessId };
@@ -384,6 +395,7 @@ export function readFlow(
       node.bounds.x = Math.max(inset.x, node.bounds.x);
       node.bounds.y = Math.max(inset.y, node.bounds.y);
     } else Object.assign(node.bounds, absolute(cell));
+    Object.assign(node.appearance, nodeStrokePatch(lineStyleFromXml(values, false)));
     for (const [field, key] of [
       ['accent', 'strokeColor'],
       ['fill', 'fillColor'],
@@ -441,6 +453,7 @@ export function readFlow(
       source: { nodeId: a, portId: source },
       target: { nodeId: b, portId: target },
       label: plainText(attrs(labelCell ?? cell, 'value') || attrs(cell, 'label')),
+      appearance: lineStyleFromXml(styleValues(cell), true),
     };
   }
   const ignoredVertices = cells.filter(
@@ -554,7 +567,7 @@ export function writeFlow(
     const cell = element('mxCell', {
       vertex: 1,
       parent: node.parentId ?? '1',
-      style: `${isBusinessNode(node) ? (node.type === 'activity' ? 'active;' : node.type === 'decision' ? 'rhombus;' : 'process;') : ''}shape=${shape.primitive};whiteSpace=wrap;html=0;fillColor=${presentation.fill};strokeColor=${presentation.stroke};fontColor=${presentation.fontColor};${isBusinessNode(node) ? 'cflowchart=1;' : ''}${node.type === 'swimlane' ? `swimlaneLane;coopwireSwimlane=1;horizontal=${poolOf(doc, node)?.type === 'pool-vertical' ? 1 : 0};roleId=${entity.roleIds.join(',')};` : ''}${isPoolType(node.type) ? `swimlaneContainer;${node.type === 'pool-vertical' ? 'verticalSwimlane' : 'horizontalSwimlane'};horizontal=${node.type === 'pool-vertical' ? 1 : 0};startSize=36;` : ''}`,
+      style: `${isBusinessNode(node) ? (node.type === 'activity' ? 'active;' : node.type === 'decision' ? 'rhombus;' : 'process;') : ''}shape=${shape.primitive};whiteSpace=wrap;html=0;fillColor=${presentation.fill};fontColor=${presentation.fontColor};${styleToXml(strokeStyle(nodeLineAppearance(node)))}${isBusinessNode(node) ? 'cflowchart=1;' : ''}${node.type === 'swimlane' ? `swimlaneLane;coopwireSwimlane=1;horizontal=${poolOf(doc, node)?.type === 'pool-vertical' ? 1 : 0};roleId=${entity.roleIds.join(',')};` : ''}${isPoolType(node.type) ? `swimlaneContainer;${node.type === 'pool-vertical' ? 'verticalSwimlane' : 'horizontalSwimlane'};horizontal=${node.type === 'pool-vertical' ? 1 : 0};startSize=36;` : ''}`,
     });
     cell.append(element('mxGeometry', { ...b, as: 'geometry' }));
     wrapper.append(cell);
@@ -566,7 +579,7 @@ export function writeFlow(
         value: part.text,
         vertex: 1,
         parent: node.id,
-        style: `${part.key === 'title' ? 'act-content;' : `act-${part.key};`}shape=${part.primitive};html=0;fillColor=${part.fill};strokeColor=${part.stroke ?? 'none'};fontColor=${part.color ?? '#334155'};fontSize=${part.fontSize ?? 12};horizontal=${part.vertical ? 0 : 1};movable=0;deletable=0;connectable=0;`,
+        style: `${part.key === 'title' ? 'act-content;' : `act-${part.key};`}shape=${part.primitive};html=0;fillColor=${part.fill};strokeColor=${part.stroke ?? 'none'};fontColor=${part.color ?? '#334155'};fontSize=${part.fontSize ?? 12};opacity=${node.appearance.opacity ?? 100};textOpacity=${node.appearance.opacity ?? 100};horizontal=${part.vertical ? 0 : 1};movable=0;deletable=0;connectable=0;`,
       });
       child.append(element('mxGeometry', { ...part.bounds, as: 'geometry' }));
       root.append(child);
@@ -586,7 +599,24 @@ export function writeFlow(
       parent: '1',
       source: edge.source.nodeId,
       target: edge.target.nodeId,
-      style: `edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=block;exitX=${source.x};exitY=${source.y};entryX=${target.x};entryY=${target.y};`,
+      style: styleToXml({
+        ...edgeRenderStyle(edge),
+        ...edgePortOffsets(edge, source, target),
+        shape: (
+          {
+            line: 'connector',
+            link: 'link',
+            'block-arrow': 'flexArrow',
+            'simple-arrow': 'arrow',
+          } as const
+        )[edge.appearance?.shape ?? 'line'],
+        exitX: source.x,
+        exitY: source.y,
+        entryX: target.x,
+        entryY: target.y,
+        exitPerimeter: false,
+        entryPerimeter: false,
+      }),
     });
     cell.append(element('mxGeometry', { relative: 1, as: 'geometry' }));
     root.append(cell);

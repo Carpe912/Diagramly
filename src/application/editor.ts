@@ -235,7 +235,19 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
     case 'edge.update': {
       const edge = doc.edges[operation.id];
       if (!edge) throw new Error(`连线不存在：${operation.id}`);
-      Object.assign(edge, structuredClone(operation.patch));
+      const { appearance, ...patch } = structuredClone(operation.patch);
+      Object.assign(edge, patch);
+      if (appearance) edge.appearance = { ...edge.appearance, ...appearance };
+      break;
+    }
+    case 'edge.appearance': {
+      const edge = doc.edges[operation.id];
+      if (!edge) throw new Error(`连线不存在：${operation.id}`);
+      const { type: _type, id: _id, ...patch } = operation;
+      edge.appearance = {
+        ...edge.appearance,
+        ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),
+      };
       break;
     }
     case 'edge.delete':

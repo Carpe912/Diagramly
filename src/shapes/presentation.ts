@@ -16,7 +16,12 @@ export function nodePresentation(doc: DiagramDocument, node: DiagramNode, regist
     (isPoolType(node.type) ? '#edf1f8' : '#f6f8fb');
   const fontColor =
     node.appearance.fontColor ?? (container ? pool?.appearance.fontColor : undefined) ?? '#52637d';
-  const stroke = container ? node.appearance.accent || '#d5deeb' : node.appearance.accent;
+  const stroke =
+    node.appearance.strokeEnabled === false
+      ? 'none'
+      : container
+        ? node.appearance.accent || '#d5deeb'
+        : node.appearance.accent;
   let parts: ShapePart[];
   if (isPoolType(node.type)) {
     const horizontal = node.type === 'pool-horizontal';

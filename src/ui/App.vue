@@ -47,6 +47,8 @@ import LaneToolbar from './LaneToolbar.vue';
 import ActivityDetails from './ActivityDetails.vue';
 import CanvasSettingsPanel from './CanvasSettings.vue';
 import ResizableSidebar from './ResizableSidebar.vue';
+import StyleInspector from './StyleInspector.vue';
+import { nodeStrokePatch } from '../shapes/styles';
 import {
   absoluteBounds,
   childrenOf,
@@ -76,6 +78,7 @@ import {
   type BusinessEntity,
   type CanvasSettings,
   type DiagramDocument,
+  type EdgeAppearance,
 } from '../domain/model';
 import type { Command, Operation } from '../application/commands';
 
@@ -113,6 +116,42 @@ const selectedEdge = computed(() =>
 const selectedEntity = computed(() =>
   selectedNode.value ? doc.value.entities[selectedNode.value.entityId] : undefined,
 );
+const styleNodes = computed(() =>
+  selection.value.flatMap((id) => (doc.value.nodes[id] ? [doc.value.nodes[id]] : [])),
+);
+const styleEdges = computed(() =>
+  selection.value.flatMap((id) => (doc.value.edges[id] ? [doc.value.edges[id]] : [])),
+);
+function changeStyle(patch: EdgeAppearance) {
+  const nodePatch = nodeStrokePatch(patch),
+    operations: Operation[] = [];
+  if (Object.keys(nodePatch).length)
+    for (const node of styleNodes.value)
+      operations.push({ type: 'node.appearance', id: node.id, ...nodePatch });
+  for (const edge of styleEdges.value)
+    operations.push({ type: 'edge.appearance', id: edge.id, ...patch });
+  if (operations.length) void run('修改线条样式', operations);
+}
+function changePreset(colors: { fill: string; stroke: string; font: string }) {
+  const operations: Operation[] = [
+    ...styleNodes.value.map((node) => ({
+      type: 'node.appearance' as const,
+      id: node.id,
+      fill: colors.fill,
+      headerFill: colors.fill,
+      fontColor: colors.font,
+      accent: colors.stroke,
+      strokeEnabled: true,
+    })),
+    ...styleEdges.value.map((edge) => ({
+      type: 'edge.appearance' as const,
+      id: edge.id,
+      strokeColor: colors.stroke,
+      strokeEnabled: true,
+    })),
+  ];
+  if (operations.length) void run('应用配色样式', operations);
+}
 const remoteSession = shallowRef<CoopwireSession>();
 const businessOptions = shallowRef<ActivityOptions>(),
   loadingOptions = ref(false);
@@ -277,6 +316,15 @@ async function run(label: string, operations: Operation[]) {
 function select(ids: string[]) {
   selection.value = ids;
   canvas?.select(ids);
+}
+function selectLayer(id: string, event: MouseEvent) {
+  select(
+    event.shiftKey || event.ctrlKey || event.metaKey
+      ? selection.value.includes(id)
+        ? selection.value.filter((item) => item !== id)
+        : [...selection.value, id]
+      : [id],
+  );
 }
 let connectSource: string | undefined;
 function onSelection(ids: string[]) {
@@ -962,7 +1010,7 @@ onBeforeUnmount(() => {
             :key="row.id"
             :class="['layer-row', { selected: selection.includes(row.id) }]"
             :style="{ paddingLeft: `${8 + row.depth * 14}px` }"
-            @click="select([row.id])"
+            @click="selectLayer(row.id, $event)"
           >
             <component :is="icons[registry.get(doc.nodes[row.id].type).icon]" :size="14" /><span>{{
               doc.entities[doc.nodes[row.id].entityId].name
@@ -973,7 +1021,7 @@ onBeforeUnmount(() => {
             v-for="edge in Object.values(doc.edges)"
             :key="edge.id"
             :class="['layer-row', { selected: selection.includes(edge.id) }]"
-            @click="select([edge.id])"
+            @click="selectLayer(edge.id, $event)"
           >
             <GitBranch :size="14" /><span>{{
               edge.label ||
@@ -1388,22 +1436,6 @@ onBeforeUnmount(() => {
                   /><span>{{ item[1] }}</span></label
                 >
               </div>
-              <div class="color-swatches">
-                <button
-                  v-for="color in ['#6b7db9', '#51867b', '#b78e59', '#a1718a', '#64748b']"
-                  :key="color"
-                  :aria-label="`颜色 ${color}`"
-                  :style="{ background: color }"
-                  :class="{ chosen: selectedNode.appearance.accent === color }"
-                  @click="
-                    run('修改外观', [
-                      { type: 'node.appearance', id: selectedNode.id, accent: color },
-                    ])
-                  "
-                >
-                  <Check v-if="selectedNode.appearance.accent === color" :size="12" />
-                </button>
-              </div>
             </section>
             <div class="element-id">
               <span>NODE ID</span><code>{{ selectedNode.id }}</code>
@@ -1471,6 +1503,14 @@ onBeforeUnmount(() => {
               <p>活动、数据与视图各司其职。复杂图形，保持简单的编辑体验。</p>
             </div>
           </template>
+          <StyleInspector
+            v-if="styleNodes.length || styleEdges.length"
+            :nodes="styleNodes"
+            :edges="styleEdges"
+            :busy="editor.busy"
+            @change="changeStyle"
+            @preset="changePreset"
+          />
           <section v-if="editor.activity.length" class="property-section activity-log">
             <h3>最近操作</h3>
             <div

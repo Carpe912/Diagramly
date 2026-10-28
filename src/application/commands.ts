@@ -4,6 +4,7 @@ import {
   boundsSchema,
   canvasSettingsSchema,
   edgeSchema,
+  edgeAppearanceSchema,
   entitySchema,
   idSchema,
   nodeSchema,
@@ -106,6 +107,13 @@ export const operationSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ type: z.literal('edge.delete'), id: idSchema }).strict(),
+  z
+    .object({ type: z.literal('edge.appearance'), id: idSchema, ...edgeAppearanceSchema.shape })
+    .strict()
+    .refine(
+      (op) => Object.keys(op).some((key) => key !== 'id' && key !== 'type'),
+      '至少指定一种外观属性',
+    ),
   z
     .object({ type: z.literal('document.canvas.update'), patch: canvasSettingsSchema.partial() })
     .strict(),

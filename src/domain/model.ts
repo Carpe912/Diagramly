@@ -56,14 +56,58 @@ export const defaultCanvasSettings: CanvasSettings = {
 export function gridAppearance(settings: CanvasSettings) {
   return { color: settings.gridColor ?? '#d5dce7', opacity: settings.gridOpacity ?? 1 };
 }
+export const strokeStyleSchema = z
+  .object({
+    strokeEnabled: z.boolean().optional(),
+    strokeWidth: z.number().finite().min(0.1).max(999).optional(),
+    pattern: z.enum(['solid', 'dashed', 'dotted', 'dotted-spaced', 'dotted-wide']).optional(),
+    opacity: z.number().finite().min(0).max(100).optional(),
+  })
+  .strict();
+export const markerSchema = z.enum([
+  'none',
+  'classic',
+  'classicThin',
+  'block',
+  'blockThin',
+  'open',
+  'openThin',
+  'oval',
+  'diamond',
+  'diamondThin',
+]);
+export const edgeAppearanceSchema = strokeStyleSchema
+  .extend({
+    strokeColor: colorSchema.optional(),
+    corner: z.enum(['sharp', 'rounded', 'curved']).optional(),
+    shape: z.enum(['line', 'link', 'block-arrow', 'simple-arrow']).optional(),
+    routing: z
+      .enum(['straight', 'orthogonal', 'elbow-horizontal', 'elbow-vertical', 'entity'])
+      .optional(),
+    startArrow: markerSchema.optional(),
+    endArrow: markerSchema.optional(),
+    startFill: z.boolean().optional(),
+    endFill: z.boolean().optional(),
+    startSize: z.number().finite().min(0).max(999).optional(),
+    endSize: z.number().finite().min(0).max(999).optional(),
+    startSpacing: z.number().finite().min(0).max(999).optional(),
+    endSpacing: z.number().finite().min(0).max(999).optional(),
+    jumpStyle: z.enum(['none', 'arc', 'gap', 'sharp']).optional(),
+    jumpSize: z.number().finite().min(1).max(999).optional(),
+  })
+  .strict();
+export type EdgeAppearance = z.infer<typeof edgeAppearanceSchema>;
 export const appearanceSchema = z
   .object({
+    ...strokeStyleSchema.shape,
+    corner: z.enum(['sharp', 'rounded']).optional(),
     accent: colorSchema,
     fill: colorSchema.optional(),
     headerFill: colorSchema.optional(),
     fontColor: colorSchema.optional(),
   })
   .strict();
+export type NodeAppearance = z.infer<typeof appearanceSchema>;
 export const nodeSchema = z
   .object({
     id: idSchema,
@@ -85,6 +129,7 @@ export const edgeSchema = z
     source: endpointSchema,
     target: endpointSchema,
     label: z.string().max(200),
+    appearance: edgeAppearanceSchema.optional(),
   })
   .strict();
 export const documentSchema = z

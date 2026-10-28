@@ -37,6 +37,37 @@ const makeCommand = (
 });
 afterEach(() => configureCoopwireAuth({}));
 describe('Coopwire transport', () => {
+  it('样式仅保存流程关系，撤销后远程 XML 恢复，业务属性不被改写', async () => {
+    const { editor, backend } = await setup(),
+      before = editor.snapshot;
+    await editor.submit(
+      makeCommand(editor, [
+        { type: 'node.appearance', id: 'receive', strokeWidth: 4, pattern: 'dotted', opacity: 60 },
+        {
+          type: 'edge.appearance',
+          id: 'edge_check',
+          startArrow: 'diamond',
+          endFill: false,
+          startSpacing: 10,
+          jumpStyle: 'gap',
+          jumpSize: 12,
+        },
+      ]),
+    );
+    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+      'saveFlowDiagramRelation',
+    ]);
+    expect(readFlow(backend.flow, registry).document).toEqual(editor.snapshot);
+    expect(editor.snapshot.entities).toEqual(before.entities);
+    await editor.undoAsync();
+    const restored = readFlow(backend.flow, registry).document;
+    expect(restored.nodes).toEqual(before.nodes);
+    expect(restored.edges).toEqual(before.edges);
+    expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+      'saveFlowDiagramRelation',
+      'saveFlowDiagramRelation',
+    ]);
+  });
   it('opens roles, the diagram and business details without any writes', async () => {
     const { backend, editor, session } = await setup();
     expect(backend.writeCount).toBe(0);

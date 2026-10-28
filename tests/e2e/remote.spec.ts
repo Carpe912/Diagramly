@@ -33,6 +33,30 @@ async function receive(page: Page) {
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
 }
+test('远程样式编辑保存真实 XML 和 PNG，撤销还原且不调用活动修改接口', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByLabel('线条宽度', { exact: true }).fill('4');
+  await page.getByLabel('线条宽度', { exact: true }).press('Tab');
+  await expect.poll(() => backend.flow.version).toBe(9);
+  expect(backend.flow.drawioXml).toContain('strokeWidth=4;');
+  expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+    'saveFlowDiagramRelation',
+  ]);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect.poll(() => backend.flow.version).toBe(10);
+  expect(backend.flow.drawioXml).not.toContain('strokeWidth=4;');
+  await page.getByRole('button', { name: '是', exact: true }).click();
+  await page.getByLabel('线末端形状', { exact: true }).selectOption('diamond');
+  await expect.poll(() => backend.flow.version).toBe(11);
+  expect(backend.flow.drawioXml).toContain('endArrow=diamond;');
+  expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
+    'saveFlowDiagramRelation',
+    'saveFlowDiagramRelation',
+    'saveFlowDiagramRelation',
+  ]);
+});
 test('remote UI writes business edits, actual XML/PNG multipart and compensates undo', async ({
   page,
 }) => {
