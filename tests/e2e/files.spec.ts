@@ -36,13 +36,11 @@ test('XML 从文档数据导入后保留泳池与业务身份，错误 XML 不�
   await page.getByLabel('导入文档', { exact: true }).setInputFiles(file!);
   expect(await readDocument(page)).toEqual(before);
   await dialog(page);
-  await page
-    .getByLabel('导入文档', { exact: true })
-    .setInputFiles({
-      name: 'bad.xml',
-      mimeType: 'application/xml',
-      buffer: Buffer.from('<mxGraphModel><root>'),
-    });
+  await page.getByLabel('导入文档', { exact: true }).setInputFiles({
+    name: 'bad.xml',
+    mimeType: 'application/xml',
+    buffer: Buffer.from('<mxGraphModel><root>'),
+  });
   await expect(page.getByRole('alert')).toBeVisible();
   expect(JSON.parse(await page.getByTestId('document-json').innerText())).toEqual(before);
 });
