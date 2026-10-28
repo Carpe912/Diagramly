@@ -81,7 +81,7 @@ const color = (event: Event) => (event.target as HTMLInputElement).value;
       <Trash2 :size="14" />
     </button>
     <i></i>
-    <label title="统一修改泳池及泳道的背景色"
+    <label title="修改泳池背景，未单独设置的泳道跟随"
       ><input
         type="color"
         aria-label="泳池背景色"
@@ -90,7 +90,7 @@ const color = (event: Event) => (event.target as HTMLInputElement).value;
         @change="emit('appearance', { fill: color($event) })"
       /><span>背景</span></label
     >
-    <label title="统一修改泳池及泳道的标题背景"
+    <label title="修改泳池标题背景，保留泳道的独立设置"
       ><input
         type="color"
         aria-label="泳池标题背景色"
@@ -99,7 +99,7 @@ const color = (event: Event) => (event.target as HTMLInputElement).value;
         @change="emit('appearance', { headerFill: color($event) })"
       /><span>标题</span></label
     >
-    <label title="统一修改泳池及泳道的文字颜色"
+    <label title="修改泳池文字颜色，保留泳道的独立设置"
       ><input
         type="color"
         aria-label="泳池文字颜色"

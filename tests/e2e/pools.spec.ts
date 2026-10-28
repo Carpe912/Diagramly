@@ -170,13 +170,11 @@ test('drops a business activity into the content area of a nested vertical lane'
   const scale = bounds.width / lane.bounds.width;
   const transfer = await page.evaluateHandle(() => new DataTransfer());
   await page.getByTestId('shape-activity').dispatchEvent('dragstart', { dataTransfer: transfer });
-  await page
-    .getByTestId('graph')
-    .dispatchEvent('drop', {
-      dataTransfer: transfer,
-      clientX: bounds.x + 24 * scale,
-      clientY: bounds.y + 90 * scale,
-    });
+  await page.getByTestId('graph').dispatchEvent('drop', {
+    dataTransfer: transfer,
+    clientX: bounds.x + 24 * scale,
+    clientY: bounds.y + 90 * scale,
+  });
   const doc = await readDocument(page),
     activity = Object.values(doc.nodes).find((n) => n.type === 'activity')!;
   expect(activity).toBeDefined();
@@ -196,7 +194,7 @@ test('lane selection has its own toolbar, appearance and role controls', async (
   await setColor(page, '泳道文字颜色', '#993300');
   await page
     .getByRole('toolbar', { name: '泳道工具栏' })
-    .getByText('角色泳道', { exact: true })
+    .getByLabel('角色泳道', { exact: true })
     .click();
   await page.getByLabel('泳道工具栏角色说明').fill('销售负责人');
   await page.getByLabel('泳道工具栏角色说明').press('Tab');

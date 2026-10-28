@@ -184,7 +184,7 @@ describe('pool hierarchy and deterministic layout', () => {
       ]),
     ).toThrow('无法容纳');
   });
-  it('shares pool background and text themes, supports lane overrides and restores overrides on undo', () => {
+  it('泳道独立外观不被泳池修改覆盖，未覆盖的泳道继承泳池主题', () => {
     const editor = make();
     editor.dispatch('单独泳道', [
       { type: 'node.appearance', id: 'lane_sales', fill: '#ffeedd', fontColor: '#aa4400' },
@@ -199,7 +199,11 @@ describe('pool hierarchy and deterministic layout', () => {
       },
     ]);
     const doc = editor.snapshot;
-    for (const id of ['pool_order', 'lane_sales', 'lane_ops'])
+    expect(nodePresentation(doc, doc.nodes.lane_sales, registry)).toMatchObject({
+      fill: '#ffeedd',
+      fontColor: '#aa4400',
+    });
+    for (const id of ['pool_order', 'lane_ops'])
       expect(nodePresentation(doc, doc.nodes[id], registry)).toMatchObject({
         fill: '#e9f5ed',
         fontColor: '#315342',

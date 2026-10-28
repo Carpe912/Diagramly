@@ -129,3 +129,27 @@ test('pool changes round-trip through remote XML and PNG without updating busine
   );
   await expect(page.getByLabel('泳池背景色', { exact: true })).toHaveValue('#eaf4ee');
 });
+test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持关闭', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await page
+    .getByRole('toolbar', { name: '泳道工具栏' })
+    .getByLabel('角色泳道', { exact: true })
+    .click();
+  await page.getByLabel('泳道工具栏组织角色').selectOption(['role_sales', 'role_ops']);
+  await expect.poll(() => backend.flow.version).toBe(9);
+  expect(backend.activities.get('remote_receive')?.activity.orgId).toEqual([
+    'role_sales',
+    'role_ops',
+  ]);
+  expect(
+    await page
+      .getByLabel('泳道工具栏组织角色')
+      .evaluate((el) =>
+        Array.from((el as HTMLSelectElement).selectedOptions, (option) => option.value),
+      ),
+  ).toEqual(['role_sales', 'role_ops']);
+  await expect(page.getByRole('toolbar', { name: '泳池工具栏' })).toHaveCount(0);
+});

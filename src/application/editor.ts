@@ -109,11 +109,6 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
         node.appearance,
         Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),
       );
-      if (isPoolType(node.type))
-        for (const lane of poolLanes(doc, node.id)) {
-          for (const key of ['fill', 'headerFill', 'fontColor'] as const)
-            if (patch[key] !== undefined) delete lane.appearance[key];
-        }
       break;
     }
     case 'pool.orientation':

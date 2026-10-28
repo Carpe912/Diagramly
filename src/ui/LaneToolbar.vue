@@ -16,17 +16,13 @@ const emit = defineEmits<{
   roles: [patch: Partial<BusinessEntity>];
 }>();
 const entity = computed(() => props.document.entities[props.lane.entityId]);
+const assignedRoles = computed({
+  get: () => entity.value.roleIds,
+  set: (roleIds: string[]) => emit('roles', { roleIds }),
+});
 const pool = computed(() => poolOf(props.document, props.lane));
 const color = (key: 'fill' | 'headerFill' | 'fontColor', fallback: string) =>
   props.lane.appearance[key] ?? pool.value?.appearance[key] ?? fallback;
-function selectRoles(event: Event) {
-  emit('roles', {
-    roleIds: Array.from(
-      (event.target as HTMLSelectElement).selectedOptions,
-      (option) => option.value,
-    ),
-  });
-}
 </script>
 <template>
   <div
@@ -67,7 +63,7 @@ function selectRoles(event: Event) {
     >
     <i></i>
     <details class="lane-role-picker" :key="lane.id">
-      <summary>
+      <summary aria-label="角色泳道">
         <UsersRound :size="14" />角色泳道<span v-if="entity.roleIds.length">{{
           entity.roleIds.length
         }}</span>
@@ -85,9 +81,8 @@ function selectRoles(event: Event) {
           >组织角色<select
             multiple
             aria-label="泳道工具栏组织角色"
-            :value="entity.roleIds"
+            v-model="assignedRoles"
             :disabled="busy"
-            @change="selectRoles"
           >
             <option v-for="org in organizations" :key="org.orgId" :value="org.orgId">
               {{ org.orgName }}
