@@ -46,6 +46,7 @@ import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
 import ActivityDetails from './ActivityDetails.vue';
 import CanvasSettingsPanel from './CanvasSettings.vue';
+import ResizableSidebar from './ResizableSidebar.vue';
 import {
   absoluteBounds,
   childrenOf,
@@ -220,6 +221,11 @@ const canvasStyle = computed(() => {
 });
 function updateCanvas(patch: Partial<CanvasSettings>) {
   void run('修改画布设置', [{ type: 'document.canvas.update', patch }]);
+}
+async function resizePanel() {
+  await nextTick();
+  canvas?.fit();
+  viewportTick.value++;
 }
 const poolToolbarPosition = computed(() => {
   void viewportTick.value;
@@ -863,7 +869,15 @@ onBeforeUnmount(() => {
     </header>
 
     <div class="workspace-body">
-      <aside class="library-panel">
+      <ResizableSidebar
+        class="library-panel"
+        side="left"
+        label="图形库侧栏"
+        :default-width="222"
+        :min-width="180"
+        :max-width="420"
+        @resized="resizePanel"
+      >
         <div class="panel-tabs">
           <button :class="{ active: libraryTab === 'shapes' }" @click="libraryTab = 'shapes'">
             图形库</button
@@ -956,7 +970,7 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div class="sidebar-footer"><span class="version-pill">v0.1</span>轻量内核 · 无限可能</div>
-      </aside>
+      </ResizableSidebar>
 
       <main class="canvas-area" :style="canvasStyle" data-testid="canvas-area">
         <div v-if="editor.busy" class="remote-saving">正在提交远程操作…</div>
@@ -1094,7 +1108,15 @@ onBeforeUnmount(() => {
         <div class="canvas-page"><span class="page-indicator"></span>画布 01</div>
       </main>
 
-      <aside class="inspector-panel" :class="{ 'details-expanded': panelTab === 'details' }">
+      <ResizableSidebar
+        class="inspector-panel"
+        side="right"
+        label="属性侧栏"
+        :default-width="panelTab === 'details' ? 400 : 274"
+        :min-width="260"
+        :max-width="600"
+        @resized="resizePanel"
+      >
         <div class="panel-tabs" role="tablist" aria-label="图形面板">
           <button
             role="tab"
@@ -1508,7 +1530,7 @@ onBeforeUnmount(() => {
         <div class="inspector-footer">
           <span class="engine-dot"></span>Powered by maxGraph<span>JSON v1</span>
         </div>
-      </aside>
+      </ResizableSidebar>
     </div>
     <footer class="status-bar">
       <span

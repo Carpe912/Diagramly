@@ -1893,40 +1893,6 @@ div.mxCellEditor {
   color: #94a3b9;
   margin: 0;
 }
-.inspector-panel.details-expanded {
-  width: 400px;
-}
-.portrait-entry {
-  padding: 0 18px 16px;
-  border-bottom: 1px solid #edf0f5;
-}
-.portrait-entry .button {
-  font-size: 11px;
-  justify-content: space-between;
-}
-.portrait-back {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #edf0f5;
-  font-size: 11px;
-  color: #7c8ba1;
-}
-.portrait-back button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.portrait-back button svg {
-  transform: rotate(180deg);
-}
-.portrait-back > span {
-  font-size: 9px;
-  background: #f2f5fa;
-  padding: 4px 7px;
-  border-radius: 4px;
-}
 .portrait-heading {
   display: flex;
   align-items: center;
@@ -2072,4 +2038,16 @@ div.mxCellEditor {
 .data-modal > footer {
   gap: 12px;
   flex-wrap: wrap;
+}
+.library-content,
+.layers-list,
+.inspector-scroll {
+  min-height: 0;
+}
+.inspector-panel .panel-tabs {
+  gap: 18px;
+  overflow-x: auto;
+}
+.workspace-body {
+  overflow: hidden;
 }
