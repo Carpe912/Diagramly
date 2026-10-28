@@ -405,12 +405,15 @@ async function addShape(type: string, point?: { x: number; y: number }) {
       x = 60;
     }
   }
-  const operation = editor.value.createNode(
-    type,
-    Math.round(x / 10) * 10,
-    Math.round(y / 10) * 10,
-    parentId,
-  );
+  const step = point ? (canvasSettings.value.grid ? canvasSettings.value.gridSize : 1) : 10;
+  x = Math.round(x / step) * step;
+  y = Math.round(y / step) * step;
+  if (parentId) {
+    const inset = laneInsets(doc.value, doc.value.nodes[parentId]);
+    x = Math.max(inset.left, x);
+    y = Math.max(inset.top, y);
+  }
+  const operation = editor.value.createNode(type, x, y, parentId);
   const result = await run(`添加${definition.label}`, [operation]);
   if (result && operation.type === 'node.create') {
     select([operation.node.id]);

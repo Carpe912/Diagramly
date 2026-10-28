@@ -487,7 +487,7 @@ export class DiagramCanvas {
     );
   }
   pointForEvent(event: MouseEvent) {
-    return this.graph.getPointForEvent(event);
+    return this.graph.getPointForEvent(event, false);
   }
   zoom(direction: number) {
     this.graph.zoomTo(Math.min(2, Math.max(0.25, this.graph.view.scale + direction * 0.1)));

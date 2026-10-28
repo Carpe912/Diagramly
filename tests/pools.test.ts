@@ -353,3 +353,19 @@ describe('泳道名称由角色选择维护', () => {
     ).toThrow('只能为泳道');
   });
 });
+it('编辑角色说明不触发改名限制，普通补丁保留未提交的角色引用', () => {
+  const doc = demoDocument();
+  doc.entities.entity_receive.roleIds = ['role_original'];
+  const editor = new Editor(doc, registry);
+  editor.dispatch('修改角色说明', [
+    { type: 'node.update', id: 'lane_sales', patch: { role: '销售负责人' } },
+  ]);
+  expect(editor.snapshot.entities.entity_lane_sales).toMatchObject({
+    name: '销售团队',
+    role: '销售负责人',
+  });
+  editor.dispatch('改活动名称', [
+    { type: 'node.update', id: 'receive', patch: { name: '新的活动名称' } },
+  ]);
+  expect(editor.snapshot.entities.entity_receive.roleIds).toEqual(['role_original']);
+});

@@ -15,7 +15,11 @@ export const operationSchema = z.discriminatedUnion('type', [
     .object({
       type: z.literal('node.update'),
       id: idSchema,
-      patch: entitySchema.omit({ id: true }).partial(),
+      // 更新补丁不能带入创建实体时的默认值，否则未编辑的角色会被清空。
+      patch: entitySchema
+        .omit({ id: true })
+        .extend({ roleIds: entitySchema.shape.roleIds.removeDefault() })
+        .partial(),
     })
     .strict(),
   z
