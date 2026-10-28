@@ -342,6 +342,45 @@ export function readFlow(
       warnings.push('发现仅存在于流程关系中的活动，已保留为独立节点，避免误删关联。');
     }
   }
+  // 标准 XML 中的基础图形可直接映射；未知模板继续拒绝，避免误丢内容。
+  for (const cell of cells.filter(
+    (c) => c.getAttribute('vertex') === '1' && !mapping.has(cellId(c)),
+  )) {
+    const style = cell.getAttribute('style') ?? '',
+      values = styleValues(cell);
+    if (/act-|swimlane|edgeLabel/.test(style) || /(?:^|;)(?:text|group)(?:;|$)/.test(style))
+      continue;
+    const parentId = mapping.get(cell.getAttribute('parent') ?? '');
+    if (parentId && doc.nodes[parentId].type !== 'swimlane') continue;
+    const shape =
+      values.shape ??
+      /^(ellipse|rhombus|rectangle)(?:;|$)/.exec(style)?.[1] ??
+      (style.split(';').every((part) => !part || part.includes('=')) ? 'rectangle' : '');
+    const type = (
+      { rectangle: 'rectangle', ellipse: 'ellipse', rhombus: 'decision' } as Record<string, string>
+    )[shape];
+    if (!type) continue;
+    const parent = byId.get(cell.getAttribute('parent') ?? '');
+    if (parent?.getAttribute('vertex') === '1' && !parentId) continue;
+    const node = insert(cell, type, attrs(cell, 'value') || attrs(cell, 'label'));
+    if (parentId) {
+      node.parentId = parentId;
+      const inset =
+        doc.nodes[parentId] && poolOf(doc, doc.nodes[parentId])?.type === 'pool-vertical'
+          ? { x: 12, y: 52 }
+          : { x: 80, y: 12 };
+      node.bounds.x = Math.max(inset.x, node.bounds.x);
+      node.bounds.y = Math.max(inset.y, node.bounds.y);
+    } else Object.assign(node.bounds, absolute(cell));
+    for (const [field, key] of [
+      ['accent', 'strokeColor'],
+      ['fill', 'fillColor'],
+      ['fontColor', 'fontColor'],
+    ] as const) {
+      const value = color(values[key]);
+      if (value) node.appearance[field] = value;
+    }
+  }
   const owner = (id: string) => {
     const visited = new Set<string>();
     while (id && !visited.has(id)) {

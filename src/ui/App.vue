@@ -60,12 +60,8 @@ import { Editor } from '../application/editor';
 import { demoDocument } from '../application/demo';
 import { createShapeRegistry } from '../shapes/registry';
 import { DiagramCanvas } from '../adapters/maxgraph/canvas';
-import {
-  attachAutosave,
-  downloadDocument,
-  loadLocal,
-  parseDocument,
-} from '../adapters/storage/local';
+import { attachAutosave, loadLocal } from '../adapters/storage/local';
+import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
 import { CoopwireApi, type ActivityOptions } from '../adapters/coopwire/api';
 import { isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
@@ -636,9 +632,10 @@ async function importFile(event: Event) {
   if (!file) return;
   try {
     if (remoteSession.value) throw new Error('请先断开远程连接，再导入其他文档');
-    if (file.size > 5 * 1024 * 1024) throw new Error('文档超过 5MB 上限');
-    const parsed = parseDocument(await file.text(), registry);
+    if (file.size > 8 * 1024 * 1024) throw new Error('文件超过 8MB 上限');
+    const parsed = await importGraphFile(await file.text(), file.name, registry);
     replaceDocument(parsed);
+    showData.value = false;
     error.value = '';
   } catch (e) {
     showError(e);
@@ -660,7 +657,7 @@ function keyboard(event: KeyboardEvent) {
     duplicateSelection();
   } else if (modifier && event.key.toLowerCase() === 's') {
     event.preventDefault();
-    downloadDocument(editor.value);
+    showData.value = true;
   } else if (event.key === 'Delete' || event.key === 'Backspace') {
     event.preventDefault();
     removeSelection();
@@ -805,6 +802,19 @@ async function retryRemote() {
 }
 const showData = ref(false),
   showReset = ref<'sample' | 'empty' | null>(null);
+const exportFormat = ref<ExportFormat>('json'),
+  exporting = ref(false);
+async function exportFile() {
+  if (exporting.value) return;
+  exporting.value = true;
+  try {
+    await downloadGraphFile(editor.value.snapshot, registry, exportFormat.value);
+  } catch (e) {
+    showError(e);
+  } finally {
+    exporting.value = false;
+  }
+}
 onMounted(() => {
   bindEditor();
   window.addEventListener('keydown', keyboard);
@@ -838,20 +848,14 @@ onBeforeUnmount(() => {
           <GitBranch :size="14" />{{ remoteSession ? 'Coopwire 已连接' : '连接 Coopwire' }}
         </button>
         <button class="text-button" @click="showData = true"><Code2 :size="15" /> 文档数据</button>
-        <button class="button secondary" @click="fileInput?.click()">
-          <ArrowUpFromLine :size="14" /> 导入
-        </button>
-        <button class="button primary" @click="downloadDocument(editor)">
-          <ArrowDownToLine :size="14" /> 导出 JSON <ChevronDown :size="12" />
-        </button>
         <span class="avatar">D</span>
       </div>
       <input
         ref="fileInput"
         type="file"
-        accept="application/json,.json"
+        accept="application/json,application/xml,text/xml,.json,.xml,.drawio"
         hidden
-        aria-label="导入 JSON 文件"
+        aria-label="导入文档"
         @change="importFile"
       />
     </header>
@@ -1530,8 +1534,27 @@ onBeforeUnmount(() => {
         </header>
         <pre data-testid="document-json">{{ JSON.stringify(doc, null, 2) }}</pre>
         <footer>
-          <span>{{ nodeCount }} 个业务节点 · revision {{ doc.revision }}</span
-          ><button class="button primary" @click="downloadDocument(editor)">导出 JSON</button>
+          <span>{{ nodeCount }} 个业务节点 · revision {{ doc.revision }}</span>
+          <div class="document-file-actions">
+            <button
+              class="button secondary"
+              :disabled="!!remoteSession || editor.busy || exporting"
+              :title="remoteSession ? '请先断开远程连接，再导入其他文档' : '导入 JSON 或 XML'"
+              @click="fileInput?.click()"
+            >
+              <ArrowUpFromLine :size="14" />导入
+            </button>
+            <select v-model="exportFormat" aria-label="导出格式" :disabled="exporting">
+              <option value="json">JSON</option>
+              <option value="xml">XML</option>
+              <option value="png">PNG 图片</option>
+            </select>
+            <button class="button primary" :disabled="exporting || editor.busy" @click="exportFile">
+              <ArrowDownToLine :size="14" />{{
+                exporting ? '正在导出…' : `导出 ${exportFormat.toUpperCase()}`
+              }}
+            </button>
+          </div>
         </footer>
       </section>
     </div>
@@ -1541,7 +1564,14 @@ onBeforeUnmount(() => {
         <h2>{{ showReset === 'sample' ? '打开订单履约示例' : '新建空白画布' }}</h2>
         <p>这会替换当前本机画布。你可以先导出当前文档，保留一份备份。</p>
         <div>
-          <button class="button secondary" @click="downloadDocument(editor)">导出当前文档</button
+          <button
+            class="button secondary"
+            @click="
+              showReset = null;
+              showData = true;
+            "
+          >
+            导出当前文档</button
           ><button
             class="button primary"
             @click="

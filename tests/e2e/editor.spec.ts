@@ -66,6 +66,7 @@ test('persists edits through reload and safely imports an exported document', as
   await page.reload();
   await selectLayer(page, '持久化活动');
   await expect(field).toHaveValue('持久化活动');
+  await page.getByRole('button', { name: '文档数据', exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
   await page
     .getByRole('button', { name: /导出 JSON/ })
@@ -74,13 +75,15 @@ test('persists edits through reload and safely imports an exported document', as
   const download = await downloadPromise,
     path = await download.path();
   expect(download.suggestedFilename()).toContain('.diagramly.json');
+  await page.getByRole('button', { name: '关闭文档数据' }).click();
   await page.getByRole('button', { name: '删除所选', exact: true }).click();
-  await page.getByLabel('导入 JSON 文件').setInputFiles(path!);
+  await page.getByRole('button', { name: '文档数据', exact: true }).click();
+  await page.getByLabel('导入文档', { exact: true }).setInputFiles(path!);
   await selectLayer(page, '持久化活动');
   await expect(field).toHaveValue('持久化活动');
 });
 test('rejects malformed import without replacing the current graph', async ({ page }) => {
-  await page.getByLabel('导入 JSON 文件').setInputFiles({
+  await page.getByLabel('导入文档', { exact: true }).setInputFiles({
     name: 'bad.json',
     mimeType: 'application/json',
     buffer: Buffer.from('{"schemaVersion":999}'),

@@ -74,6 +74,17 @@ export class ShapeRegistry {
 export function createShapeRegistry() {
   return new ShapeRegistry()
     .register({
+      type: 'ellipse',
+      version: 1,
+      label: '椭圆',
+      category: '基础图形',
+      icon: 'circle',
+      defaultSize: [140, 80],
+      minSize: [64, 40],
+      primitive: 'ellipse',
+      ports: allPorts,
+    })
+    .register({
       type: 'rectangle',
       version: 1,
       label: '矩形',

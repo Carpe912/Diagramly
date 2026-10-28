@@ -2055,3 +2055,21 @@ div.mxCellEditor {
   overflow-wrap: anywhere;
   color: #7b8da7;
 }
+.document-file-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.document-file-actions select {
+  height: 33px;
+  border: 1px solid #e1e5eb;
+  background: white;
+  border-radius: 5px;
+  padding: 0 8px;
+  color: #657085;
+  font-size: 11px;
+}
+.data-modal > footer {
+  gap: 12px;
+  flex-wrap: wrap;
+}

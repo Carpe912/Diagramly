@@ -45,10 +45,13 @@ export function attachAutosave(
 }
 export function downloadDocument(editor: Editor) {
   const blob = new Blob([JSON.stringify(editor.snapshot, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `${editor.snapshot.title}.diagramly.json`);
+}
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob),
     a = document.createElement('a');
   a.href = url;
-  a.download = `${editor.snapshot.title.replace(/[\\/:*?"<>|]/g, '_')}.diagramly.json`;
+  a.download = filename.replace(/[\\/:*?"<>|]/g, '_');
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
