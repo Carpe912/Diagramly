@@ -1,5 +1,10 @@
 import type { EditorTransport, RemoteCommit } from '../../application/transport';
 import { newId, type DiagramDocument, type DiagramNode } from '../../domain/model';
+import {
+  activityDetailFields,
+  defaultDisplaySettings,
+  type ActivityDetails,
+} from '../../domain/activityDetails';
 import type { ShapeRegistry } from '../../shapes/registry';
 import { validateDocument } from '../../domain/validation';
 import {
@@ -10,7 +15,7 @@ import {
   readFlow,
   writeFlow,
 } from './codec';
-import { CoopwireApi, CoopwireError, type Organization } from './api';
+import { CoopwireApi, CoopwireError, type ActivityDetail, type Organization } from './api';
 
 export interface JournalStore {
   getItem(key: string): string | null;
@@ -30,6 +35,29 @@ export interface RemoteStatus {
   state: 'ready' | 'saving' | 'failed' | 'uncertain';
   message: string;
 }
+const emptyDetails: Required<ActivityDetails> = {
+  keyStep: '',
+  showInFlow: false,
+  markDiffWithCurrent: '',
+  actSystemUsed: '',
+  terminals: [],
+  actDevicesUsed: [],
+  operateTypes: [],
+  needActTimeSchedule: false,
+  hoursOnceAct: '0',
+  timeRanges: null,
+  needActCycleSchedule: false,
+  isFixedCycle: true,
+  fixedCycleKey: '',
+  fixedCycleWeekValues: [],
+  fixedCycleMonthValues: [],
+  nonFixedCycleDesc: '',
+  progressRate: 0,
+  linkFlow: '',
+  interviewers: [],
+  interviewees: [],
+  displaySetting: defaultDisplaySettings,
+};
 export class CoopwireSession implements EditorTransport {
   readonly journalKey: string;
   private pending?: Journal;
@@ -41,6 +69,7 @@ export class CoopwireSession implements EditorTransport {
     NonNullable<DiagramDocument['entities'][string]['externalRef']>
   >();
   organizations: Organization[] = [];
+  activityDetails = new Map<string, ActivityDetail>();
   warnings: string[] = [];
   legacySource?: string;
   constructor(
@@ -87,13 +116,14 @@ export class CoopwireSession implements EditorTransport {
       if (entity.externalRef?.provider === 'coopwire') {
         const detail = await this.api.activity(entity.externalRef.id);
         hydrateEntity(document, node, detail);
+        this.activityDetails.set(entity.externalRef.id, detail);
         this.knownEntities.set(entity.id, structuredClone(entity.externalRef));
       }
     }
     if (!this.pending) this.report('ready', `已连接 Coopwire · v${this.version}`);
     return validateDocument(document, this.registry);
   }
-  /** Explicit user recovery: retain a backup of the journal before accepting current remote state. */
+  /** 用户主动恢复时，先备份事务日志，再接受当前远程状态。 */
   async reloadAndReconcile() {
     const document = await this.open();
     if (this.pending) {
@@ -172,7 +202,7 @@ export class CoopwireSession implements EditorTransport {
       if ((!node.parentId || !this.orgIds(desired, node).length) && !entity.externalRef)
         throw new Error('Coopwire 业务节点必须放在已选择组织角色的泳道内');
     }
-    // Read versions before any mutation. A journal retry resumes known acknowledged steps.
+    // 任何写入前先核对版本；重试时跳过日志中已确认的步骤。
     const flow = await this.api.flow();
     if (flow.version !== this.version || flow.lockUser)
       throw new CoopwireError('远端流程版本已变化或被锁定，请重新加载后再编辑', 'conflict');
@@ -209,7 +239,7 @@ export class CoopwireSession implements EditorTransport {
     }
     this.report('saving', '正在提交 Coopwire 业务与流程…');
     try {
-      // Render first: export failures must never leave freshly-created remote activities behind.
+      // 先验证图形导出，避免导出失败后遗留新建的远程活动。
       const png = await this.png(desired);
       if (png.type !== 'image/png' || !png.size) throw new Error('流程预览图导出失败');
       for (const node of business) {
@@ -267,6 +297,17 @@ export class CoopwireSession implements EditorTransport {
           patch.code = entity.code;
         if (!baseline || entity.activityType !== baseline.activityType)
           patch.actType = activityType(node, entity);
+        for (const key of activityDetailFields) {
+          if (key === 'keyStep' || key === 'timeRanges') continue;
+          if (JSON.stringify(entity.details?.[key]) !== JSON.stringify(baseline?.details?.[key])) {
+            patch[key] = entity.details?.[key] ?? emptyDetails[key];
+            if (key === 'displaySetting')
+              patch[key] = {
+                ...((detail.activity.displaySetting as Record<string, unknown>) ?? {}),
+                ...(patch[key] as Record<string, unknown>),
+              };
+          }
+        }
         const oldOrgIds = baselineNode ? this.orgIds(before, baselineNode) : undefined;
         if (
           (oldOrgIds && JSON.stringify(oldOrgIds) !== JSON.stringify(orgIds)) ||
@@ -292,6 +333,33 @@ export class CoopwireSession implements EditorTransport {
               detail.activity.version,
               orgIds,
               entity.description,
+            ),
+          );
+          detail = await this.api.activity(ref.id);
+        }
+        if (entity.details?.keyStep !== baseline?.details?.keyStep) {
+          await this.writeStep(`key-step:${node.id}`, () =>
+            this.api.updateDescription(
+              ref!.id,
+              detail.activity.version,
+              orgIds,
+              entity.details?.keyStep ?? '',
+              'keyStep',
+            ),
+          );
+          detail = await this.api.activity(ref.id);
+        }
+        if (
+          JSON.stringify(entity.details?.timeRanges) !==
+          JSON.stringify(baseline?.details?.timeRanges)
+        ) {
+          const range = detail.activity.timeRanges as { id?: string } | undefined;
+          await this.writeStep(`time-range:${node.id}`, () =>
+            this.api.saveTimeRange(
+              ref!.id,
+              detail.activity.version,
+              entity.details?.timeRanges ?? null,
+              range?.id,
             ),
           );
           detail = await this.api.activity(ref.id);
@@ -324,13 +392,14 @@ export class CoopwireSession implements EditorTransport {
             detail = await this.api.activity(ref.id);
           }
         }
-        // Only server-owned metadata is merged; plain-text fields already reflect the user's intent.
+        // 仅合并服务端维护的元数据，文本字段保留用户提交的内容。
         entity.externalRef = { provider: 'coopwire', id: ref.id, version: detail.activity.version };
+        this.activityDetails.set(ref.id, detail);
         if (!entity.code) entity.code = String(detail.activity.code ?? '');
         this.knownEntities.set(entity.id, structuredClone(entity.externalRef));
       }
       const validated = validateDocument(desired, this.registry);
-      // Full relation set is the existing backend's graph save/delete contract. Never call portrait/delAct.
+      // 完整关系集沿用现有后端的图形保存与移除约定，不调用永久删除活动接口。
       const finalPng = await this.png(validated);
       this.version = await this.writeStep('save-flow', () =>
         this.api.saveFlow(

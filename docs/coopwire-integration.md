@@ -63,9 +63,9 @@ COOPWIRE_TARGET=https://your-coopwire.example
 COOPWIRE_SESSION_FILE=/absolute/private/coopwire-session.json
 ```
 
-鉴权文件仅保存在本机、Git 外，内容为 JSON `{ "cookie": "..." }`，权限设为 600。不要给密钥变量添加 VITE_ 前缀。代理启动时在内存中读取 Cookie，仅附加到转发请求；不会将上游 Set-Cookie 下发到本机页面。本项目 dev 监听 127.0.0.1；开发代理不作为公开部署服务器。
+鉴权文件仅保存在本机、Git 外，内容为 JSON `{ "cookie": "..." }`，权限设为 600。不要给密钥变量添加 VITE_ 前缀。代理在每次转发时读取会话文件中的 Cookie，仅附加到转发请求；不会将上游 Set-Cookie 下发到本机页面。本项目 dev 监听 127.0.0.1；开发代理不作为公开部署服务器。
 
-测试与源码不包含本次用户的 Cookie。实际鉴权文件位于临时目录，过期后替换文件并重启 dev 即可。生产环境应使用现有宿主的会话与反向代理，不部署这个开发鉴权文件。
+测试与源码不包含本次用户的 Cookie。实际鉴权文件位于临时目录，过期后替换文件即可，无需重启 dev。仅更新 access_token 时应移除已过期的 GSESSION 等旧登录字段，避免它们优先参与鉴权。生产环境应使用现有宿主的会话与反向代理，不部署这个开发鉴权文件。
 
 ## 失败、去重与恢复
 
@@ -100,3 +100,5 @@ COOPWIRE_SESSION_FILE=/absolute/private/coopwire-session.json
 写操作使用隔离的 Coopwire 契约测试验证，包括创建、复制、修改、描述/IO、多步骤失败续传、响应丢失后的停止重发、版本冲突、恢复记录、远程撤销重做和 Agent。浏览器测试实际走 fetch、真实 XML 编码与 SVG → Canvas → PNG → multipart 上传链路，但 `/rest` 请求全部由测试后端拦截，无法修改真实项目。
 
 运行 `npm test`、`npm run test:e2e` 和 `npm run build`。测试使用虚构业务数据，不保存本次真实流程内容或鉴权信息。
+
+活动画像的新增字段、增量更新和时间范围专用接口见 [业务图形详情](activity-details.md)。使用本机代理已只读验证实际流程及活动详情，以及应用、设备、流程、终端、操作方式选项；编辑与撤销的业务写入通过隔离后端测试，不会修改测试环境现有业务数据。

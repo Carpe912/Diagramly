@@ -5,6 +5,7 @@ import {
   type DiagramDocument,
   type DiagramNode,
 } from '../../domain/model';
+import { activityDetailFields, activityDetailsSchema } from '../../domain/activityDetails';
 import {
   isPoolType,
   layoutPool,
@@ -25,6 +26,7 @@ export const activityType = (node: DiagramNode, entity: DiagramDocument['entitie
       ? 'subAct'
       : {
           manual: 'manualOnline',
+          offline: 'manualOffline',
           system: 'systemOperate',
           interface: 'interfaceDocking',
           linked: 'linkAct',
@@ -41,13 +43,43 @@ export function hydrateEntity(doc: DiagramDocument, node: DiagramNode, detail: A
   entity.critical = activity.isKeyStep === true;
   if (!node.parentId && Array.isArray(activity.orgId)) entity.roleIds = activity.orgId;
   entity.activityType =
-    activity.actType === 'systemOperate'
-      ? 'system'
-      : activity.actType === 'interfaceDocking'
-        ? 'interface'
-        : activity.actType === 'linkAct'
-          ? 'linked'
-          : 'manual';
+    activity.actType === 'manualOffline'
+      ? 'offline'
+      : activity.actType === 'systemOperate'
+        ? 'system'
+        : activity.actType === 'interfaceDocking'
+          ? 'interface'
+          : activity.actType === 'linkAct'
+            ? 'linked'
+            : 'manual';
+  // 仅读取已支持的字段；其余业务关系继续由后端维护。
+  const details: Record<string, unknown> = {};
+  for (const key of activityDetailFields) {
+    let value = activity[key];
+    if (value === undefined || (value === null && key !== 'timeRanges')) continue;
+    if (key === 'hoursOnceAct') value = String(value);
+    if (key === 'timeRanges' && value && typeof value === 'object') {
+      const range = value as Record<string, unknown>;
+      value = { actTimeStart: Number(range.actTimeStart), actTimeEnd: Number(range.actTimeEnd) };
+    }
+    if (key === 'displaySetting' && typeof value === 'object' && value)
+      value = Object.fromEntries(
+        Object.entries(value).filter(
+          ([k]) => k in activityDetailsSchema.shape.displaySetting.unwrap().shape,
+        ),
+      );
+    if (key === 'interviewees' && Array.isArray(value))
+      value = value.map((item) =>
+        item.accountId
+          ? { accountId: item.accountId, from: 'project' }
+          : { clientId: item.clientId, from: 'client' },
+      );
+    if (key === 'fixedCycleWeekValues' || key === 'fixedCycleMonthValues')
+      value = Array.isArray(value) ? value.map(String) : value;
+    const result = activityDetailsSchema.shape[key].safeParse(value);
+    if (result.success) details[key] = result.data;
+  }
+  if (Object.keys(details).length) entity.details = activityDetailsSchema.parse(details);
   const io = activity.ioputs ?? [];
   entity.inputs = io.filter((item) => item.type === 'input').map((item) => String(item.desc ?? ''));
   entity.outputs = io
@@ -280,7 +312,7 @@ export function readFlow(
     if (businessId && isBusinessNode(node))
       doc.entities[node.entityId].externalRef = { provider: 'coopwire', id: businessId };
   }
-  // Preserve relation-only activities rather than deleting business links absent from XML.
+  // 保留仅存在于关系数据中的活动，避免误删 XML 未包含的业务关联。
   for (const relation of flow.flowObj?.acts ?? []) {
     const businessId = String(relation.actId || '');
     if (businessId && !Object.values(doc.entities).some((e) => e.externalRef?.id === businessId)) {

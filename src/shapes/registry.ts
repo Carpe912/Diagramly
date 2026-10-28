@@ -6,7 +6,7 @@ export interface PortDefinition {
   y: number;
   direction: 'input' | 'output' | 'both';
 }
-// Engine-independent render descriptors. No Cell, Graph or DOM in shape definitions.
+// 与渲染引擎无关的描述，图形定义不依赖 Cell、Graph 或 DOM。
 export interface ShapePart {
   key: string;
   bounds: Bounds;
@@ -41,9 +41,10 @@ const allPorts: PortDefinition[] = [
   { id: 'left', x: 0, y: 0.5, direction: 'both' },
 ];
 const activityLabels = {
-  manual: '人工活动',
-  system: '系统活动',
-  interface: '接口活动',
+  manual: '人工线上',
+  offline: '人工线下',
+  system: '系统操作',
+  interface: '接口对接',
   linked: '引用活动',
 };
 export class ShapeRegistry {
@@ -155,7 +156,9 @@ export function createShapeRegistry() {
           {
             key: 'title',
             bounds: { x: 8, y: 30, width: w - 16, height: h - 60 },
-            text: entity.name,
+            text:
+              entity.name +
+              (entity.details?.showInFlow && entity.description ? `\n${entity.description}` : ''),
             primitive: 'rectangle',
             fill: 'none',
             color: '#263547',

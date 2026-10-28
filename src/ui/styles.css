@@ -1893,3 +1893,165 @@ div.mxCellEditor {
   color: #94a3b9;
   margin: 0;
 }
+.inspector-panel.details-expanded {
+  width: 400px;
+}
+.portrait-entry {
+  padding: 0 18px 16px;
+  border-bottom: 1px solid #edf0f5;
+}
+.portrait-entry .button {
+  font-size: 11px;
+  justify-content: space-between;
+}
+.portrait-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf0f5;
+  font-size: 11px;
+  color: #7c8ba1;
+}
+.portrait-back button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.portrait-back button svg {
+  transform: rotate(180deg);
+}
+.portrait-back > span {
+  font-size: 9px;
+  background: #f2f5fa;
+  padding: 4px 7px;
+  border-radius: 4px;
+}
+.portrait-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 20px 8px;
+  gap: 15px;
+}
+.portrait-heading > div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.portrait-heading span {
+  font-size: 10px;
+  color: #94a3b9;
+}
+.portrait-heading strong {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #40516c;
+  overflow-wrap: anywhere;
+}
+.activity-details fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.activity-details .property-section {
+  padding: 20px;
+}
+.activity-details .property-section label {
+  font-size: 11px;
+}
+.activity-details input,
+.activity-details textarea,
+.activity-details select {
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+}
+.activity-details .property-section h3 {
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+.display-picker {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 10px;
+}
+.display-picker summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  list-style: none;
+  color: #6b7d99;
+}
+.display-picker > div {
+  position: absolute;
+  z-index: 6;
+  right: 0;
+  top: 27px;
+  width: 200px;
+  padding: 12px 14px;
+  border: 1px solid #dce4ef;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 5px 20px #31456318;
+}
+.display-picker label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 7px 0;
+}
+.display-picker input {
+  accent-color: #657ca8;
+}
+.activity-details .diff-options {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.activity-details .diff-options label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+.activity-details input[type='radio'] {
+  width: 12px;
+  min-height: 0;
+  accent-color: #657ca8;
+}
+.time-range-fields {
+  display: grid;
+  grid-template-columns: 1fr 15px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.time-range-fields > span {
+  margin-top: 28px;
+  color: #a3aec0;
+}
+.activity-details h3 .quiet-button {
+  margin-left: auto;
+  font-size: 10px;
+}
+.activity-details .related-records {
+  padding: 10px 0;
+  border-top: 1px solid #edf0f5;
+}
+.related-records summary {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 11px;
+}
+.related-records summary span {
+  color: #94a3b9;
+}
+.related-records li {
+  font-size: 11px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  color: #7b8da7;
+}

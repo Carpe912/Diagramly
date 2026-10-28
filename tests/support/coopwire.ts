@@ -118,7 +118,15 @@ export class FakeCoopwire {
     const data = body as Record<string, unknown>,
       id = query.get('actId') ?? '';
     const detail = this.activities.get(id);
-    if (action === 'qryOrgs')
+    if (action === 'selectApp') result = [{ id: 'app_erp', name: '订单应用' }];
+    else if (action === 'queryDevice')
+      result = { data: [{ id: 'device_scanner', name: '扫码枪' }] };
+    else if (action === 'qryFlowDiagram')
+      result = { data: [{ id: 'flow_delivery', name: '交付流程' }] };
+    else if (decodeURIComponent(action) === 'investigate|core|prHardwaresInvolved')
+      result = [{ metaCode: 'desktop', metaValue: '电脑' }];
+    else if (action === 'qryOperateTypeEnums') result = ['扫码', '纸质登记'];
+    else if (action === 'qryOrgs')
       result = [
         { orgId: 'role_sales', orgName: '销售角色', index: 0 },
         { orgId: 'role_ops', orgName: '交付角色', index: 1 },
@@ -159,11 +167,24 @@ export class FakeCoopwire {
       this.flow.drawioXml = String(data.drawioXml);
       this.flow.flowObj = data.data as FlowDetail['flowObj'];
       result = ++this.flow.version;
-    } else if (['updateAct', 'updateActDetailDesc', 'saveIoput', 'delIoput'].includes(action)) {
+    } else if (
+      [
+        'updateAct',
+        'updateActDetailDesc',
+        'saveIoput',
+        'delIoput',
+        'addTimeRange',
+        'updateTimeRange',
+        'delTimeRange',
+      ].includes(action)
+    ) {
       if (!detail || Number(query.get('version')) !== detail.activity.version)
         return Response.json({ code: 999, msg: '活动版本冲突' }, { status: 409 });
       if (action === 'updateAct' || action === 'updateActDetailDesc')
         Object.assign(detail.activity, data);
+      if (action === 'addTimeRange' || action === 'updateTimeRange')
+        detail.activity.timeRanges = { ...data, id: data.id ?? `range_${++this.sequence}` };
+      if (action === 'delTimeRange') detail.activity.timeRanges = null;
       if (action === 'saveIoput') {
         const io = detail.activity.ioputs ?? (detail.activity.ioputs = []),
           index = io.findIndex((i) => i.id === data.id);

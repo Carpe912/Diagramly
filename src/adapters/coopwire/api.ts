@@ -53,6 +53,17 @@ export interface Organization {
   index?: number;
   porgId?: string;
 }
+export interface BusinessOption {
+  value: string;
+  label: string;
+}
+export interface ActivityOptions {
+  applications: BusinessOption[];
+  devices: BusinessOption[];
+  flows: BusinessOption[];
+  terminals: BusinessOption[];
+  operateTypes: BusinessOption[];
+}
 export class CoopwireError extends Error {
   constructor(
     message: string,
@@ -63,7 +74,7 @@ export class CoopwireError extends Error {
     super(message);
   }
 }
-// Values live in memory only. Host applications may inject their own token refresh/header callback.
+// 鉴权配置仅保存在内存，宿主可注入请求头与令牌刷新回调。
 let auth: { headers?: () => HeadersInit | Promise<HeadersInit>; refresh?: () => Promise<void> } =
   {};
 export function configureCoopwireAuth(provider: typeof auth) {
@@ -143,7 +154,7 @@ export class CoopwireApi {
       throw new CoopwireError('Coopwire 返回格式不正确，操作结果待核对', 'protocol');
     }
     if (data.code === 1002) {
-      // The business envelope explicitly rejected auth, so one replay after host refresh is safe.
+      // 业务响应明确拒绝鉴权后，允许宿主刷新登录态并重试一次。
       if (auth.refresh && options.refresh !== false) {
         await auth.refresh();
         return this.request(path, { ...options, refresh: false });
@@ -216,7 +227,7 @@ export class CoopwireApi {
         await this.request(`${this.scope('portrait')}/queryActDetail`, { params: { actId: id } }),
       ) as ActivityDetail;
   }
-  // Client-assigned 24-hex IDs follow the old batchCreateActs contract.
+  // 客户端分配 24 位十六进制 ID，沿用旧版批量创建活动约定。
   async createActivity(id: string, data: Record<string, unknown>) {
     await this.request(`${this.scope('portrait')}/addActs`, { body: [{ ...data, id }] });
     return id;
@@ -228,24 +239,84 @@ export class CoopwireApi {
       .parse(await this.request(`${this.scope('portrait')}/copyAct`, { body: [{ id, name }] }));
   }
   async updateActivity(id: string, version: number, data: Record<string, unknown>) {
+    const clear: Record<string, boolean> = {};
+    if (data.actSystemUsed === '') clear.clearSystemUsed = true;
+    if (Array.isArray(data.actDevicesUsed) && !data.actDevicesUsed.length)
+      clear.clearDeviceUsed = true;
+    if (data.linkFlow === '') clear.clearLinkFlow = true;
     const result = await this.request(`${this.scope('portrait')}/updateAct`, {
-      params: { actId: id, version, updateDrawio: true, ignoreNameCheck: true },
+      params: { actId: id, version, updateDrawio: true, ignoreNameCheck: true, ...clear },
       body: data,
     });
     if (Array.isArray(result))
       throw new CoopwireError('活动名称冲突，需要选择不同名称', 'rejected');
     return z.number().int().nonnegative().parse(result);
   }
-  async updateDescription(id: string, version: number, orgIds: string[], text: string) {
+  async updateDescription(
+    id: string,
+    version: number,
+    orgIds: string[],
+    text: string,
+    field: 'actDetailDesc' | 'keyStep' = 'actDetailDesc',
+  ) {
     const body = new FormData();
     body.append(
       'data',
-      new Blob([JSON.stringify({ actDetailDesc: text })], { type: 'application/json' }),
+      new Blob([JSON.stringify({ [field]: text })], { type: 'application/json' }),
     );
     await this.request(`${this.scope('portrait')}/updateActDetailDesc`, {
       body,
       params: { actId: id, version, orgId: orgIds.join(',') },
     });
+  }
+  async saveTimeRange(
+    id: string,
+    version: number,
+    range: { actTimeStart: number; actTimeEnd: number } | null,
+    rangeId?: string,
+  ) {
+    if (!range && !rangeId) return;
+    await this.request(
+      `${this.scope('portrait')}/${range ? (rangeId ? 'updateTimeRange' : 'addTimeRange') : 'delTimeRange'}`,
+      {
+        body: range ? { ...range, ...(rangeId ? { id: rangeId } : {}) } : null,
+        params: { actId: id, version, ...(!range && rangeId ? { rangeId } : {}) },
+      },
+    );
+  }
+  async activityOptions(): Promise<ActivityOptions> {
+    const p = this.config.projectId;
+    const [apps, devices, flows, terminals, operations] = await Promise.all([
+      this.request(`/rest/project/application/p/${p}/selectApp`, { body: null }),
+      this.request(`/rest/quality/investigate/core/p/${p}/queryDevice`, {
+        body: { additionalFilters: {} },
+      }),
+      this.request(`${this.scope('scopeDefine')}/qryFlowDiagram`, {
+        body: { additionalFilters: { isDelete: false } },
+      }),
+      this.request(
+        `/rest/global/dictionary/f/${encodeURIComponent('investigate|core|prHardwaresInvolved')}`,
+      ),
+      this.request(`/rest/quality/investigate/act/p/${p}/qryOperateTypeEnums`, { body: null }),
+    ]);
+    const records = z.array(z.object({ id: z.string(), name: z.string() }).passthrough());
+    const list = (value: unknown) =>
+      records.parse(value).map((item) => ({ value: item.id, label: item.name }));
+    return {
+      applications: list(apps),
+      devices: list(z.object({ data: records }).parse(devices).data),
+      flows: list(z.object({ data: records }).parse(flows).data).filter(
+        (item) => item.value !== this.config.flowchartId,
+      ),
+      terminals: z
+        .array(z.object({ metaCode: z.string(), metaValue: z.string() }))
+        .parse(terminals)
+        .map((item) => ({ value: item.metaCode, label: item.metaValue })),
+      operateTypes: z
+        .array(z.string())
+        .parse(operations)
+        .map((value) => ({ value, label: value })),
+    };
   }
   async saveIo(id: string, version: number, data: Record<string, unknown>) {
     const body = new FormData();

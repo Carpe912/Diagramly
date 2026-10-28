@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FakeCoopwire, testConfig } from '../support/coopwire';
 async function connect(page: Page, backend: FakeCoopwire) {
-  // All /rest requests are fulfilled in-process. These tests cannot reach the configured live service.
+  // 所有 /rest 请求均由进程内的测试后端响应，不会访问真实服务。
   await page.route('**/rest/**', async (route) => {
     const source = route.request(),
       method = source.method(),
@@ -128,6 +128,40 @@ test('pool changes round-trip through remote XML and PNG without updating busine
     'true',
   );
   await expect(page.getByLabel('泳池背景色', { exact: true })).toHaveValue('#eaf4ee');
+});
+test('活动详情加载业务选项并通过专用接口保存说明和时间', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('button', { name: '查看业务详情', exact: true }).click();
+  await page.getByRole('button', { name: '加载业务选项', exact: true }).click();
+  await expect(
+    page
+      .getByLabel('活动使用的应用', { exact: true })
+      .getByRole('option', { name: '订单应用', exact: true }),
+  ).toHaveCount(1);
+  await page.getByLabel('活动使用的应用', { exact: true }).selectOption('app_erp');
+  await expect.poll(() => backend.flow.version).toBe(9);
+  await page.getByLabel('补充说明', { exact: true }).fill('远程核对库存');
+  await page.getByLabel('补充说明', { exact: true }).press('Tab');
+  await expect.poll(() => backend.flow.version).toBe(10);
+  expect(backend.activities.get('remote_receive')?.activity).toMatchObject({
+    actSystemUsed: 'app_erp',
+    keyStep: '远程核对库存',
+  });
+  expect(backend.calls.filter((call) => call.action === 'updateActDetailDesc')).toHaveLength(1);
+  await page.getByText('显示设置', { exact: true }).click();
+  await page.getByLabel('显示活动时间要求', { exact: true }).check();
+  await expect.poll(() => backend.flow.version).toBe(11);
+  await page.getByText('显示设置', { exact: true }).click();
+  await page.getByLabel('活动开始小时', { exact: true }).fill('8');
+  await page.getByLabel('活动开始小时', { exact: true }).press('Tab');
+  await expect.poll(() => backend.flow.version).toBe(12);
+  expect(backend.calls.filter((call) => call.action === 'addTimeRange')).toHaveLength(1);
+  expect(backend.activities.get('remote_receive')?.activity.timeRanges).toMatchObject({
+    actTimeStart: 8,
+    actTimeEnd: 18,
+  });
 });
 test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持关闭', async ({ page }) => {
   const backend = new FakeCoopwire();

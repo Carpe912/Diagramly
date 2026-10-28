@@ -61,7 +61,7 @@ npm run test:e2e
 
 浏览器测试默认使用 Playwright 管理的 Chromium。可设置 `PLAYWRIGHT_CHROMIUM_PATH` 使用已有 Chrome；首次使用默认浏览器需先运行 `npx playwright install chromium`。
 
-已验证：73 项核心/接口测试、23 项真实浏览器测试及生产构建通过。
+已验证：80 项核心/接口测试、31 项真实浏览器测试及生产构建通过。
 
 核心测试覆盖事务回滚、复制身份隔离、幂等、版本冲突、预览、撤销重做、循环图、容器约束及非法文档。浏览器测试覆盖真实画布操作、属性联动、拖动、连线、本机恢复、导出导入和 Agent 操作。
 
@@ -75,4 +75,8 @@ npm run test:e2e
 
 maxGraph 的升级仅涉及依赖和适配器；升级仍需运行契约与浏览器回归，不承诺上游 API 不变。项目不修改上游源码，不引入 draw.io 编辑器、云盘、模板库或桌面端代码。
 
-构建当前会提示 maxGraph 内部保留的 eval 函数和单个 JS 包超过 500kB；未屏蔽这些提示。适配器显式关闭 allowEval，生产 JS 约 714kB / gzip 198kB，后续可按加载场景拆包。
+构建当前会提示 maxGraph 内部保留的 eval 函数和单个 JS 包超过 500kB；未屏蔽这些提示。适配器显式关闭 allowEval，生产 JS 约 743kB / gzip 205kB，后续可按加载场景拆包。
+
+业务活动、判断与子流程的完整详情入口位于右侧「查看业务详情」，支持补充说明、差异、应用设备、时间及周期等字段，参见 [业务图形详情](docs/activity-details.md)。
+
+代码统一使用 Prettier 格式化：`npm run format`；提交前检查 `npm run format:check`。提交信息与代码注释使用中文，每项功能验证完成后分别提交。

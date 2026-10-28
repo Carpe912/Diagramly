@@ -476,3 +476,146 @@ describe('pool relation ordering', () => {
     expect(relations.otherCells.some((cell) => cell.xmlId === 'pool_order')).toBe(false);
   });
 });
+describe('活动画像详情', () => {
+  it('读取人工线下类型及详情，原有文档仍可打开', async () => {
+    const backend = new FakeCoopwire(),
+      activity = backend.activities.get('remote_receive')!.activity;
+    Object.assign(activity, {
+      actType: 'manualOffline',
+      keyStep: '<p>先确认库存</p>',
+      hoursOnceAct: 2,
+      progressRate: 45,
+      fixedCycleKey: 'week',
+      fixedCycleWeekValues: [1, 3],
+      displaySetting: { timeVisible: true, futureFlag: true },
+      timeRanges: { id: 'time_original', actTimeStart: 8, actTimeEnd: 18 },
+    });
+    const session = new CoopwireSession(
+      new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch),
+      registry,
+      png,
+      new MemoryJournal(),
+    );
+    const doc = await session.open();
+    expect(doc.entities.entity_receive.activityType).toBe('offline');
+    expect(doc.entities.entity_receive.details).toMatchObject({
+      keyStep: '<p>先确认库存</p>',
+      hoursOnceAct: '2',
+      progressRate: 45,
+      fixedCycleWeekValues: ['1', '3'],
+      timeRanges: { actTimeStart: 8, actTimeEnd: 18 },
+    });
+    expect(backend.writeCount).toBe(0);
+  });
+  it('补充说明与时间范围使用专用接口，普通字段增量保存，撤销会补偿写入', async () => {
+    const { editor, backend } = await setup();
+    backend.activities.get('remote_receive')!.activity.displaySetting = { futureFlag: true };
+    await editor.submit(
+      makeCommand(editor, [
+        {
+          type: 'node.update',
+          id: 'receive',
+          patch: {
+            activityType: 'offline',
+            details: {
+              keyStep: '扫描订单后检查库存',
+              progressRate: 65,
+              hoursOnceAct: '2.5',
+              actDevicesUsed: ['device_scanner'],
+              displaySetting: { timeVisible: true },
+              timeRanges: { actTimeStart: 9, actTimeEnd: 17 },
+            },
+          },
+        },
+      ]),
+    );
+    const saved = backend.activities.get('remote_receive')!.activity;
+    expect(saved).toMatchObject({
+      actType: 'manualOffline',
+      keyStep: '扫描订单后检查库存',
+      progressRate: 65,
+      hoursOnceAct: '2.5',
+      displaySetting: { timeVisible: true, futureFlag: true },
+      timeRanges: { actTimeStart: 9, actTimeEnd: 17 },
+    });
+    expect(backend.calls.find((c) => c.action === 'updateAct')?.body).not.toHaveProperty('keyStep');
+    expect(backend.calls.find((c) => c.action === 'updateAct')?.body).not.toHaveProperty(
+      'timeRanges',
+    );
+    expect(backend.calls.filter((c) => c.action === 'addTimeRange')).toHaveLength(1);
+    await editor.undoAsync();
+    expect(saved).toMatchObject({
+      actType: 'manualOnline',
+      keyStep: '',
+      progressRate: 0,
+      actDevicesUsed: [],
+      timeRanges: null,
+    });
+    expect(backend.calls.some((c) => c.action === 'delTimeRange')).toBe(true);
+    await editor.redoAsync();
+    expect(saved.progressRate).toBe(65);
+  });
+  it('详情支持部分字段更新，不清空其他业务字段，并拒绝非法日期', async () => {
+    const { editor } = await setup();
+    await editor.submit(
+      makeCommand(editor, [
+        {
+          type: 'node.update',
+          id: 'receive',
+          patch: { details: { keyStep: '保留说明', displaySetting: { timeVisible: true } } },
+        },
+      ]),
+    );
+    await editor.submit(
+      makeCommand(
+        editor,
+        [
+          {
+            type: 'node.update',
+            id: 'receive',
+            patch: { details: { progressRate: 20, displaySetting: { cycleVisible: true } } },
+          },
+        ],
+        'cmd_details_2',
+      ),
+    );
+    expect(editor.snapshot.entities.entity_receive.details).toMatchObject({
+      keyStep: '保留说明',
+      progressRate: 20,
+      displaySetting: { timeVisible: true, cycleVisible: true },
+    });
+    expect(() =>
+      editor.preview(
+        makeCommand(
+          editor,
+          [
+            {
+              type: 'node.update',
+              id: 'receive',
+              patch: { details: { fixedCycleWeekValues: ['8'] } },
+            },
+          ],
+          'cmd_invalid',
+        ),
+      ),
+    ).toThrow();
+  });
+  it('加载真实业务选项协议并发送清空关联参数', async () => {
+    const backend = new FakeCoopwire(),
+      api = new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch);
+    expect(await api.activityOptions()).toMatchObject({
+      applications: [{ value: 'app_erp', label: '订单应用' }],
+      devices: [{ value: 'device_scanner', label: '扫码枪' }],
+      terminals: [{ value: 'desktop', label: '电脑' }],
+    });
+    await api.updateActivity('remote_receive', 1, {
+      actSystemUsed: '',
+      actDevicesUsed: [],
+      linkFlow: '',
+    });
+    const call = backend.calls.find((c) => c.action === 'updateAct')!;
+    expect(call.query.get('clearSystemUsed')).toBe('true');
+    expect(call.query.get('clearDeviceUsed')).toBe('true');
+    expect(call.query.get('clearLinkFlow')).toBe('true');
+  });
+});

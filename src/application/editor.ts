@@ -81,9 +81,20 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
       }
       break;
     }
-    case 'node.update':
-      Object.assign(doc.entities[getNode(operation.id).entityId], operation.patch);
+    case 'node.update': {
+      const entity = doc.entities[getNode(operation.id).entityId],
+        { details, ...patch } = operation.patch;
+      Object.assign(entity, patch);
+      if (details)
+        entity.details = {
+          ...entity.details,
+          ...details,
+          ...(details.displaySetting
+            ? { displaySetting: { ...entity.details?.displaySetting, ...details.displaySetting } }
+            : {}),
+        };
       break;
+    }
     case 'node.move': {
       const node = getNode(operation.id);
       if (isManagedLane(doc, node)) throw new Error('泳道位置由泳池布局控制，请使用移动泳道命令');
@@ -150,7 +161,7 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
         throw new Error('泳池至少保留一条泳道');
       const extent = parentPool?.type === 'pool-vertical' ? node.bounds.width : node.bounds.height;
       const removed = new Set([operation.id]);
-      // Iterative traversal also makes the deletion boundary explicit for future nested containers.
+      // 迭代遍历明确级联删除范围，便于后续扩展嵌套容器。
       let size = 0;
       while (size !== removed.size) {
         size = removed.size;
@@ -218,7 +229,7 @@ export class Editor {
   private undoStack: { before: DiagramDocument; after: DiagramDocument; entry: HistoryEntry }[] =
     [];
   private redoStack: typeof this.undoStack = [];
-  // Session-scoped idempotency. A production API must persist these receipts server-side.
+  // 当前会话内保证幂等；生产接口应在服务端持久化回执。
   private receipts = new Map<string, { fingerprint: string; receipt: Receipt }>();
   private transport?: EditorTransport;
   private inFlight = new Map<string, { fingerprint: string; promise: Promise<Receipt> }>();
@@ -240,7 +251,7 @@ export class Editor {
     if (this.working) throw new Error('远程操作进行中');
     this.transport = transport;
     this.retryAction = undefined;
-    // A history recorded before binding has no corresponding remote transaction.
+    // 绑定远程适配器前的历史记录没有对应的远程事务。
     this.undoStack = [];
     this.redoStack = [];
     this.receipts.clear();
@@ -395,7 +406,7 @@ export class Editor {
       stack.pop();
       (kind === 'undo' ? this.redoStack : this.undoStack).push(step);
       this.document = freeze(result);
-      // Preserve authoritative business references/versions in future history targets.
+      // 后续撤销与重做的目标保留服务端确认的业务引用和版本。
       for (const history of [...this.undoStack, ...this.redoStack]) {
         for (const snapshot of [history.before, history.after]) {
           const mutable = structuredClone(snapshot);

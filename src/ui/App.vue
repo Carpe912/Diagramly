@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   computed,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   reactive,
@@ -43,6 +44,7 @@ import {
 } from '@lucide/vue';
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
+import ActivityDetails from './ActivityDetails.vue';
 import {
   absoluteBounds,
   childrenOf,
@@ -63,7 +65,8 @@ import {
   loadLocal,
   parseDocument,
 } from '../adapters/storage/local';
-import { CoopwireApi } from '../adapters/coopwire/api';
+import { CoopwireApi, type ActivityOptions } from '../adapters/coopwire/api';
+import { isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
 import { exportDiagramPng } from '../adapters/maxgraph/export';
 import { createAgentTools } from '../agent/tools';
@@ -104,6 +107,32 @@ const selectedEdge = computed(() =>
 const selectedEntity = computed(() =>
   selectedNode.value ? doc.value.entities[selectedNode.value.entityId] : undefined,
 );
+const showBusinessDetails = ref(false),
+  businessOptions = shallowRef<ActivityOptions>(),
+  loadingOptions = ref(false);
+watch(showBusinessDetails, async () => {
+  await nextTick();
+  canvas?.fit();
+});
+watch(
+  () => selectedNode.value?.id,
+  () => {
+    if (!selectedNode.value || !isBusinessNode(selectedNode.value))
+      showBusinessDetails.value = false;
+  },
+);
+async function loadBusinessOptions() {
+  const session = remoteSession.value;
+  if (!session || loadingOptions.value) return;
+  loadingOptions.value = true;
+  try {
+    businessOptions.value = await session.api.activityOptions();
+  } catch (e) {
+    showError(e);
+  } finally {
+    loadingOptions.value = false;
+  }
+}
 const form = reactive({
   name: '',
   description: '',
@@ -283,6 +312,8 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   editor.value = new Editor(document, registry);
   remoteSession.value = session;
   if (session) editor.value.attachTransport(session);
+  showBusinessDetails.value = false;
+  businessOptions.value = undefined;
   bindEditor();
   setTool('select');
 }
@@ -717,7 +748,7 @@ function disconnectRemote() {
   try {
     local = loadLocal(registry) ?? local;
   } catch {
-    /* Preserve the existing cache on read failure. */
+    /* 读取失败时保留原有缓存。 */
   }
   replaceDocument(local);
   remoteStatus.value = { state: 'ready', message: '' };
@@ -1010,7 +1041,10 @@ onBeforeUnmount(() => {
         <div class="canvas-page"><span class="page-indicator"></span>画布 01</div>
       </main>
 
-      <aside class="inspector-panel">
+      <aside
+        class="inspector-panel"
+        :class="{ 'details-expanded': showBusinessDetails && panelTab === 'properties' }"
+      >
         <div class="panel-tabs">
           <button :class="{ active: panelTab === 'properties' }" @click="panelTab = 'properties'">
             属性</button
@@ -1019,7 +1053,30 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div v-if="panelTab === 'properties'" class="inspector-scroll">
-          <template v-if="selectedNode && selectedEntity">
+          <template
+            v-if="
+              showBusinessDetails && selectedNode && selectedEntity && isBusinessNode(selectedNode)
+            "
+          >
+            <div class="portrait-back">
+              <button @click="showBusinessDetails = false">
+                <ChevronRight :size="14" />返回图形属性</button
+              ><span>{{ registry.get(selectedNode.type).label }}</span>
+            </div>
+            <ActivityDetails
+              :key="selectedNode.id"
+              :entity="selectedEntity"
+              :node="selectedNode"
+              :busy="editor.busy"
+              :remote="!!remoteSession"
+              :options="businessOptions"
+              :loading-options="loadingOptions"
+              :related="remoteSession?.activityDetails.get(selectedEntity.externalRef?.id ?? '')"
+              @patch="patchEntity"
+              @load-options="loadBusinessOptions"
+            />
+          </template>
+          <template v-else-if="selectedNode && selectedEntity">
             <div class="inspector-selection">
               <span class="selection-icon"
                 ><component :is="icons[registry.get(selectedNode.type).icon]" :size="19"
@@ -1031,6 +1088,11 @@ onBeforeUnmount(() => {
                 </p>
               </div>
               <span class="selected-badge">已选择</span>
+            </div>
+            <div v-if="isBusinessNode(selectedNode)" class="portrait-entry">
+              <button class="button secondary full-width" @click="showBusinessDetails = true">
+                查看业务详情<ArrowUpRight :size="14" />
+              </button>
             </div>
             <section class="property-section">
               <h3>基本信息</h3>
@@ -1106,9 +1168,10 @@ onBeforeUnmount(() => {
                     })
                   "
                 >
-                  <option value="manual">人工活动</option>
-                  <option value="system">系统活动</option>
-                  <option value="interface">接口活动</option>
+                  <option value="manual">人工线上</option>
+                  <option value="offline">人工线下</option>
+                  <option value="system">系统操作</option>
+                  <option value="interface">接口对接</option>
                   <option value="linked">引用活动</option>
                 </select></label
               ><label class="toggle-label"
@@ -1449,9 +1512,7 @@ onBeforeUnmount(() => {
         <h2>删除泳道</h2>
         <p>
           将删除「{{ doc.entities[doc.nodes[laneDeletion.laneId].entityId].name }}」及其中的
-          {{
-            childrenOf(doc, laneDeletion.laneId).length
-          }}
+          {{ childrenOf(doc, laneDeletion.laneId).length }}
           个节点和相关连线。可以完整撤销；远程业务活动本身会保留。
         </p>
         <button

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { activityDetailsSchema } from './activityDetails';
 
 export const idSchema = z
   .string()
@@ -18,13 +19,14 @@ export const entitySchema = z
     name: z.string().trim().min(1).max(160),
     description: z.string().max(10000),
     code: z.string().max(60),
-    activityType: z.enum(['manual', 'system', 'interface', 'linked']),
+    activityType: z.enum(['manual', 'offline', 'system', 'interface', 'linked']),
     critical: z.boolean(),
     inputs: z.array(z.string().max(160)).max(100),
     outputs: z.array(z.string().max(160)).max(100),
     role: z.string().max(160),
     roleIds: z.array(z.string().min(1).max(160)).max(100).default([]),
-    // Remote business identity is explicit and independent of the placement/entity ID.
+    details: activityDetailsSchema.optional(),
+    // 远程业务标识显式保存，独立于图形节点和本地实体 ID。
     externalRef: z
       .object({
         provider: z.string().min(1).max(80),
