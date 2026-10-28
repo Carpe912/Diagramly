@@ -77,6 +77,6 @@ maxGraph 的升级仅涉及依赖和适配器；升级仍需运行契约与浏�
 
 构建当前会提示 maxGraph 内部保留的 eval 函数和单个 JS 包超过 500kB；未屏蔽这些提示。适配器显式关闭 allowEval，生产 JS 约 743kB / gzip 205kB，后续可按加载场景拆包。
 
-业务活动、判断与子流程的完整详情入口位于右侧「查看业务详情」，支持补充说明、差异、应用设备、时间及周期等字段，参见 [业务图形详情](docs/activity-details.md)。
+业务活动、判断与子流程的完整详情入口位于右侧独立的「业务详情」标签页，支持补充说明、差异、应用设备、时间及周期等字段，参见 [业务图形详情](docs/activity-details.md)。
 
 代码统一使用 Prettier 格式化：`npm run format`；提交前检查 `npm run format:check`。每项功能验证完成后分别提交，提交信息遵循 Conventional Commits，使用 `type(scope): 中文说明`，例如 `feat(core): 新增泳池布局命令`。类型与作用域使用英文，代码注释使用中文。

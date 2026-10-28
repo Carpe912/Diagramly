@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { FakeCoopwire, testConfig } from '../support/coopwire';
+import { FakeCoopwire, testConfig, embed } from '../support/coopwire';
 async function connect(page: Page, backend: FakeCoopwire) {
   // 所有 /rest 请求均由进程内的测试后端响应，不会访问真实服务。
   await page.route('**/rest/**', async (route) => {
@@ -133,7 +133,7 @@ test('活动详情加载业务选项并通过专用接口保存说明和时间',
   const backend = new FakeCoopwire();
   await connect(page, backend);
   await receive(page);
-  await page.getByRole('button', { name: '查看业务详情', exact: true }).click();
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
   await page.getByRole('button', { name: '加载业务选项', exact: true }).click();
   await expect(
     page
@@ -211,4 +211,15 @@ test('属性面板选择角色也同步生成泳道名称', async ({ page }) => 
       expect.objectContaining({ xmlId: 'lane_sales', name: '交付角色', orgId: ['role_ops'] }),
     ]),
   );
+});
+test('远程活动没有可用业务详情时隐藏详情标签', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  delete backend.document.entities.entity_check.externalRef;
+  backend.flow.drawioXml = embed(backend.document);
+  await connect(page, backend);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '信息完整？', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toBeVisible();
 });

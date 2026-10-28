@@ -95,7 +95,7 @@ const selection = ref<string[]>([]),
   zoom = ref(1),
   search = ref(''),
   libraryTab = ref<'shapes' | 'layers'>('shapes');
-const panelTab = ref<'properties' | 'agent'>('properties'),
+const panelTab = ref<'properties' | 'details' | 'agent'>('properties'),
   activeTool = ref<'select' | 'hand' | 'connect'>('select');
 const graphEl = ref<HTMLElement>(),
   fileInput = ref<HTMLInputElement>();
@@ -111,20 +111,23 @@ const selectedEdge = computed(() =>
 const selectedEntity = computed(() =>
   selectedNode.value ? doc.value.entities[selectedNode.value.entityId] : undefined,
 );
-const showBusinessDetails = ref(false),
-  businessOptions = shallowRef<ActivityOptions>(),
+const remoteSession = shallowRef<CoopwireSession>();
+const businessOptions = shallowRef<ActivityOptions>(),
   loadingOptions = ref(false);
-watch(showBusinessDetails, async () => {
+const hasBusinessDetails = computed(() => {
+  const node = selectedNode.value;
+  if (!node || !isBusinessNode(node)) return false;
+  if (!remoteSession.value) return true;
+  const id = selectedEntity.value?.externalRef?.id;
+  return !!id && remoteSession.value.activityDetails.has(id);
+});
+watch(panelTab, async () => {
   await nextTick();
   canvas?.fit();
 });
-watch(
-  () => selectedNode.value?.id,
-  () => {
-    if (!selectedNode.value || !isBusinessNode(selectedNode.value))
-      showBusinessDetails.value = false;
-  },
-);
+watch(hasBusinessDetails, (available) => {
+  if (!available && panelTab.value === 'details') panelTab.value = 'properties';
+});
 async function loadBusinessOptions() {
   const session = remoteSession.value;
   if (!session || loadingOptions.value) return;
@@ -334,7 +337,7 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   editor.value = new Editor(document, registry);
   remoteSession.value = session;
   if (session) editor.value.attachTransport(session);
-  showBusinessDetails.value = false;
+  panelTab.value = 'properties';
   businessOptions.value = undefined;
   bindEditor();
   setTool('select');
@@ -725,7 +728,6 @@ async function history(action: 'undo' | 'redo') {
     showError(e);
   }
 }
-const remoteSession = shallowRef<CoopwireSession>();
 const remoteStatus = shallowRef<RemoteStatus>({ state: 'ready', message: '' });
 const connectionOpen = ref(false),
   connecting = ref(false),
@@ -1092,42 +1094,60 @@ onBeforeUnmount(() => {
         <div class="canvas-page"><span class="page-indicator"></span>画布 01</div>
       </main>
 
-      <aside
-        class="inspector-panel"
-        :class="{ 'details-expanded': showBusinessDetails && panelTab === 'properties' }"
-      >
-        <div class="panel-tabs">
-          <button :class="{ active: panelTab === 'properties' }" @click="panelTab = 'properties'">
-            属性</button
-          ><button :class="{ active: panelTab === 'agent' }" @click="panelTab = 'agent'">
+      <aside class="inspector-panel" :class="{ 'details-expanded': panelTab === 'details' }">
+        <div class="panel-tabs" role="tablist" aria-label="图形面板">
+          <button
+            role="tab"
+            :aria-selected="panelTab === 'properties'"
+            :class="{ active: panelTab === 'properties' }"
+            @click="panelTab = 'properties'"
+          >
+            属性
+          </button>
+          <button
+            v-if="hasBusinessDetails"
+            role="tab"
+            :aria-selected="panelTab === 'details'"
+            :class="{ active: panelTab === 'details' }"
+            @click="panelTab = 'details'"
+          >
+            业务详情
+          </button>
+          <button
+            role="tab"
+            :aria-selected="panelTab === 'agent'"
+            :class="{ active: panelTab === 'agent' }"
+            @click="panelTab = 'agent'"
+          >
             <Sparkles :size="13" /> Agent <span class="beta-label">LAB</span>
           </button>
         </div>
-        <div v-if="panelTab === 'properties'" class="inspector-scroll">
-          <template
-            v-if="
-              showBusinessDetails && selectedNode && selectedEntity && isBusinessNode(selectedNode)
-            "
-          >
-            <div class="portrait-back">
-              <button @click="showBusinessDetails = false">
-                <ChevronRight :size="14" />返回图形属性</button
-              ><span>{{ registry.get(selectedNode.type).label }}</span>
-            </div>
-            <ActivityDetails
-              :key="selectedNode.id"
-              :entity="selectedEntity"
-              :node="selectedNode"
-              :busy="editor.busy"
-              :remote="!!remoteSession"
-              :options="businessOptions"
-              :loading-options="loadingOptions"
-              :related="remoteSession?.activityDetails.get(selectedEntity.externalRef?.id ?? '')"
-              @patch="patchEntity"
-              @load-options="loadBusinessOptions"
-            />
-          </template>
-          <template v-else-if="selectedNode && selectedEntity">
+        <div
+          v-if="panelTab === 'details' && hasBusinessDetails && selectedNode && selectedEntity"
+          class="inspector-scroll"
+          role="tabpanel"
+          aria-label="业务详情"
+        >
+          <ActivityDetails
+            :key="selectedNode.id"
+            :entity="selectedEntity"
+            :node="selectedNode"
+            :busy="editor.busy"
+            :remote="!!remoteSession"
+            :options="businessOptions"
+            :loading-options="loadingOptions"
+            :related="remoteSession?.activityDetails.get(selectedEntity.externalRef?.id ?? '')"
+            @patch="patchEntity"
+            @load-options="loadBusinessOptions"
+          />
+        </div>
+        <div
+          v-else-if="panelTab === 'properties'"
+          class="inspector-scroll"
+          role="tabpanel"
+          aria-label="属性"
+        >
+          <template v-if="selectedNode && selectedEntity">
             <div class="inspector-selection">
               <span class="selection-icon"
                 ><component :is="icons[registry.get(selectedNode.type).icon]" :size="19"
@@ -1139,11 +1159,6 @@ onBeforeUnmount(() => {
                 </p>
               </div>
               <span class="selected-badge">已选择</span>
-            </div>
-            <div v-if="isBusinessNode(selectedNode)" class="portrait-entry">
-              <button class="button secondary full-width" @click="showBusinessDetails = true">
-                查看业务详情<ArrowUpRight :size="14" />
-              </button>
             </div>
             <section class="property-section">
               <h3>基本信息</h3>
@@ -1434,7 +1449,7 @@ onBeforeUnmount(() => {
             </div>
           </section>
         </div>
-        <div v-else class="inspector-scroll agent-panel">
+        <div v-else class="inspector-scroll agent-panel" role="tabpanel" aria-label="Agent">
           <div class="agent-intro">
             <span><Sparkles :size="20" /></span>
             <h3>让 Agent 读懂你的图</h3>

@@ -96,7 +96,7 @@ test('rejects malformed import without replacing the current graph', async ({ pa
 test('previews an agent command before applying it through the same undo history', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: /Agent LAB/ }).click();
+  await page.getByRole('tab', { name: /Agent/ }).click();
   await page.getByRole('button', { name: '生成命令示例' }).click();
   await page.getByRole('button', { name: '校验并预览' }).click();
   await expect(page.getByText('校验通过')).toBeVisible();

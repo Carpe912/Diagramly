@@ -3,7 +3,7 @@ async function openDetails(page: Page) {
   await page.goto('/');
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await page.getByRole('button', { name: '查看业务详情', exact: true }).click();
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
 }
 test('活动画像的说明、差异与图上描述可以保存并撤销', async ({ page }) => {
   const failures: string[] = [];
@@ -31,7 +31,7 @@ test('活动画像的说明、差异与图上描述可以保存并撤销', async
   await page.reload();
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await page.getByRole('button', { name: '查看业务详情', exact: true }).click();
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
   await expect(page.getByLabel('补充说明', { exact: true })).toHaveValue('核对库存后提交订单');
   await expect(page.getByLabel('差异新增', { exact: true })).toBeChecked();
   expect(failures).toEqual([]);
@@ -52,4 +52,23 @@ test('显示设置展开时间和周期，切换节点时保持各自详情', as
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
   await expect(page.getByLabel('单次活动用时', { exact: true })).toHaveValue('2.5');
   await expect(page.getByLabel('执行星期', { exact: true })).toHaveValue('1,3,5');
+});
+test('业务详情是独立标签页，无详情的图形隐藏标签并返回属性', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  await expect(page.getByRole('tabpanel', { name: '业务详情', exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: '属性', exact: true }).click();
+  await expect(page.getByLabel('节点名称', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  await page.getByRole('button', { name: '开始', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: '属性', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
 });
