@@ -1,0 +1,1769 @@
+# 旧项目完整提交索引
+
+含所有本地分支和标签可达提交；并非只统计 master，也不把 merge 当成独立业务功能。
+
+- `90d5ebad` 2020-07-06 Add README.md
+- `39d1b360` 2020-07-07 source file
+- `ce945a40` 2020-07-07 fix conflict
+- `a0cbb353` 2020-07-07 change readme.md
+- `19d0815a` 2020-07-08 url中携带来源参数
+- `c3ab7e04` 2020-07-09 取消build屏蔽
+- `12ddf7ca` 2020-07-09 修改打包后的名称
+- `7ba4fb63` 2020-07-09 fix: 打包名称
+- `ff293498` 2020-07-09 fix: 替换文件compiler.jar“
+- `f551cbf0` 2020-07-09 Merge branch 'master' of http://www.greaconsulting.com:30080/coopwire/coopwire-drawio
+- `24258c32` 2020-07-09 jar包更换
+- `5c5413b5` 2020-07-10 字典接口变更
+- `90a9cca7` 2020-07-10 Merge branch 'master' of ssh://www.greaconsulting.com:13389/coopwire/coopwire-drawio
+- `9e7a3776` 2020-07-11 fix: 图形保存之后不要弹出桌面版下载弹窗image.png;隐藏新建按钮
+- `c4d87760` 2020-07-11 fix: 隐藏预览时的编辑按钮
+- `6795ec95` 2020-07-11 fix: 保存时的名称是文件名称，而不是sheet页的名称
+- `41fb89c1` 2020-07-11 fix: 蒙版默认zIndex 4999
+- `e0e13764` 2020-07-11 FilenameDialog.createTypeHint 对应的帮助按钮隐藏
+- `bafbf041` 2020-07-11 去掉其他里的数学排版  便签本一栏的 ？
+- `b0f97fe4` 2020-07-14 fix: window.openWindow 改为当前页打开，而不是加载新页面
+- `436a4cc1` 2020-07-14 fix: 去除所有帮助连接，帮助按钮
+- `dacd5426` 2020-07-14 关闭草稿箱
+- `a73e9bf3` 2020-07-15 fix: 绘图功能view.min.js
+- `2bb53c02` 2020-07-16 fix: 变更字典接口
+- `714025cf` 2020-07-22 feat: 显示More sheap
+- `9f2621f9` 2020-07-22 fix: 非联网模式显示模板
+- `906646b0` 2020-07-27 隐藏外链
+- `261c3ea5` 2020-08-12 Mathjax.js 取消导向外链
+- `be1646ed` 2020-08-12 外链控制
+- `0356f431` 2020-08-17 fix: 箭头不显示问题
+- `5bbb3763` 2020-09-18 Upload New File
+- `81e68a67` 2020-09-18 Update drawio.markdown
+- `08ade986` 2020-09-18 Delete README.md
+- `7129b66a` 2020-09-18 Update drawio.markdown
+- `aad8d748` 2020-09-18 Update readme.md
+- `3c445600` 2020-09-18 url参数为 coopwireTriggerType,=1时触发csv自动导入
+- `6a4f9b12` 2020-09-18 Merge branch 'master' of ssh://www.greaconsulting.com:13389/coopwire/coopwire-drawio
+- `ee1f4238` 2020-09-18 feat: 测试csv
+- `d0241a1e` 2020-09-22 feat: coopwire转csv数据
+- `5b8f0aaa` 2020-09-22 feat: 测试csv
+- `c6a50ce3` 2020-09-22 feat: 测试csv
+- `1651f442` 2020-09-23 importCsv 方法中，根据labels 对象中的数据来设定线条的label
+- `57bb2027` 2020-09-23 importCsv 方法中，根据labels 对象中的数据来设定线条的label
+- `7c1a1208` 2020-09-23 测试新csv数据
+- `05932cd3` 2020-09-23 删除打印日志
+- `073ec393` 2020-09-23 Update readme.md 记录drawio日志
+- `986dfdf6` 2020-09-24 Update readme.md
+- `243ecbee` 2020-09-27 csv 模式下，取消保存文件到本地
+- `a93dd2cf` 2020-09-27 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `00668bc6` 2020-09-27 测试保存方法
+- `da6ab7c8` 2020-09-27 测试保存
+- `0448ca24` 2020-09-27 测试
+- `276e34cf` 2020-09-27 测试
+- `4db799e1` 2020-09-27 测试
+- `769a544b` 2020-09-27 csv模式不下载文件
+- `f8ee1610` 2020-09-28 fix: csv模式下，关闭loading
+- `4dfe32bf` 2020-09-28 fix 火狐浏览器下图标显示问题
+- `e0667e45` 2020-09-28 fix 取消合并
+- `605ecbce` 2020-09-29 Merge branch 'dev-mcy' into 'master'
+- `43d7a700` 2020-09-30 Update readme.md
+- `0a58265c` 2020-10-12 csv模式时，保存文件时停止spinner
+- `4e016fda` 2020-10-23 删除console.log
+- `dd98f637` 2020-11-20 启动草稿箱功能
+- `77a5b289` 2020-11-23 feature 保存时提交draftId 到外部
+- `6d255a47` 2020-11-25 增加订阅发布模式以及保存时的禁用状态
+- `9a7483eb` 2020-11-25 Drawio 版本编号
+- `9887a025` 2020-11-27 添加注释
+- `1f88ba1f` 2020-11-30 添加注释
+- `8db67386` 2020-11-30 fea saveAndClose返回绘图的base64
+- `1adbc8fa` 2020-12-01 fix 图片和xml重复命名
+- `8933bf4c` 2020-12-01 fix saveAndClose 换行符问题
+- `ad93b5e2` 2020-12-16 Hotfix
+- `1b38fc55` 2020-12-16 Merge branch 'hotfix' into 'master'
+- `c22eacc9` 2021-02-03 fix 显示file菜单且只显示导出按钮
+- `9f29b4b7` 2021-02-04 fix PDF导出问题 & 隐藏导出url时Facebook和Twitter按钮
+- `7c8b3f76` 2021-02-04 hotfix 隐藏命名
+- `f97c388b` 2021-02-05 Merge branch 'hotfix' into 'master'
+- `ab1a7b49` 2021-02-05 Merge branch 'master' into dev-mcy
+- `31c0de2a` 2021-02-05 Merge branch 'dev-mcy' into 'master'
+- `7d864fb4` 2021-03-10 feat 导出功能；隐藏文件名
+- `ce8aeedb` 2021-03-10 Merge branch 'sprint-202101-1' into 'master'
+- `79190f4e` 2021-03-12 fix 修改coopwire library 字典接口
+- `a4429066` 2021-03-12 Merge branch 'dev-mcy' into 'master'
+- `0afe9bc8` 2021-03-12 HOTFIX 配置pdf导出服务路径
+- `d03b6698` 2021-03-12 Merge branch 'hotfix-wyq' into 'master'
+- `ccf457f9` 2021-03-12 HOTFIX 配置pdf服务路径
+- `51dbc2f9` 2021-03-12 HOTFIX 配置pdf服务路径
+- `066dd190` 2021-03-12 Merge branch 'hotfix-wyq' into 'master'
+- `2cf003c5` 2021-03-18 fix 修改GrapgViewer ，配合view.min.js 协助 coopwire 渲染
+- `8a4a8f28` 2021-03-18 修改保存草稿时的提示语
+- `61d15abc` 2021-03-18 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `19f2c864` 2021-03-18 fix 修改草稿提示
+- `b9ecb235` 2021-03-18 fix window.confirm
+- `90b5b8c0` 2021-03-22 fix 不显示全屏和缩进按钮
+- `c1184097` 2021-03-22 fix viewer.min.js 事件中增加name参数
+- `412aba0e` 2021-03-22 fix 屏蔽部分逻辑，以免样式异常
+- `6c779fe8` 2021-03-23 fix 修改 viewer.min.js 中点击全屏时未设置id的问题
+- `b2055388` 2021-03-23 退出提示语切换为英文
+- `4ae6f7c6` 2021-03-23 Sprint 202103 1
+- `2d4c33a8` 2021-03-23 Merge branch 'sprint-202103-1' into 'master'
+- `6474dadb` 2021-04-12 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `f7699217` 2021-04-12 feat: 点击关闭按钮时，重写关闭逻辑和样式；显示TItle到中间部分
+- `575b72a7` 2021-04-19 关闭信息通过多语言处理
+- `c43cddf5` 2021-04-19 Sprint 202103 2
+- `fa764113` 2021-04-19 Merge branch 'sprint-202103-2' into 'master'
+- `86a814cc` 2021-04-19 升级drawio版本
+- `63c1231a` 2021-04-19 Merge branch 'hotfix' into 'master'
+- `0ed5ab21` 2021-05-26 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `c9f3e65a` 2021-05-26 feat drawio增加hash值，手动写入到 HASH 文件中，为 app.min.js 和 viewer.min.js 增加hash命名
+- `1612638e` 2021-05-28 fix 修改ant编译replace任务时，字符集不正确导致中文乱码问题
+- `9451297d` 2021-06-07 feat drawio增加hash值，手动写入到HASH文件中，为 App.min.js 和 viewer.min.js 增加hash命名
+- `d6a72fd4` 2021-06-07 Merge branch 'new-sprint-202105-1' into 'master'
+- `a7340ef0` 2021-06-15 feat 增加页码显示
+- `81334f29` 2021-06-22 Merge branch 'dev-mcy-0601' into 'sprint-202106-1'
+- `389820af` 2021-06-24 feat 增加页码显示
+- `aae55855` 2021-06-24 Merge branch 'dev-mcy-0601' into 'sprint-202106-1'
+- `075d65c2` 2021-06-29 Sprint 202106 1
+- `81854665` 2021-06-29 Merge branch 'sprint-202106-1' into 'master'
+- `b8d7bba1` 2021-07-02 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `e14cdf59` 2021-07-13 Sprint 202106 2
+- `6a7f4eb8` 2021-07-13 Merge branch 'sprint-202106-2' into 'master'
+- `d0ac18d8` 2021-08-05 fix 修复logo大小，固定文件名宽度
+- `fe4b925c` 2021-08-19 合并master
+- `5b93649e` 2021-08-19 fix 修复logo大小，固定文件名宽度
+- `e6825c3c` 2021-08-19 Merge branch 'sprint-202107-2' into 'master'
+- `8fe3bcb7` 2021-08-20 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `b970e2e0` 2021-08-20 feat 修复拖拽文件放开鼠标时，跳转的地址链接问题
+- `826d88b9` 2021-08-30 禁止拖拽链接释放
+- `cc325291` 2021-08-30 测试更新
+- `22289301` 2021-08-30 修复测试代码
+- `975e7984` 2021-09-08 Sprint 202108 1
+- `e97ad13c` 2021-09-08 Merge branch 'sprint-202108-1' into 'master'
+- `f013f684` 2021-09-09 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `16eb33a4` 2021-09-15 初始化sprint-202109-2
+- `ca9a0f6b` 2021-09-15 提供 flowchart 模式，隐藏左侧边栏内容
+- `ed4aa2de` 2021-09-16 feat flowchart模式下泳道图双击后选择角色信息
+- `6a3a8401` 2021-09-16 feat 自定义活动元素
+- `2755105f` 2021-09-16 feat 流程图元素右侧边栏demo
+- `993f5b55` 2021-09-17 feat 活动周期要求、活动时间要求
+- `092fd3ae` 2021-09-21 引入Vue, Element
+- `46199abe` 2021-09-22 右侧边栏demo 60%
+- `107d0f3d` 2021-09-22 开始对接接口
+- `e6de745e` 2021-09-22 对接到输入输出
+- `0cf85b25` 2021-09-27 优化vue, element显示效果
+- `ef6f2527` 2021-09-30 feat 对接其他接口
+- `1fa77535` 2021-09-30 fix 对接
+- `d2cf005a` 2021-09-30 对接
+- `38381f95` 2021-10-11 流程图功能发生变更，保留旧功能记录,完成活动的接口对接，接下来要改为实时保存
+- `68c92ef8` 2021-10-12 feat 增加画布功能，参考更新日志
+- `2ac82fe6` 2021-10-12 对接初步完成
+- `dea1bd2d` 2021-10-13 处理流程图功能
+- `1bb12130` 2021-10-13 feat 增强报错提示
+- `77a74716` 2021-10-13 多语言更新
+- `a5ea85e4` 2021-10-13 fix 接口对接
+- `e7d9506e` 2021-10-14 feat 接口对接
+- `3a8747a9` 2021-10-14 fix 控制流程图元素是否可以编辑；处理报错信息提示
+- `3668d2e6` 2021-10-14 渲染drawio图形到coopwire时禁止显示 fit 按钮
+- `683cb3c5` 2021-10-14 fix 创建活动元素后，显示活动元素编号
+- `452579f2` 2021-10-14 fix: 问题修复
+- `a80ee43f` 2021-10-15 feat 增加 Tinymce编辑器
+- `fdbe0b58` 2021-10-15 fix: 需求调研部分修复
+- `d52e3de2` 2021-10-15 增加删除流程图提示
+- `e7591f95` 2021-10-15 合并孙灵跃代码
+- `78eaa6d2` 2021-10-15 fix 删除活动图功能
+- `4afae649` 2021-10-15 fix 修改多语言
+- `4d08e468` 2021-10-15 fix: 需求调研修改
+- `b4383639` 2021-10-17 merge sly
+- `717ca851` 2021-10-17 merge sly
+- `02b508d9` 2021-10-17 fix
+- `f312a260` 2021-10-17 fix修复表单测问题
+- `36c0030f` 2021-10-17 增加系统使用的活动
+- `b3b8fdce` 2021-10-17 merge sly
+- `94ca774e` 2021-10-17 fix
+- `1a47dc23` 2021-10-17 多语言
+- `59489222` 2021-10-17 修复流程图右侧表单页
+- `3334a8ad` 2021-10-17 fix
+- `6be8f8d3` 2021-10-17 merge
+- `fa34e342` 2021-10-17 fix 异常
+- `88143c6a` 2021-10-17 fix 输入输出、关联
+- `a2a4b2d6` 2021-10-17 fix 痛点
+- `5a0f1382` 2021-10-18 fix 修复drawio画图接口数据问题
+- `79cb5848` 2021-10-18 fix 修复时间周期要求
+- `7869881b` 2021-10-18 fix 修复drawio
+- `2cc3e474` 2021-10-18 fix 显示输入输出的文本描述
+- `2d5cbe32` 2021-10-18 fix 修复异常内数据超出问题
+- `8868a225` 2021-10-18 fix 活动周期要求时按月统计的显示问题
+- `6999cd7b` 2021-10-18 fix 修复异常显示关联活动问题
+- `168907c0` 2021-10-18 fix 修复异常直接点击编辑不显示的问题
+- `21081430` 2021-10-18 fix 修复输入输出中，数据对象下拉框的值没有带入的问题
+- `5669d821` 2021-10-18 fix 修复时间周期中，选择星期时没有带入已选值的问题
+- `bd7c0946` 2021-10-18 feat drawio增加显示特定角色下的活动元素
+- `f5b6fec3` 2021-10-19 fix 修复输入输出数据显示问题&添加选择接口字段
+- `070ae817` 2021-10-19 fix 输出文档由多选改为单选
+- `601ad784` 2021-10-19 fix 修复文本类型不显示依赖设备
+- `14cf1507` 2021-10-19 fix 修复显示流程编号问题
+- `8187b65c` 2021-10-19 fix 修复新增输入时，数据值显示错误
+- `c0c1509e` 2021-10-19 Merge branch 'dev-sly' into 'sprint-202109-2'
+- `c4922779` 2021-10-19 feat 增加对活动元素跨越泳道的判断
+- `2c8a2d0c` 2021-10-19 merge and fix
+- `c6b7b820` 2021-10-19 fix: 修复添加输入输出后，不显示的问题
+- `6d6605fe` 2021-10-19 Merge branch 'dev-sly' into 'sprint-202109-2'
+- `3adca039` 2021-10-19 fix: 字段值修改
+- `889702b1` 2021-10-19 Merge branch 'dev-sly' into 'sprint-202109-2'
+- `fe7baf76` 2021-10-20 fix 流程图活动的名称只可以通过回车提交
+- `6cffff42` 2021-10-20 fix 输入输出切换类型时清空数据、关联功能清单显示模块名称
+- `62e7753d` 2021-10-20 Merge branch 'sprint-202109-2' of http://119.3.73.53:30080/coopwire/coopwire-drawio into sprint-202109-2
+- `9d307bd8` 2021-10-20 fix 修复编译报错
+- `fca995d6` 2021-10-20 活动元素内部元素不可链接
+- `e795a924` 2021-10-20 Sprint 202109 2
+- `24e296f2` 2021-10-20 Merge branch 'sprint-202109-2' into 'master'
+- `4ceb7fac` 2021-10-26 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `969562fe` 2021-10-26 HOTFIX 只有在流程图时才会查询数据
+- `a4c9567e` 2021-10-26 Hotfix
+- `a35e7af5` 2021-10-26 Merge branch 'hotfix' into 'master'
+- `b9f4cd89` 2021-11-08 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `de85f3f3` 2021-11-08 feat 在选择泳道时判断提示
+- `7ef67b76` 2021-11-08 feat 面板点击事件
+- `274a2fc7` 2021-11-10 fix 修复需求调研相关
+- `c7c0bde8` 2021-11-10 Merge branch 'dev-sly' into 'sprint-202110-1'
+- `1e6dacb0` 2021-11-10 update 添加流程步骤
+- `42467e01` 2021-11-10 Merge branch 'dev-sly' into 'sprint-202110-1'
+- `db2a8b03` 2021-11-11 修改HASH
+- `7fd5ab48` 2021-11-11 Merge branch 'sprint-202110-1' of http://119.3.73.53:30080/coopwire/coopwire-drawio into sprint-202110-1
+- `77308667` 2021-11-12 修改流程图时退出的提示信息
+- `022cc225` 2021-11-14 fix 修复终端数据源有误
+- `071c7a8b` 2021-11-14 fix 输入添加调用方向字段
+- `54accab7` 2021-11-15 fix 修复接口类型--输入选择系统报错
+- `ac1b9451` 2021-11-15 Merge branch 'dev-sly' into 'sprint-202110-1'
+- `6c55adfb` 2021-11-17 fix 修复多语言问题
+- `9d520cdd` 2021-11-17 Merge branch 'dev-sly' into 'sprint-202110-1'
+- `8c9ab321` 2021-11-17 fix 调用方向多语言
+- `82e1021e` 2021-11-17 Merge branch 'dev-sly' into 'sprint-202110-1'
+- `f8df2bb6` 2021-11-18 Sprint 202110 1
+- `52670a59` 2021-11-18 Merge branch 'sprint-202110-1' into 'master'
+- `58922c3a` 2021-11-25 Merge branch 'master' of http://119.3.73.53:30080/coopwire/coopwire-drawio
+- `f482f848` 2021-11-26 HOTFIX 1833 禁用快捷键
+- `0d0d1938` 2021-11-26 HOTFIX 修改多语言
+- `26c5f19b` 2021-11-26 HOTFIX 禁用 在这粘贴 按钮
+- `13b7df58` 2021-11-26 Merge branch 'hotfix-1833' into 'master'
+- `33b2c498` 2021-11-29 fix 修改1789议题
+- `01b50f17` 2021-11-29 fix 修复活动元素可以拖拽到非法区域的问题
+- `8a8eee82` 2021-11-30 fix 删除流程图元素时提示中显示活动名称
+- `6759844b` 2021-11-30 修改HASH
+- `c2a40a3f` 2021-12-08 fix 修改需求调研中 drawio 问题
+- `0cc8587e` 2021-12-09 修改名称后保存到 data-act-name 属性
+- `e850fd05` 2021-12-10 增加 tinymce 选项
+- `509ad93e` 2021-12-13 update 活动输入输出详情优化
+- `dce16950` 2021-12-14 fix 对象操作类型多语言补充
+- `60942e0e` 2021-12-14 Merge branch 'master' into 'sprint-202111-1'
+- `afdfcce9` 2021-12-14 Merge branch 'dev-sly' into 'sprint-202111-1'
+- `8033ce7b` 2021-12-14 Dev 1834
+- `c312d1a8` 2021-12-14 Merge branch 'dev-1834' into 'sprint-202111-1'
+- `d0ab59e4` 2021-12-14 Merge remote-tracking branch 'origin/sprint-202111-1' into sprint-202111-1
+- `14983f28` 2021-12-14 merge
+- `f93b1e89` 2021-12-14 fix 修复变量未赋值报错
+- `cdad0880` 2021-12-14 Merge branch 'dev-sly' into 'sprint-202111-1'
+- `246400e9` 2021-12-16 编译
+- `d88ef170` 2021-12-16 Merge remote-tracking branch 'origin/sprint-202111-1' into sprint-202111-1
+- `cc5fc29d` 2021-12-16 Merge branch 'sprint-202111-1' into 'dev-1834'
+- `19f4fcaf` 2021-12-16 Merge branch 'dev-1834' into 'sprint-202111-1'
+- `8a9ba542` 2021-12-16 Merge remote-tracking branch 'origin/sprint-202111-1' into sprint-202111-1
+- `ed527be2` 2021-12-16 修改数据源来源
+- `83e7dff6` 2021-12-20 Sprint 202111 1
+- `e77082a5` 2021-12-20 Merge branch 'sprint-202111-1' into 'master'
+- `70da2c06` 2022-01-06 去掉文件后缀
+- `6df29966` 2022-01-06 修复删除时，活动名称显示不正确
+- `4cf680d3` 2022-01-06 新增痛点优化
+- `94a97dbd` 2022-01-06 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `62fbe7ec` 2022-01-11 fix 多语言补充
+- `d0fa9cb3` 2022-01-11 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `80f98761` 2022-01-11 FIX 接口返回值修复
+- `579490f4` 2022-01-11 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `ff13a6ad` 2022-01-12 fix 修复概述样式
+- `7139a5d1` 2022-01-12 FIX 修复活动描述图片未显示问题
+- `1ad2bcd2` 2022-01-12 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `59d92d7d` 2022-01-12 fix
+- `0139ed1e` 2022-01-12 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `536f4949` 2022-01-12 FIX 样式修改
+- `d6a0bc82` 2022-01-12 fix 样式
+- `299240f4` 2022-01-12 Merge branch 'dev-sly' into 'sprint-202112-1'
+- `94cf555e` 2022-01-12 Merge branch 'master' into 'sprint-202112-1'
+- `46d373d0` 2022-01-12 Sprint 202112 1
+- `467cb628` 2022-01-12 Merge branch 'sprint-202112-1' into 'master'
+- `fbb46abb` 2022-01-12 hash 值修改
+- `97c43da7` 2022-01-12 Merge branch 'dev-sly' into 'master'
+- `5dc40476` 2022-01-24 Sprint 202201 1
+- `87fb8548` 2022-01-24 HOTFIX 为Graph画布的编辑事件和取消编辑事件增加监听，控制按钮点击
+- `05f56b2d` 2022-01-24 Update HASH 为 "master"
+- `813cdad5` 2022-02-21 feat(#2234) 人工线下的活动中添加操作方式
+- `54e5d39c` 2022-02-21 Merge branch 'dev-sly' into 'master'
+- `380e52ad` 2022-02-22 fix 去除换行
+- `c206f805` 2022-02-22 Merge branch 'dev-sly' into 'master'
+- `878348a2` 2022-02-23 #2314 drawio中活动名称修改优化; #2315 drawio中删除活动，操作向下键页面锁死 fixed；
+- `43e83085` 2022-02-23 新增了CoopwireUtils.js
+- `45bbe191` 2022-02-23 忘了提交Coopwire.js
+- `afceef87` 2022-02-24 #2314 双击修改名称支持回车关闭
+- `18c1fb9f` 2022-03-01 #2314 解决一些双击修改名称的琐碎问题
+- `6fa04a7b` 2022-03-02 #2314 禁止活动cell直接编辑，只能编辑活动中的content cell内容
+- `27cb372c` 2022-03-03 #2316 #2320 #2405
+- `06d36be4` 2022-03-04 存逻辑&文案修改
+- `eb6edb15` 2022-03-04 #2320 #2323
+- `4dc0b421` 2022-03-04 #2322
+- `cc95e9dc` 2022-03-07 #2405 fix 在调整图形和流程数据中切换后，详情内容重复出现
+- `8512d17a` 2022-03-08 #2316 泳道内存在活动时不允许删除泳道 #2321 drawio活动移动优化
+- `5e18c75f` 2022-03-09 移动优化
+- `563c907d` 2022-03-09 解决活动code位置不正确问题
+- `6bd2d4dd` 2022-03-16 Merge branch 'dev-wkh' into 'master'
+- `6694c5c9` 2022-03-16 Merge branch 'dev-sly' into 'master'
+- `c2e0ab42` 2022-04-07 fix
+- `64d1b8f4` 2022-04-08 fix
+- `6a0351d8` 2022-04-08 fix
+- `a488bf26` 2022-04-08 fix
+- `ccd217ab` 2022-04-08 fix
+- `ac7d4350` 2022-04-09 添加附件功能
+- `6e407c71` 2022-04-11 fix
+- `f15632b6` 2022-04-11 handleEditGraphGeometry
+- `27468620` 2022-04-11 fix
+- `cd29f35a` 2022-04-11 fix
+- `1772740f` 2022-04-11 删除changeActSwimlane方法
+- `d0716d0d` 2022-04-11 fix
+- `564d4ed4` 2022-04-12 fix
+- `15731cb9` 2022-04-12 fix
+- `64abca43` 2022-04-12 pathCellsUiGeometry
+- `1a375737` 2022-04-12 fix
+- `f2a81688` 2022-04-12 fix
+- `e7e3a90b` 2022-04-12 修改
+- `e01b12ce` 2022-04-13 warningCommandInvalid
+- `a4131562` 2022-04-13 ui样式调整
+- `ac481744` 2022-04-13 fix
+- `650f7136` 2022-04-13 Merge branch 'dev-wkh-2529' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into dev-sly1
+- `ae12f129` 2022-04-13 graph.model
+- `d729bfc3` 2022-04-13 修改
+- `8602a870` 2022-04-13 ui样式
+- `532415e5` 2022-04-13 fix
+- `0bf444f3` 2022-04-14 ui相关
+- `2f0e86e1` 2022-04-14 Merge branch 'dev-sly-2470' into 'dev-2529-2470-2490-2500-2542'
+- `59b3fb3d` 2022-04-14 fix 交互优化
+- `d3dcdbdf` 2022-04-14 fix 流程交互
+- `1a47363f` 2022-04-15 custom link
+- `44db5181` 2022-04-15 fix
+- `214f2b70` 2022-04-15 fix
+- `2e5ffc1b` 2022-04-15  drawio中功能及交互优化
+- `ed7f7b61` 2022-04-15 点击穿透
+- `6de79ffe` 2022-04-17 fix
+- `73e58446` 2022-04-17 Merge branch 'dev-sly-2470' into dev-sly
+- `566142d4` 2022-04-17 Merge branch 'dev-sly-2490' into dev-sly
+- `90294a74` 2022-04-17 Merge branch 'dev-sly-2542' into dev-sly
+- `6630fdd3` 2022-04-17 fix
+- `4dd15fdf` 2022-04-18 fix
+- `9f172366` 2022-04-18 fix
+- `144468b1` 2022-04-18 fix
+- `24f5c8b5` 2022-04-18 活动右侧详情优化
+- `028ed383` 2022-04-18 fix
+- `17f2162c` 2022-04-18 fix
+- `5037c1ec` 2022-04-19 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `4caaa8d7` 2022-04-20 fix
+- `b7e52a57` 2022-04-25 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `4d1b450e` 2022-04-28 fix
+- `5ad22b4c` 2022-04-28 fix
+- `d7fce4a6` 2022-04-28 fix
+- `32f3930e` 2022-04-28 fix
+- `78d8f243` 2022-04-28 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `8d54e7a7` 2022-04-28 fix
+- `9970caf9` 2022-04-28 fix
+- `f6d937eb` 2022-04-28  # 流程图中部分活动修改了名称后，图中活动名称没有变化
+- `804a5d7d` 2022-04-28 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `6213f8e5` 2022-04-28 fix
+- `214d37c0` 2022-04-28 fix
+- `d8936cf9` 2022-04-28 清理无效注释
+- `f42d2f14` 2022-04-28 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `4baa8a57` 2022-04-28 updateCoopwireDoc
+- `a6837f36` 2022-04-28 fix
+- `d254575c` 2022-04-28 fix
+- `4357833b` 2022-04-28 fix
+- `484c74da` 2022-04-28 Merge branch 'dev-wkh' into 'master'
+- `ac5550fe` 2022-04-28 Merge branch 'dev-sly' into 'dev-2529-2470-2490-2500-2542'
+- `cd572119` 2022-04-28  # 修复实时附件实时更新问题
+- `d28ba753` 2022-04-28  #
+- `b3fe94dc` 2022-04-28 Merge branch 'master' into 'dev-sly-drawio'
+- `8e8e2fac` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `f78ffa74` 2022-04-28 fix
+- `6509139c` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `e298b381` 2022-04-28 fix 附件监听
+- `b28ffe89` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `f4466244` 2022-04-28 fix
+- `23c2bb44` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `7696a604` 2022-04-28 fix
+- `a336b33a` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `87bb32dd` 2022-04-28 fix
+- `492ca300` 2022-04-28 Merge branch 'dev-sly-drawio' into 'master'
+- `4d98acb5` 2022-04-29 fix
+- `367de5c1` 2022-04-29 fix
+- `2c5f720c` 2022-04-29 fix
+- `5bb61752` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `ce016a9b` 2022-04-29 fix
+- `adafd6e2` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `1755f4cd` 2022-04-29 fix
+- `5e6cc86e` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `431231a1` 2022-04-29 fix
+- `aef99522` 2022-04-29 fix
+- `fd62c712` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `072c8865` 2022-04-29 fix
+- `8695e6f1` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `85768783` 2022-04-29 fix
+- `2f9e18c5` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `7506aff7` 2022-04-29 fix
+- `1e44cdb0` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `4f17f50e` 2022-04-29 fix
+- `e3c1e941` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `9ce7ac60` 2022-04-29 fix 宽度调整
+- `4b97dc4e` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `dc62b1ce` 2022-04-29  # hotfix
+- `4fbd0e7c` 2022-04-29 fix
+- `37a142e1` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `7f83295e` 2022-04-29 fix
+- `0a17920a` 2022-04-29  hotfix
+- `c18b57b2` 2022-04-29 Merge branch 'dev-wkh-202203-hotfix' into 'master'
+- `f9bc64e1` 2022-04-29 fix
+- `522cdb00` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `4555b33a` 2022-04-29 样式问题
+- `0cc514e4` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `fb553038` 2022-04-29 fix 宽度
+- `18ca88c9` 2022-04-29 getDefinitionList
+- `a4c20dc7` 2022-04-29 fix
+- `5c6efd12` 2022-04-29 fix
+- `23e60aa2` 2022-04-29 fix
+- `cffa1f89` 2022-04-29 fix
+- `1038195a` 2022-04-29 fix
+- `d18e149e` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `ace80735` 2022-04-29 添加附件patch
+- `6bb62715` 2022-04-29 Merge branch 'dev-sly-drawio' into 'master'
+- `5e0f471f` 2022-04-29 hotfix
+- `3facf9c2` 2022-04-29 Merge branch 'dev-wkh-hotfix' into 'master'
+- `ca1fdd7f` 2022-05-01 fix 调整样式
+- `72e79343` 2022-05-02 update
+- `5f14980b` 2022-05-03 update
+- `847af2b9` 2022-05-04 update 更新
+- `bf2640aa` 2022-05-10 update 新增复制名称不需要加时间戳
+- `1fe129d3` 2022-05-10 update 侧边栏样式优化
+- `8d0853e1` 2022-05-11 update 侧边栏样式优化
+- `e41811e7` 2022-05-11 update 调整图形附件样式
+- `3213c845` 2022-05-11 fix 时间范围初始值调整
+- `ceacf40a` 2022-05-11 fix 修复调研人无法选中问题
+- `8253ccfe` 2022-05-11 Merge branch 'dev-sly-drawio' into 'master'
+- `5432d558` 2022-05-11 update 更改hash值
+- `3fc7a3d7` 2022-05-11 Merge branch 'dev-sly-drawio' into 'master'
+- `91905018` 2022-05-18 fix 修复因判断条件问题产生的已存在活动无法拖拽问题
+- `18e6ed1f` 2022-05-18 fix 解决因获取不到data-id接口调用错误无法删除问题
+- `a6ef0d14` 2022-05-18 fix 更改hash值
+- `ec9f2658` 2022-05-18 Merge branch 'dev-sly-drawio' into 'master'
+- `9ef05da9` 2022-05-27 style 样式修复
+- `1b257c1f` 2022-05-27 HASH
+- `fa9363a3` 2022-05-27 Merge branch 'dev-sly-drawio' into 'master'
+- `5ab85221` 2022-06-10 fix 处理需求调研字段变更
+- `911e3a71` 2022-06-13 fix 去重无用代码
+- `3b9d2197` 2022-06-13 fix 传递updateDrawio,参数
+- `a1a43aef` 2022-06-15 Merge branch 'dev-sly-drawio' into 'master'
+- `d518c653` 2022-06-15 fix 输出输出参数改变
+- `c7a8d43b` 2022-06-15 Merge branch 'dev-sly-drawio' into 'master'
+- `69b60227` 2022-06-15 fix 修复参数问题
+- `d737a4ff` 2022-06-15 Merge branch 'dev-sly-drawio' into 'master'
+- `7d704c92` 2022-06-16 update 更改hash值
+- `35033393` 2022-06-16 Merge branch 'dev-sly-drawio' into 'master'
+- `8d1dd83e` 2022-08-23 hotfix #3855
+- `521024cb` 2022-08-24 update
+- `f1b53f7b` 2022-08-24 Merge branch 'hotfix-sly-drawio' into 'master'
+- `e93a9861` 2022-09-08 #3832
+- `2c15ed83` 2022-09-13 #3866
+- `4d80566f` 2022-09-13 hash
+- `3eed6f11` 2022-09-13 Merge branch 'dev-0801-3866' into 'master'
+- `d2f8cb0a` 2022-10-24 #3866
+- `9ca4619a` 2022-10-24 #3865
+- `64ad8d0b` 2022-10-24 #4346
+- `22fb9113` 2022-10-24 Merge branch 'fix-pv/4346' into 'pv/2.6.b2-3'
+- `b1e95b93` 2022-10-24 Merge branch 'pv/2.6.b2-3' into 'master'
+- `f9eeb40d` 2022-10-25 #3865
+- `346994f0` 2022-10-25 Merge branch 'feat/3865' into 'master'
+- `86b52cf7` 2022-10-25 #3865
+- `e030a9a4` 2022-10-25 #3865
+- `4c2f62fb` 2022-10-25 #3865
+- `28c143cb` 2022-10-26 Merge branch 'pv/2.6.b3' into 'feat/3865'
+- `ebda989a` 2022-10-26 Merge branch 'feat/3865' into 'pv/2.6.b3'
+- `1b30c835` 2022-10-27 Merge branch 'pv/2.6.b3' into 'master'
+- `4b1483be` 2022-10-27 Merge branch 'master' into 'pv/2.6.b3'
+- `345842c1` 2022-10-27 111
+- `8ff8d7b5` 2022-10-27 1
+- `7800cf37` 2022-10-27 3444
+- `2a9fc562` 2022-10-27 Update EditorUi.js
+- `05d2ca88` 2022-10-27 #4027 修复活动名称input回车后刷新页面
+- `f270b853` 2022-10-27 Merge branch 'pv/2.6.b3' into 'master'
+- `c9e8c65f` 2022-10-31 Merge branch 'master' into 'fix/4027'
+- `d04b57b7` 2022-11-01 fix 测试修复bug
+- `93d97382` 2022-11-03 Merge branch 'master' into 'pv/2.6.b4'
+- `141f809f` 2022-11-03 Merge branch 'fix/4027' into 'pv/2.6.b4'
+- `22caef67` 2022-11-03 Merge branch 'pv/2.6.b4' into 'master'
+- `0069ec76` 2023-02-22 #3862 添加图形水印
+- `9f06edb5` 2023-02-22 HASH
+- `e76e9d12` 2023-02-22 #3862 横向泳道调整
+- `992a0542` 2023-02-22 #3862
+- `a3c33c32` 2023-02-22 #3862
+- `859e5b81` 2023-02-23 更新水印距离
+- `722262e0` 2023-02-23 调整水印渲染时间
+- `8fbeaecf` 2023-02-23 更改跨线的默认属性
+- `3938adbb` 2023-03-03 Merge branch 'pv/2.8.1' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/3862
+- `e29d3a78` 2023-03-03 Merge branch 'feat/3862' into 'pv/2.8.1'
+- `b4a72bf8` 2023-03-05 HASH去掉空格
+- `4d9c7a22` 2023-03-05 Merge branch 'feat/3862' into 'pv/2.8.1'
+- `e2572b0c` 2023-03-05 Merge branch 'pv/2.8.1' into 'master'
+- `dfd1d901` 2023-03-10 hotfix 更改drawio的link赋值逻辑
+- `cc9f7523` 2023-03-10 Merge branch 'feat/3862' into 'master'
+- `18abf3db` 2023-03-10 hotfix 修复link属性
+- `819b5a49` 2023-03-10 Merge branch 'feat/3862' into 'master'
+- `9986142d` 2023-03-31 fix 修复drawio渲染水印的问题
+- `009015a0` 2023-03-31 Merge branch 'dev-sly' into 'master'
+- `88942e34` 2023-04-06 fix 设置act-content不可移动
+- `92de4f8e` 2023-04-06 fix 防止图形重复更新
+- `fc544ad3` 2023-04-06 fix
+- `550deb23` 2023-04-06 Merge branch 'hotfix-sly-drawio' into 'pv/2.9.b1-3'
+- `08f29fb3` 2023-04-06 Merge branch 'pv/2.9.b1-3' into 'master'
+- `a18e9410` 2023-04-07 修改图形tip显示判断
+- `a0167dcf` 2023-04-07 fix
+- `02b086f9` 2023-04-07 fix
+- `bb67486b` 2023-04-07 Merge branch 'dev-sly' into 'pv/2.9.b1-4'
+- `43f2c83b` 2023-04-07 Update CoopwireUtils.js
+- `3aad35af` 2023-04-07 Update CoopwireUtils.js
+- `1bf0b2ee` 2023-04-07 Merge branch 'dev-sly' into 'pv/2.9.b1-4'
+- `653c4043` 2023-04-07 Merge branch 'pv/2.9.b1-4' into 'master'
+- `c5523b48` 2023-04-10 fix
+- `ff3237cb` 2023-04-10 Merge branch 'dev-sly' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into dev-sly
+- `2a71905f` 2023-04-10 11
+- `63d673c1` 2023-04-11 放开 ctrl+z 的功能
+- `27846ae4` 2023-04-17 #6095
+- `4cd80a10` 2023-04-17 #6088
+- `f823c772` 2023-04-19 Update Format.js
+- `f71a6e43` 2023-04-19 Merge branch 'feat/6088' into 'pv/2.9.b2-4'
+- `6cbcad4c` 2023-04-19 Merge branch 'pv/2.9.b2-4' into 'master'
+- `0dbe2642` 2023-04-23 Merge branch 'master' into 'feat/6095'
+- `97e16414` 2023-04-23 #6273
+- `b73615d7` 2023-04-24 Merge branch 'feat/6095' into 'pv/2.9.b3-3'
+- `04940b5b` 2023-04-24 Merge branch 'pv/2.9.b3-3' into 'master'
+- `08bb51f9` 2023-04-25 HOTFIX 修复因已存在的活动拖拽到流程图中引起的接口重复调用
+- `8d87b8c3` 2023-04-25 Merge branch 'hotfix-sly-drawio' into 'master'
+- `b04fba98` 2023-04-27 #6315文案修改
+- `96ee0061` 2023-04-27 Merge branch 'feat/6315' into 'pv/2.9.b3-6'
+- `fd9d7412` 2023-04-27 #6094
+- `b6dc5f31` 2023-04-27 Merge branch 'pv/2.9.b3-6' into 'master'
+- `d5f7cc7b` 2023-05-05 Merge branch 'feat/6273' into 'pv/2.9.b3-9'
+- `7b408494` 2023-05-05 Merge branch 'pv/2.9.b3-9' into 'master'
+- `5c097598` 2023-05-06 hotfix 修复内存泄漏
+- `9182ad2b` 2023-05-06 Merge branch 'hotfix-sly-drawio' into 'master'
+- `a29d58d9` 2023-05-06 hotfix 添加退出时手动保存
+- `31c723ba` 2023-05-06 hotfix 添加退出时手动保存
+- `7885441d` 2023-05-11 updateDrawio 置为true
+- `a52ab10f` 2023-05-11 updateDrawio 置为true
+- `644e359f` 2023-05-11 Merge branch 'hotfix-sly-drawio' into 'fix/6410'
+- `ce3c1f50` 2023-05-11 Merge branch 'master' into 'feat/6094'
+- `332256c4` 2023-05-11 Merge branch 'fix/6410' into 'feat/6094'
+- `6a1ddc08` 2023-05-11 Merge branch 'fix/6410' into 'pv/2.9.b3-14'
+- `6cfe24dc` 2023-05-11 #6094
+- `490517a3` 2023-05-11 Merge branch 'feat/6094' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/6094
+- `841e6756` 2023-05-11 Merge branch 'pv/2.9.b3-14' into 'master'
+- `e937f7e7` 2023-05-16 Merge branch 'feat/6094' into 'pv/2.9.b3-17'
+- `601cc839` 2023-05-16 Merge branch 'pv/2.9.b3-17' into 'master'
+- `77772443` 2023-05-17 #6489
+- `0a07e34d` 2023-05-17 #6396
+- `4c1dbab7` 2023-05-17 #6396-5
+- `dc37ba26` 2023-05-18 #6371-1
+- `f0810b3a` 2023-05-18 #6489
+- `3d42c04f` 2023-05-18 Merge branch 'fix/6396' into feat/6371
+- `fb19f1d3` 2023-05-18 Merge branch 'fix/6396' into fix/6489
+- `c03bbd49` 2023-05-18 #6489
+- `b98ce48e` 2023-05-18 Merge branch 'fix/6489' into 'pv/2.9.b3-19'
+- `7e9e4e23` 2023-05-18 Merge branch 'pv/2.9.b3-19' into 'master'
+- `31732367` 2023-05-19 hotfix tinymce相关的优化 1. 将tinymce的外链cdn改为本地静态资源文件 2. 调整tinymce的工具栏,隐藏掉部分工具栏,适应需求模块的导出功能
+- `40ab45fe` 2023-05-19 Merge branch 'hotfix-sly-drawio' into 'master'
+- `fc0d15a2` 2023-05-22 Merge branch 'master' into 'feat/6371'
+- `6d9758bf` 2023-05-23 test
+- `a866622f` 2023-05-23 #6371 操作方式点击清空按钮时触发事件
+- `239e4492` 2023-05-23 #6371 使用设备添加清空事件
+- `495a35b9` 2023-05-23 #6371 使用系统添加清空事件
+- `6931ce25` 2023-05-23 #6371 选择系统或者设备支持清空并添加清空事件
+- `8bc69aec` 2023-05-23 Merge branch 'feat/6371' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/6371
+- `09460f2f` 2023-05-23 #6371 流程图中泳道的名称期望只显示最后两级
+- `274ef555` 2023-05-24 #6371
+- `1c0850e7` 2023-05-24 #6371
+- `e48b02bd` 2023-05-24 #6371
+- `7e789c40` 2023-05-24 #6371
+- `5c0e3a99` 2023-05-24 #6371
+- `1dfdbc1a` 2023-05-24 #6371
+- `04e9ce83` 2023-05-24 #6371 修复水印不可点击
+- `dd4de250` 2023-05-24 #6371
+- `e80d7f1f` 2023-05-24 #6371
+- `a706a067` 2023-05-24 Merge branch 'feat/6371' into 'pv/2.9.b3-23'
+- `ae6a5125` 2023-05-24 Merge branch 'pv/2.9.b3-23' into 'master'
+- `40acde81` 2023-05-26 #6445-1;#6445-3
+- `60de2046` 2023-05-26 #6445 名称样式修改
+- `49d5807e` 2023-05-26 #6445 更改io cell
+- `27aebffd` 2023-05-26 #6445
+- `8171c389` 2023-05-26 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/6445
+- `a7990e87` 2023-05-29 #6445
+- `a82477ea` 2023-05-29 #6445
+- `22ac8d64` 2023-05-29 #6445
+- `468c8772` 2023-05-29 #6445
+- `64c2a400` 2023-05-29 #6445
+- `a72a8b9f` 2023-05-29 #6445
+- `f03ce9bd` 2023-05-29 #6445
+- `96792504` 2023-05-29 #6445
+- `f3a1d6ef` 2023-05-29 #6445
+- `f28987c2` 2023-05-30 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into hotfix-sly-drawio
+- `5b6f1f67` 2023-05-30 HOTFIX 做样式区分,修复需求调研模块样式污染其他模块
+- `df79c4d0` 2023-05-30 Merge branch 'hotfix-sly-drawio' into 'master'
+- `df065035` 2023-05-30 HOTFIX 做样式区分,修复需求调研模块样式污染其他模块
+- `89fcc9ee` 2023-05-30 Merge branch 'hotfix-sly-drawio' into 'master'
+- `898868aa` 2023-05-30 6445
+- `e542f9fe` 2023-05-30 Merge branch 'feat/6445' into 'pv/2.9.b3-27'
+- `0eb8a7b8` 2023-05-30 Merge branch 'pv/2.9.b3-27' into 'master'
+- `49bdc408` 2023-06-27 #6099
+- `9ccb4c4e` 2023-06-27 #6099
+- `5839aedb` 2023-06-27 #6099
+- `6d338ed6` 2023-06-27 #6099-patch
+- `4299ef19` 2023-06-27 6099-patch
+- `8cfa8e8f` 2023-06-27 6099-patch
+- `26c83fb6` 2023-06-27 6099-patch
+- `c011864d` 2023-06-27 6099
+- `199e500e` 2023-06-27 6099
+- `e78416aa` 2023-06-27 6099
+- `586d27d7` 2023-06-27 6099
+- `f72d7add` 2023-06-27 6099
+- `7d384ffb` 2023-06-27 6099
+- `834e167f` 2023-06-27 6099
+- `3e7c0d66` 2023-06-27 6099
+- `a55a2fef` 2023-06-27 6099
+- `39fc088e` 2023-06-27 6099
+- `b6b4c83f` 2023-06-27 6099
+- `4cf10c52` 2023-06-27 6009
+- `1deece4c` 2023-06-27 6099
+- `cc3667ea` 2023-06-27 6099
+- `a32bf4a4` 2023-06-28 6099-样式调整
+- `43dece11` 2023-06-28 6099 移位
+- `da202d2b` 2023-06-28 6099
+- `3e7a1d38` 2023-06-28 6099-样式
+- `2f7571ce` 2023-06-28 6099
+- `5f1aeed5` 2023-06-28 6099
+- `d2c9ff2c` 2023-06-28 6099
+- `2bdb809a` 2023-06-28 6099
+- `2661da0c` 2023-06-28 6099
+- `732cd880` 2023-06-28 6099
+- `62b4f1b9` 2023-06-28 6099
+- `2c35cd8b` 2023-06-28 #6099
+- `0aa9e72b` 2023-06-28 6099行内编辑
+- `f4258667` 2023-06-28 6099
+- `21248680` 2023-06-28 6099 行内编辑
+- `9f516e3a` 2023-06-28 6099
+- `d686a6d9` 2023-06-28 6099
+- `455c3c66` 2023-06-28 #6099
+- `dee4063d` 2023-06-28 6099
+- `3a6a30dc` 2023-06-28 6099
+- `24f6a6c3` 2023-06-29 6099
+- `0383d316` 2023-06-29 #6099
+- `6955282a` 2023-06-29 6099-
+- `5d60bba5` 2023-06-29 6099
+- `8b0b7973` 2023-06-29 6099
+- `49886735` 2023-06-29 6099 旧图
+- `2c5bb3ca` 2023-06-29 #6099
+- `1b232c8f` 2023-06-29 6099
+- `39339e06` 2023-06-29 6099
+- `eae96ea8` 2023-06-29 6099
+- `be9f9aec` 2023-06-29 6099
+- `f8c41c7e` 2023-06-29 6099
+- `e84e2f74` 2023-06-29 6099-组织结构
+- `e4341cc5` 2023-06-29 #6099
+- `b9d4125d` 2023-06-29 #6099
+- `5a3d5597` 2023-06-29 6099
+- `bfb7884a` 2023-06-29 6099
+- `f9ad193b` 2023-06-29 6099
+- `bbcbf1ac` 2023-06-29 Merge branch 'feat/6099' into 'pv/2.9.b3-41'
+- `2750c304` 2023-06-29 Merge branch 'pv/2.9.b3-41' into 'master'
+- `3fb3ebf2` 2023-06-29 hotfix-6099
+- `ca53d016` 2023-06-29 Merge branch 'feat/6099' into 'master'
+- `56b40049` 2023-06-29 6099
+- `28cbcfa1` 2023-06-29 6099
+- `fa168077` 2023-06-29 6099
+- `fd76d373` 2023-06-29 Merge branch 'feat/6099' into 'master'
+- `4a3517fc` 2023-06-29 6099
+- `b4d7de4f` 2023-06-29 Merge branch 'feat/6099' into 'master'
+- `00efac1f` 2023-06-30 6099
+- `2035676d` 2023-06-30 6099
+- `f68f8b3d` 2023-06-30 6099
+- `53299d5e` 2023-06-30 6099
+- `4a0d9b26` 2023-06-30 6099
+- `55d42a61` 2023-06-30 6099
+- `37f5a0ff` 2023-06-30 6099
+- `4225b33f` 2023-06-30 6794
+- `aa242aba` 2023-06-30 6794
+- `7a52660a` 2023-06-30 双击编辑
+- `1f8e3317` 2023-06-30 6099
+- `c6f2db88` 2023-06-30 6099
+- `4d4f0bc9` 2023-06-30 6099
+- `159f8d28` 2023-06-30 6099
+- `78c1d678` 2023-06-30 6099
+- `96838ac0` 2023-06-30 6099
+- `6060d012` 2023-06-30 Merge branch 'feat/6099' into 'feat/6794'
+- `17e51179` 2023-06-30 Merge branch 'feat/6794' into 'pv/2.9.b3-42'
+- `64c93fc9` 2023-07-01 hotfix
+- `e9ddfaec` 2023-07-01 hotifx
+- `78c6a940` 2023-07-02 hotfix
+- `d54f0b7f` 2023-07-02 hotfix
+- `7b81eca4` 2023-07-02 hotfix
+- `aab97b1b` 2023-07-02 hotfix
+- `3af24483` 2023-07-02 Merge branch 'pv/2.9.b3-42' into 'master'
+- `c06e23ba` 2023-07-02 Merge branch 'feat/6099' into 'master'
+- `d6e01c67` 2023-07-03 hotfix 重新设置图形数据
+- `0a2eaaa8` 2023-07-03 Merge branch 'feat/6099' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/6099
+- `84870bd5` 2023-07-03 hotfix 调整图形数据
+- `34845fbe` 2023-07-03 hotfix
+- `01e20a91` 2023-07-03 hotfix
+- `5681a984` 2023-07-03 hotfix
+- `adce8c36` 2023-07-03 Merge branch 'feat/6099' into 'master'
+- `cde34cc7` 2023-07-03 hotfix
+- `4537be20` 2023-07-03 Merge branch 'feat/6099' into 'pv/2.9.b3-43'
+- `64086eb6` 2023-07-03 Merge branch 'pv/2.9.b3-43' into 'master'
+- `928dc98c` 2023-07-04 hotfix
+- `3c7f1ad7` 2023-07-04 hotfix
+- `ff4821c9` 2023-07-04 hotfix
+- `57f94313` 2023-07-04 Merge branch 'feat/6099' into hotfix-sly-drawio
+- `2db46d2f` 2023-07-04 hotfix 更改选中时选中框的样式
+- `91389a3a` 2023-07-04 Merge branch 'hotfix-sly-drawio' into 'master'
+- `dea75902` 2023-07-05 hotfix 修复复制泳道出现的样式问题
+- `981d7477` 2023-07-05 Merge branch 'hotfix-sly-drawio' into 'master'
+- `b640800c` 2023-07-27 hotfix
+- `9d3c4cbe` 2023-07-27 hotfix
+- `c4171047` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `38fee53e` 2023-07-27 hotfix
+- `1c58a225` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `5b2f6a48` 2023-07-27 hotfix
+- `51159a66` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `89eaee9e` 2023-07-27 hotfix
+- `a3db0cfb` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `d7fcc1ce` 2023-07-27 hotfix
+- `54483b45` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `c160ad24` 2023-07-27 hotfix 去除组织架构中不可见字符
+- `9df50d33` 2023-07-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `1a258f5a` 2023-07-31 hotfix 修复eadgelabel影响拖动的问题
+- `b998af56` 2023-07-31 Merge branch 'hotfix-sly-drawio' into 'master'
+- `693032f6` 2023-07-31 hotfix 修复eadgelabel影响拖动的问题
+- `8bcd3f5f` 2023-07-31 Merge branch 'hotfix-sly-drawio' into 'master'
+- `3aa48b30` 2023-07-31  hotfix 修复eadgelabel影响拖动的问题
+- `17d54cdd` 2023-07-31  hotfix 修复eadgelabel影响拖动的问题
+- `d72618f3` 2023-07-31 Merge branch 'hotfix-sly-drawio' into 'master'
+- `78d06e74` 2023-07-31 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into hotfix-sly-drawio
+- `91984bba` 2023-07-31 feat/6920
+- `087a2c78` 2023-07-31 hotfix 修复横向水印删除失败的问题
+- `75a1b3e7` 2023-07-31 Merge branch 'hotfix-sly-drawio' into 'master'
+- `ba02cef2` 2023-08-01 Merge branch 'master' into 'feat/6920'
+- `0549a979` 2023-08-01 6920
+- `1a698cbd` 2023-08-01 Merge branch 'feat/6920' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/6920
+- `09477f13` 2023-08-01 6920
+- `9fbe83b7` 2023-08-01 #6920
+- `dc90208c` 2023-08-01 #6920
+- `61d05163` 2023-08-01 Merge branch 'feat/6920' into 'pv/2.9.b3-55'
+- `b8ca56f0` 2023-08-01 Merge branch 'pv/2.9.b3-55' into 'master'
+- `67f859f7` 2023-08-02 #6920
+- `fb7e1e4c` 2023-08-02 #6920
+- `e5d12356` 2023-08-02 #6920 添加catch捕获
+- `2ed183bf` 2023-08-02 #6920
+- `842fb483` 2023-08-02 #6920
+- `62725081` 2023-08-02 Merge branch 'feat/6920' into 'master'
+- `29aca065` 2023-08-03 #6920
+- `da573d05` 2023-08-03 #6920
+- `ef85885b` 2023-08-03 hotfix 修复泳道图添加cflowchart=1标识造成不可拖拽的问题
+- `648050fb` 2023-08-03 Merge branch 'feat/6920' into 'master'
+- `f78a7be8` 2023-08-03 更改HASH值
+- `80c9ee66` 2023-08-03 Merge branch 'feat/6920' into 'master'
+- `fcdce538` 2023-10-17 7559
+- `9c1a5697` 2023-10-17 #feat/6554 把里面的“系统”文字改成“应用”
+- `8ae2a46a` 2023-10-17 Merge branch 'fix/7559' into 'master'
+- `58904555` 2023-10-18 #feat/6554 选择应用下拉框增加应用选项
+- `4e740940` 2023-10-20 7559
+- `3c120961` 2023-10-20 7559
+- `390f4a7a` 2023-10-20 7559
+- `cf77d815` 2023-10-20 7559
+- `4e86aabb` 2023-10-20 7559
+- `6e0c933e` 2023-10-20 7559
+- `e64cd030` 2023-10-20 7559
+- `bf48b78a` 2023-10-20 7559
+- `fe7e9dae` 2023-10-20 7559
+- `2232ad61` 2023-10-20 33
+- `0860bb13` 2023-10-20 7559
+- `04e92d44` 2023-10-20 7559
+- `8eb4bfb8` 2023-10-20 7559
+- `9342d049` 2023-10-22 Merge branch 'feat/6554' into 'pv/2.9.b5-5'
+- `e54b7215` 2023-10-22 Merge branch 'pv/2.9.b5-5' into 'master'
+- `b808e7a2` 2023-10-23 554
+- `fd92843e` 2023-10-23 756556
+- `e6c7851e` 2023-10-23 677878
+- `2391f039` 2023-10-23 用于
+- `81e567c0` 2023-10-23 454
+- `deee83e6` 2023-10-30 测试
+- `fa76f131` 2023-10-30 Merge branch 'hotfix-test' into 'master'
+- `44f1fd63` 2023-10-30 hotfix
+- `89a8a1c2` 2023-10-30 merge
+- `84aa755e` 2023-10-30 Merge branch 'hotfix-test' into 'master'
+- `03ebfb98` 2023-11-03 7807
+- `30b36926` 2023-11-03 7807
+- `a2c36ef0` 2023-11-06 Merge branch 'feat/7807' into 'pv/2.9.b5-16'
+- `e240a971` 2023-11-06 Merge branch 'pv/2.9.b5-16' into 'master'
+- `07f4b554` 2023-11-07 文案修改
+- `db590196` 2023-11-07 禁止活动底部点击选中
+- `4a0f2137` 2023-11-07 parallel可更改大小
+- `b5d8df3f` 2023-11-07 7758
+- `747f9e83` 2023-11-08 7758
+- `687a1d14` 2023-11-08 Merge branch 'fix/7758' into 'pv/2.9.b5-18'
+- `999d4712` 2023-11-08 Merge branch 'pv/2.9.b5-18' into 'master'
+- `c1bcb207` 2023-11-09 7862
+- `8b4e0042` 2023-11-13 Merge branch 'master' into 'fix/7862'
+- `c59b7485` 2023-11-14 7968
+- `15b6ab92` 2023-11-14 test
+- `b4e69ad9` 2023-11-14 hotfix 去掉文字图形不可点击的逻辑
+- `56f3fadb` 2023-11-14 hotfix 设置水印不可点击
+- `8e077615` 2023-11-14 hotfix
+- `51393f2d` 2023-11-14 hotfix 禁止在除了线段边缘处建立text图形
+- `9befecf6` 2023-11-15 7968
+- `48a3b847` 2023-11-15 7971
+- `d6bc6216` 2023-11-15 7971
+- `ff26f7cc` 2023-11-15 Merge branch 'fix/7971' into 'pv/2.9.b5-23'
+- `102ab54b` 2023-11-15 HOTFIX
+- `c1147f3e` 2023-11-15 Merge branch 'feat/7968' into 'pv/2.9.b5-23'
+- `e2b151c7` 2023-11-15 Merge branch 'hotfix-test' into 'pv/2.9.b5-23'
+- `dfe26fa8` 2023-11-15 Merge branch 'pv/2.9.b5-23' into 'master'
+- `8aea908e` 2023-11-20 8027
+- `cec4aa4e` 2023-11-20 Merge branch 'feat/8027' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8027
+- `beb2ebd4` 2023-11-20 8027
+- `2cc1f4de` 2023-11-21 7759
+- `144f7a6a` 2023-11-22 8026
+- `ce660603` 2023-11-22 8026
+- `60e387de` 2023-11-22 8026
+- `d269a56a` 2023-11-22 8026
+- `fa3361ef` 2023-11-22 HOTFIX 修复活动名称更改的时候,活动属性名不会跟着改变的问题
+- `da32ffa2` 2023-11-22 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into hotfix-test
+- `c7acdb65` 2023-11-22 Merge branch 'hotfix-test' into 'master'
+- `0fa0476c` 2023-11-23 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8026
+- `af9e0d80` 2023-11-23 7759
+- `5547ce84` 2023-11-23 7759
+- `83464110` 2023-11-23 8027
+- `50c59808` 2023-11-23 8027
+- `b869d545` 2023-11-23 8026
+- `fa2d2089` 2023-11-23 8026
+- `b73bbba5` 2023-11-23 8027
+- `e4a4c762` 2023-11-23 8026
+- `db112382` 2023-11-23 8026
+- `1d1c4a63` 2023-11-23 8026
+- `e1fa8c5d` 2023-11-23 8026
+- `0e345a4a` 2023-11-23 8026
+- `26baeb99` 2023-11-23 Merge branch 'feat/7759' into 'pv/2.9.b5-28'
+- `a55e3eec` 2023-11-23 Merge branch 'feat/8027' into 'pv/2.9.b5-28'
+- `f685f8e8` 2023-11-23 Merge branch 'pv/2.9.b5-28' into 'master'
+- `625a90de` 2023-11-23 hotfix
+- `7c611bde` 2023-11-23 Merge branch 'hotfix-11-23' into 'master'
+- `ecd9f59f` 2023-11-23 hotfix
+- `3881cf6e` 2023-11-23 Merge branch 'hotfix-11-23' into 'master'
+- `21087ff7` 2023-11-23 hotfix
+- `614b1a26` 2023-11-23 Merge branch 'hotfix-11-23' into 'master'
+- `37b9442f` 2023-11-24 Merge branch 'feat/8026' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8026
+- `f5fb83a4` 2023-11-27 8026
+- `2244cdfd` 2023-11-27 6799
+- `f454e6ee` 2023-11-27 6799
+- `ae47279f` 2023-11-28 6799
+- `b4449445` 2023-11-29 Merge branch 'feat/6799' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8026
+- `7a2c0ff6` 2023-11-29 7018
+- `1942a4f2` 2023-11-29 hotfix
+- `514ef70d` 2023-11-29 hotfix
+- `1e80b713` 2023-11-29 hotfix
+- `feea5bfc` 2023-11-29 hotfix
+- `b9d223f6` 2023-11-29 hotfix
+- `3c23d1c1` 2023-11-29 Merge branch 'hotfix-test' into 'pv/2.9.b5-31'
+- `d9aac30e` 2023-11-29 Merge branch 'pv/2.9.b5-31' into 'master'
+- `b0220de7` 2023-11-30 8026
+- `93703b4e` 2023-11-30 8026
+- `764be74b` 2023-11-30 8026
+- `08f7f159` 2023-11-30 8026
+- `a6de22e0` 2023-11-30 6799
+- `067bb78f` 2023-11-30 Merge branch 'feat/8026' into 'pv/2.9.b5-32'
+- `80befb34` 2023-11-30 Merge branch 'feat/8026' into 'pv/2.9.b5-31'
+- `b15cb931` 2023-11-30 6799
+- `0a1ee69b` 2023-11-30 6799
+- `106baee0` 2023-11-30 Merge branch 'feat/6799' into 'pv/2.9.b5-32'
+- `8f19a9e2` 2023-11-30 6799
+- `41436c7a` 2023-11-30 Merge branch 'feat/6799' into 'pv/2.9.b5-32'
+- `70b6c19b` 2023-11-30 Merge branch 'pv/2.9.b5-32' into 'master'
+- `c1aca3a0` 2023-12-07 Merge branch 'master' into 'feat/7018'
+- `73439e22` 2023-12-10 Merge branch 'feat/7018' into 'pv/2.9.b5-38'
+- `5ca61b7c` 2023-12-10 Merge branch 'pv/2.9.b5-38' into 'master'
+- `daade7ba` 2023-12-11 新增图形 ProcessBarAndLine
+- `1beb01e3` 2023-12-11 Merge branch 'master' into 'hotfix-test'
+- `960fd450` 2023-12-11 新增图形 ProcessBarAndLine
+- `a87ee627` 2023-12-11 Merge branch 'hotfix-test' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into hotfix-test
+- `f182e57e` 2023-12-11 Merge branch 'hotfix-test' into 'master'
+- `5d96520d` 2023-12-12 修改模板
+- `9d870448` 2023-12-12 修改模板
+- `9ff5e94a` 2023-12-12 修改模板
+- `92dcca5d` 2023-12-12 Merge branch 'hotfix-test' into 'master'
+- `e6f03641` 2023-12-13 #8370-2
+- `bd33b1ad` 2023-12-13 #8370-2
+- `e583b3ba` 2023-12-13  #8370-2
+- `dc05f8e7` 2023-12-13 8370-1
+- `97eae16d` 2023-12-13 8370-2
+- `962aa3ea` 2023-12-13 8370-1
+- `37c47917` 2023-12-13 8370-1
+- `dd795616` 2023-12-13  #8336: 8370实现8336的功能
+- `4d9426e4` 2023-12-13 hotfix  修复报错问题
+- `d431f220` 2023-12-14 2323
+- `bd146936` 2023-12-14 8384
+- `1d04172a` 2023-12-14 8384
+- `c278f233` 2023-12-14 8384
+- `5cc694e9` 2023-12-14 8370
+- `a9478ced` 2023-12-14 8384
+- `55cdc06f` 2023-12-14 8384
+- `74b98748` 2023-12-14 Merge branch 'hotfix-test' into 'pv/2.9.b5-42'
+- `9aba1244` 2023-12-14 8336 原生表现 ctrl+回车是复制操作  直接禁用
+- `f9f0c405` 2023-12-14 hotfix 修复hoverIconClick的点击报错
+- `eedf0f7a` 2023-12-14 Merge branch 'hotfix-test' into 'pv/2.9.b5-42'
+- `3fef342e` 2023-12-14 Merge branch 'fix/8384' into 'pv/2.9.b5-42'
+- `44f27c8d` 2023-12-14 Merge branch 'fix/8370' into 'pv/2.9.b5-42'
+- `3492b1ee` 2023-12-14 hotfix
+- `267d99fc` 2023-12-14 yty
+- `51ae13ee` 2023-12-14 Merge branch 'pv/2.9.b5-42' into 'master'
+- `ddd671d5` 2023-12-18 #8389
+- `ee075d82` 2023-12-18 8395
+- `fb6e2b38` 2023-12-19 #8395
+- `c492cc76` 2023-12-19 #8404 接口对接类型的活动最大显示4个字
+- `74a2f544` 2023-12-19 #8461
+- `e55b85f7` 2023-12-19 8404
+- `f6e90b5a` 2023-12-19 8404
+- `d61081dd` 2023-12-19 8451
+- `bddfed5a` 2023-12-19 8451
+- `e8f3eaed` 2023-12-19 #8452
+- `b3b47056` 2023-12-19 #8452
+- `3f0cd9f4` 2023-12-19 Merge branch 'fix/8404' into 'pv/2.9.b5-45'
+- `ec64654e` 2023-12-19 Merge branch 'feat/8389' into 'pv/2.9.b5-45'
+- `6ac55b8f` 2023-12-19 Merge branch 'fear/8395' into 'pv/2.9.b5-45'
+- `7d02bfcc` 2023-12-19 Merge branch 'fix/8461' into 'pv/2.9.b5-45'
+- `8e2b626a` 2023-12-19 Merge branch 'pv/2.9.b5-45' into 'master'
+- `e77d5560` 2023-12-21 8451
+- `67ec43f6` 2023-12-21 Merge branch 'master' into 'fix/8451'
+- `ca4c2474` 2023-12-21 8415
+- `99e84a1e` 2023-12-21 8415
+- `37fea26b` 2023-12-21 8415
+- `d0e7bf9f` 2023-12-21 8415
+- `71e722e1` 2023-12-21 8412
+- `41b18e29` 2023-12-22 8264
+- `7b9185ff` 2023-12-22 8264
+- `22a3f5c3` 2023-12-22 Merge branch 'fix/8412' into 'pv/2.9.b5-48'
+- `228a5705` 2023-12-22 Merge branch 'fix/8452' into 'pv/2.9.b5-48'
+- `b4bc45f4` 2023-12-22 Merge branch 'feat/8415' into 'pv/2.9.b5-48'
+- `7e47befb` 2023-12-24 Merge branch 'pv/2.9.b5-48' into 'master'
+- `aceef760` 2023-12-25 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8264
+- `75141161` 2023-12-25 #8264
+- `fd9b06d6` 2023-12-25 8264 patch
+- `7d0def48` 2023-12-25 8264
+- `1fba21b7` 2023-12-25 Merge branch 'feat/8264' into 'pv/2.9.b5-49'
+- `2f261d83` 2023-12-25 Merge branch 'pv/2.9.b5-49' into 'master'
+- `6d840b9b` 2023-12-25 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8026
+- `0ace8000` 2023-12-25 hotfix
+- `9225f3d0` 2023-12-25 Merge branch 'feat/8026' into 'master'
+- `293ccfec` 2023-12-25 Merge branch 'master' into 'pv/2.9.b5-49'
+- `2a5be3f5` 2023-12-26 feat 创建图形交互按钮
+- `b5adfd11` 2023-12-26 hotfix 调整高亮活动类型的交互
+- `78b24d7a` 2023-12-26 hotfix 调整按钮的样式
+- `cbc1a209` 2023-12-26 222
+- `bc03da7b` 2023-12-26 Merge branch 'hotfix-12-26' into 'master'
+- `adb8928f` 2023-12-27 8264
+- `1ebcdbc7` 2023-12-27 8264
+- `37ed8127` 2023-12-27 Merge branch 'feat/8264' into 'master'
+- `28cdfaea` 2023-12-27 hotfix 1.禁用活动的content图形旋转的功能 2.调整刷新序号按钮的大小,和其他按钮保持一致
+- `9de8886b` 2023-12-27 hotfix 更改高亮活动下拉框的布局和样式
+- `ba5ceb4d` 2023-12-27 hotfix patch 处理旧图的content可以旋转的问题
+- `6b9531ab` 2023-12-27 Merge branch 'master' into 'hotfix-test'
+- `f21866db` 2023-12-27 Merge branch 'hotfix-12_27' into 'master'
+- `4e5ad2de` 2023-12-28 hotfix 调整侧边栏的图形展示大小
+- `6d7addd3` 2023-12-28 mouseMove
+- `20aa6a6a` 2023-12-28 45556
+- `0a9ec4f4` 2023-12-28 233
+- `058cfc04` 2023-12-28 8584
+- `f9ce1a78` 2023-12-28 8602
+- `161e2fbb` 2023-12-28 8602
+- `24398da9` 2023-12-28 8602
+- `904b3152` 2023-12-28 8602
+- `903a46b0` 2023-12-28 8602
+- `3f20d9a4` 2023-12-28 8602
+- `162290ea` 2023-12-28 8602
+- `3ee85bfa` 2023-12-28 Merge branch 'fix/8584' into 'pv/2.9.b5-52'
+- `f39cc7cf` 2023-12-28 Merge branch 'fix/8602' into 'pv/2.9.b5-52'
+- `713985aa` 2023-12-28 Merge branch 'pv/2.9.b5-52' into 'master'
+- `f4fb0e8b` 2023-12-29 8410
+- `15d5332f` 2023-12-29 8410
+- `14e241b3` 2023-12-29 8410
+- `8146cee3` 2023-12-29 8410
+- `537c73fe` 2023-12-29 8410
+- `f8dd953e` 2023-12-29 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/8410
+- `1d2cb4da` 2023-12-29 hotfix 先修复新增活动名称undefined的问题
+- `4b3f481e` 2023-12-29 hotfix 修复新增活动时活动名称报错的问题
+- `b2789555` 2023-12-29 Revert "hotfix 先修复新增活动名称undefined的问题"
+- `680ac1bd` 2023-12-29 Merge branch 'revert-1d2cb4da' into 'master'
+- `c88b433b` 2023-12-29 Merge branch 'hotfix-12/29' into 'master'
+- `01bc5fe0` 2023-12-29 8410
+- `dc1710be` 2023-12-29 8410
+- `24d7f76a` 2023-12-29 8530
+- `95024855` 2024-01-03 8410-t
+- `c3cf8292` 2024-01-03 8410
+- `5fbe7dd9` 2024-01-03 8410
+- `cebdf713` 2024-01-03 #8476
+- `d38f7c8b` 2024-01-03 8476
+- `34ff5ebd` 2024-01-03 #8476 调整编辑逻辑
+- `b6261bc9` 2024-01-04 8476
+- `eaaf18c3` 2024-01-04 #8476
+- `f1b97cd6` 2024-01-04 #8190-2
+- `37fef3f4` 2024-01-04 #8190-3
+- `c6606c19` 2024-01-04 #8190-6
+- `9f3f5e8c` 2024-01-04 8190
+- `e5d3fc45` 2024-01-05 temp
+- `72a00212` 2024-01-05 Merge branch 'master' into 'feat/8410'
+- `7eb69db1` 2024-01-05 #8530
+- `109ef8f9` 2024-01-05 222
+- `195a1022` 2024-01-05 reerr
+- `a75c6341` 2024-01-05 Update CoopwireUtils.js
+- `51978a7d` 2024-01-05 345
+- `16de226c` 2024-01-05 656
+- `73cf9aa7` 2024-01-05 344
+- `d4c0033f` 2024-01-05 434
+- `fdb0f82b` 2024-01-05 656
+- `9b21ff26` 2024-01-05 4545
+- `4e99cb8e` 2024-01-05 8476
+- `4fe36d18` 2024-01-05 8476
+- `bff25c66` 2024-01-05 Merge branch 'feat/8476' into 'pv/2.9.b5-55'
+- `b5df90fc` 2024-01-05 Merge branch 'feat/8410' into 'pv/2.9.b5-55'
+- `5bffad1b` 2024-01-05 Merge branch 'hotfix-test' into 'pv/2.9.b5-55'
+- `f9730feb` 2024-01-05 5456546
+- `c5f2b808` 2024-01-05 8530
+- `e798db95` 2024-01-05 333
+- `010d6879` 2024-01-05 45466
+- `9336835c` 2024-01-05 rtry
+- `ee8a5252` 2024-01-05 66666
+- `70c96ac8` 2024-01-05 Merge branch 'feat/8530' into 'pv/2.9.b5-55'
+- `dbf0b0c1` 2024-01-07 Merge branch 'fix/8190' into 'pv/2.9.b5-55'
+- `de052229` 2024-01-07 Merge branch 'pv/2.9.b5-55' into 'master'
+- `f20041a4` 2024-01-08 水印
+- `b881f9ba` 2024-01-08 900
+- `7386924f` 2024-01-08 e
+- `2f23ee4e` 2024-01-08 3434
+- `4a06329b` 2024-01-08 56
+- `82551f7e` 2024-01-08 6767
+- `7f138112` 2024-01-08 5656
+- `eab9d3cb` 2024-01-08 trt
+- `151d8053` 2024-01-08 7678
+- `e036c28d` 2024-01-08 45656
+- `8b768304` 2024-01-08 2323
+- `20f8e53c` 2024-01-08 5454
+- `ccf390cb` 2024-01-08 54656
+- `7bcfb941` 2024-01-08 5656
+- `89dd9ae9` 2024-01-08 6767
+- `4651bbcd` 2024-01-08 hotfix 修复bar group宽度叠加的问题
+- `ff0d0886` 2024-01-08 1/8
+- `a78f76d9` 2024-01-08 Merge branch 'hotfix-1/8' into 'pv/2.9.b5-56'
+- `3c83ac5f` 2024-01-08 8627
+- `62fbac14` 2024-01-08 8627
+- `347b7495` 2024-01-08 8627
+- `d4dd2e97` 2024-01-08 Merge branch 'pv/2.9.b5-56' into 'master'
+- `de1e31c5` 2024-01-11 hotfix 修复图形拖拽组元素范围成为组元素子元素的问题 禁止向组元素中添加任何元素
+- `bb3cec97` 2024-01-11 hotfix 修复组的方向
+- `267993fd` 2024-01-11 Merge branch 'hotfix-1/11' into 'master'
+- `6c283dde` 2024-01-11 hotfix 确保actType有值之后再去设置活动的链接
+- `214132c4` 2024-01-11 hotfix 修复活动放置在组上面出现的问题
+- `345d9bcb` 2024-01-17 Merge branch 'feat/8627' into 'pv/2.9.b5-63'
+- `346bd652` 2024-01-17 Merge branch 'pv/2.9.b5-63' into 'master'
+- `ab2ed470` 2024-01-19 hotfix
+- `ebad3dea` 2024-01-22 hotfrix 修改进度图形的组合逻辑
+- `d97b9c3a` 2024-01-22 hotfix
+- `2940de0f` 2024-01-22 hotfix
+- `103071e2` 2024-01-22 hotfix
+- `85a17d79` 2024-01-22 hotfix
+- `d74ac2fd` 2024-01-22 hotfix
+- `399fd05d` 2024-01-22 hotfix
+- `f3e6d502` 2024-01-22 hotfix
+- `1160d787` 2024-01-22 hotfix
+- `178b73ea` 2024-01-22 Merge branch 'hotfix-sly' into 'master'
+- `2af663bb` 2024-01-25 8874
+- `bc5bd8f4` 2024-01-25 8874
+- `a2e8270a` 2024-01-31 8946
+- `89532462` 2024-02-02 Merge branch 'master' into 'hotfix-1/19'
+- `b945b547` 2024-02-02 Merge branch 'hotfix-1/19' into 'pv/2.9.b5-72'
+- `29efc732` 2024-02-04 Merge branch 'pv/2.9.b5-72' into 'master'
+- `2cb7ead1` 2024-02-05 8874
+- `6b7ab3f0` 2024-02-05 Merge branch 'feat/8874' into 'pv/2.9.b5-73'
+- `c5bc1fbf` 2024-02-05 Merge branch 'pv/2.9.b5-73' into 'master'
+- `10117d51` 2024-02-20 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into hotfix-test
+- `bb8f2ec3` 2024-02-20 hotfix 修复流程图名称有非法字符解析出错的问题
+- `0e188781` 2024-02-20 Merge branch 'hotfix-test' into 'master'
+- `52d44edc` 2024-02-20 hotfix
+- `0bc14fbb` 2024-02-20 Merge branch 'hotfix-sly' into 'master'
+- `37ba06ab` 2024-02-27 hotfix 调整工作汇报drawio导出时的缩放比例
+- `07c85511` 2024-02-27 9099
+- `7808c49c` 2024-02-27 9099
+- `cc80abb3` 2024-02-29 Merge branch 'fix/9099' into 'pv/2.9.b6-4'
+- `ec2868cf` 2024-02-29 Merge branch 'pv/2.9.b6-4' into 'master'
+- `92bd85f0` 2024-03-01 9080 尺寸支持首选项
+- `e53541fe` 2024-03-01 9080
+- `3e025323` 2024-03-01 9080
+- `babbf7c7` 2024-03-01 Merge branch 'feat/9080' into 'pv/2.9.b6-5'
+- `550d8eaf` 2024-03-04 Merge branch 'pv/2.9.b6-5' into 'master'
+- `786225fe` 2024-03-12 9080
+- `2beb36f3` 2024-03-12 9080
+- `559310c1` 2024-03-13 9080
+- `be152437` 2024-05-15 #9603
+- `48043eaf` 2024-05-15 Merge branch 'fix/9603' into 'master'
+- `1e94355d` 2024-05-16 # 修复刷新序号接口报错后loading不消失的问题
+- `981e2706` 2024-05-16 Merge branch 'hotfix-sly-drawio' into 'master'
+- `202bcefb` 2024-05-17 hotfix 退出流程图的时候,点击确定添加loading
+- `be201bba` 2024-05-20 Merge branch 'hotfix-sly-drawio' into 'master'
+- `fed3026c` 2024-05-20 #9629
+- `204ffc8a` 2024-05-20 #9629
+- `6b24e9c5` 2024-05-20 9629
+- `ee4de53c` 2024-05-21 9552
+- `d33a11d1` 2024-05-21 9552
+- `4de21f72` 2024-05-21 9552
+- `bd0e6cb7` 2024-05-22 Merge branch 'hotfix-sly-drawio' into 'pv/2.9.b7-7'
+- `51cca3ad` 2024-05-22 Merge branch 'pv/2.9.b7-7' into 'master'
+- `ba1029b5` 2024-05-22 hotfix
+- `4e5f03bb` 2024-05-22 Merge branch 'hotfix-sly' into 'master'
+- `19a38673` 2024-05-22 hotfix
+- `b60a755c` 2024-05-22 Merge branch 'hotfix-sly' into 'master'
+- `fc1bee28` 2024-05-23 perf 泳道水印方式重写,提高流程图首页加载效率
+- `adf28e03` 2024-05-23 4554
+- `7386f376` 2024-05-23 hotfix 去掉保存活动时活动名称的富文本样式
+- `88ef2bba` 2024-05-23 3434
+- `49515a43` 2024-05-23 545
+- `9bdac41f` 2024-05-23 55454
+- `9a0c6939` 2024-05-23 Merge branch 'hotfix-sly-drawio' into 'master'
+- `d1ee8230` 2024-05-28 Merge branch 'feat/9552' into 'pv/2.9.b7-9'
+- `aef483d9` 2024-05-28 Merge branch 'pv/2.9.b7-9' into 'master'
+- `dea59a1e` 2024-05-29 hotfix 更改终端相关的图片
+- `bb3452f7` 2024-05-29 hotfix
+- `fe11b638` 2024-05-30 Update BatchUpdateGraphCell.js
+- `97a64aff` 2024-05-30 PDA
+- `f4bc8e76` 2024-05-30 Merge branch 'hotfix-sly' into 'master'
+- `42e65a2b` 2024-05-31 #9681
+- `bd091860` 2024-05-31 9681
+- `dba4ec3f` 2024-05-31 Merge branch 'master' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/9681
+- `73af0af1` 2024-05-31 9681
+- `caa4ccf5` 2024-05-31 9681
+- `96e6f4d1` 2024-05-31 9681
+- `bd35d90d` 2024-05-31 #9635
+- `4e627b1e` 2024-06-04 #9770
+- `66129248` 2024-06-07 #9637
+- `ccb7f094` 2024-06-07 #9637
+- `d28a032e` 2024-06-07 #9637
+- `430161bd` 2024-06-07 #9637
+- `72a392c4` 2024-06-07 #9637
+- `9b0167aa` 2024-06-07 #9637
+- `9ac6d51c` 2024-06-11 Merge branch 'feat/9770' into 'pv/2.9.b7-13'
+- `b0807652` 2024-06-12 Merge branch 'pv/2.9.b7-13' into 'master'
+- `c7c0e26e` 2024-07-01 Merge branch 'feat/9637' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/9637
+- `75639f4c` 2024-07-01 #9637
+- `075c6702` 2024-07-01 #9637
+- `d81dbc67` 2024-07-02 feat/9735
+- `cbfa9a83` 2024-07-02 Merge branch 'feat/9637' into 'pv/2.9.b7-20'
+- `9b1bc23b` 2024-07-02 Merge branch 'pv/2.9.b7-20' into 'master'
+- `399121db` 2024-07-17 #
+- `6fed945f` 2024-07-18 #9926
+- `b575d140` 2024-07-18 #9943
+- `c1ce1212` 2024-07-23 Merge branch 'master' into 'feat/9681'
+- `b27fd619` 2024-07-23 Merge branch 'feat/9681' into 'master'
+- `84713b51` 2024-07-26 Merge branch 'hotfix-sly-drawio' into 'pv/2.9.b7-29'
+- `4720ad7b` 2024-07-29 Merge branch 'pv/2.9.b7-29' into 'master'
+- `2f7071ef` 2024-07-30 Merge branch 'feat/9635' of http://gitlab.logwire.cn/coopwire/coopwire-drawio into feat/9635
+- `13a03f8c` 2024-08-05 Merge branch 'master' into 'feat/9943'
+- `821ef49e` 2024-08-08 10103
+- `bd340f76` 2024-08-08 10103
+- `6c92f1a4` 2024-08-08 #9635
+- `33ea4542` 2024-08-08 Merge branch 'feat/10103' into 'pv/2.9.b7-33'
+- `96ad4fb2` 2024-08-08 Merge branch 'feat/9635' into 'pv/2.9.b7-33'
+- `2172a62f` 2024-08-09 Merge branch 'feat/9943' into 'pv/2.9.b7-33'
+- `4afb0754` 2024-08-09 Merge branch 'pv/2.9.b7-33' into 'master'
+- `c52fe642` 2024-08-15 #10196 默认拉取泳道模板
+- `84750623` 2024-08-15 #10196 泳道禁止复制删除等操作
+- `6b2aaf12` 2024-08-15 #10196 泳道样式获取结构调整
+- `6cf70881` 2024-08-15 #10196 修改弹窗新增泳道的获取方式
+- `b5f86c39` 2024-08-15 #10196 泳道的赋值操作添加限制
+- `84495821` 2024-08-16 #10196 修改粘贴泳道时的提示
+- `d1e59dd8` 2024-08-16 #10196 调整泳道的样式 part,防止拖动
+- `f2c31d3f` 2024-08-16 #10196 去掉轮询保存&修改保存成功的提示语
+- `249fb91a` 2024-08-16 #10196 重构活动查看详情按钮样式
+- `2c50d4de` 2024-08-16 #10196 泳池聚焦时添加新增按钮
+- `39725c89` 2024-08-16 #10196 泳池聚焦时添加新增按钮
+- `4cf99bb4` 2024-08-16 #10101
+- `0895a18b` 2024-08-16 #10106
+- `b9ecad24` 2024-08-16 10106
+- `8d0bb471` 2024-08-19 Merge branch 'feat/10101' into 'pv/2.9.b7-36'
+- `4cf5f1fb` 2024-08-19 Merge branch 'pv/2.9.b7-36' into 'master'
+- `2e931234` 2024-08-21 Merge branch 'feat/10106' into 'pv/2.9.b7-37'
+- `aa5d13ad` 2024-08-21 Merge branch 'pv/2.9.b7-37' into 'master'
+- `156446ae` 2024-08-26 fix 修复新增时version值取不到的问题
+- `ca50de00` 2024-08-26 Merge branch 'hotfix-sly' into 'master'
+- `062fd887` 2024-08-29 #10234 限制开始结束图形拖拽到泳池外部
+- `8cf9e3b1` 2024-08-29 #10234 限制开始结束图形拖拽到泳池外部
+- `57d2c6c6` 2024-08-29 #10234 限制开始结束图形拖拽到泳池外部
+- `e01ec5c5` 2024-08-29 #10234 限制开始结束图形拖拽到泳池外部
+- `b39463ae` 2024-08-30 #9651
+- `684ceeff` 2024-08-30 9651
+- `ee35fd23` 2024-08-30 #9651
+- `50095e65` 2024-09-05 feat 10109 快照功能 & 草稿功能 & 编辑锁定
+- `1277c08c` 2024-09-05 Merge branch 'feat/10196' into feat/10109
+- `92d0f06d` 2024-09-05 10109
+- `911d58b8` 2024-09-05 #10109
+- `2e01e93f` 2024-09-05 #10109
+- `299f1312` 2024-09-05 #10109
+- `62902ab0` 2024-09-05 10109
+- `b6120577` 2024-09-05 #10196
+- `ea70552d` 2024-09-05 #10196
+- `b3740b34` 2024-09-05 10196
+- `37fbe1b8` 2024-09-05 #10196
+- `8870ea4d` 2024-09-05 Merge branch 'feat/10234' into 'pv/2.9.b7-39'
+- `ae2e22da` 2024-09-05 Merge branch 'pv/2.9.b7-39' into 'master'
+- `9987d77b` 2024-09-06 #9651
+- `24d4f610` 2024-09-06 #9651
+- `36d20d5e` 2024-09-06 #9651
+- `d5594dfc` 2024-10-22 Merge branch 'master' into 'feat/9651'
+- `7340d203` 2024-11-27 hotfix 收窄判断
+- `ae9c0d4b` 2024-11-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `7d5e88d3` 2024-11-27 hotfix cell的角色获取判断收窄
+- `7d1eb36b` 2024-11-27 Merge branch 'hotfix-sly-drawio' into 'master'
+- `98f4ec8d` 2024-11-28 hotfix cell的角色获取判断收窄
+- `204e82f0` 2024-11-28 控制台日志注释掉
+- `1aa5aeec` 2024-11-28 Merge branch 'hotfix-sly-drawio' into 'master'
+- `409a44b4` 2025-01-17 Merge branch 'master' into 'feat/9651'
+- `5be8ccfc` 2025-01-20 #9651
+- `95e5aef4` 2025-01-21 Merge branch 'feat/9651' into 'pv/2.9.b8-17'
+- `c081cad8` 2025-01-21 Merge branch 'pv/2.9.b8-17' into 'master'
+- `97c4bee5` 2025-01-22 Merge branch 'master' into 'feat/10196'
+- `2a77c9d1` 2025-01-22 Merge branch 'master' into feat/10109
+- `da6fee0c` 2025-01-22 #10109 修改 10196
+- `3b003e5f` 2025-02-17 #9651
+- `7322ff4f` 2025-02-17 Merge branch 'feat/9651' into 'master'
+- `a315a2ce` 2025-02-20 #10893
+- `9378310b` 2025-02-20 merge
+- `f5917b33` 2025-02-20 Merge branch 'feat/10893' into 'pv/2.9.b8-22'
+- `ab1cb09a` 2025-02-20 Merge branch 'pv/2.9.b8-22' into 'master'
+- `c4fd9162` 2025-02-21 hotfix 文案修改
+- `dfb66619` 2025-02-21 Merge branch 'hotfix-sly' into 'master'
+- `2ec0b71c` 2025-03-19 #10109
+- `7da60a9b` 2025-03-19 hotfix
+- `78872b0b` 2025-03-19 #10109
+- `84ffe77f` 2025-03-19 #10109
+- `e1ffb6ff` 2025-03-20 #10109
+- `08bada07` 2025-03-20 #10109
+- `19db657f` 2025-03-20 #10109
+- `96d86e9c` 2025-03-20 #10109
+- `efbcb32e` 2025-03-20 #10109
+- `4bda5748` 2025-03-20 #10109
+- `7c2911e2` 2025-03-20 #10109
+- `d25e8e08` 2025-03-20 #10109
+- `c64d761a` 2025-03-20 #10109
+- `aac7e434` 2025-03-20 #10109
+- `20f8d148` 2025-03-20 #10109
+- `5f2f6183` 2025-03-20 #10109
+- `1fcda3a8` 2025-03-20 #10109
+- `f634677b` 2025-03-20 #10109
+- `676c4209` 2025-03-20 #10109
+- `5fd6f97d` 2025-03-20 #10109
+- `5bec4b5a` 2025-03-20 Update dia_zh.txt
+- `69311cb5` 2025-03-21 Merge branch 'master' into feat/10109
+- `f55fb9d2` 2025-03-21 #10109
+- `b13c7edd` 2025-03-24 #10109
+- `69d5073f` 2025-03-24 #10109
+- `7b8eb2c0` 2025-03-24 #10109
+- `265dee15` 2025-03-24 #10109
+- `1b54f442` 2025-03-25 #10109
+- `d7fcb19d` 2025-03-25 #10109
+- `80972db0` 2025-03-25 #10109
+- `8182481b` 2025-03-25 #10109
+- `19f035c6` 2025-03-25 #10109
+- `6b433418` 2025-03-25 #10109
+- `d156113c` 2025-03-25 #10109
+- `9c63b4f6` 2025-03-25 #10109
+- `109b3dd3` 2025-03-25 #10109
+- `fc979b1e` 2025-03-25 #10109
+- `fa6063cc` 2025-03-25 #10109
+- `2bea3553` 2025-03-25 #10109 解除 allowArrows
+- `de786adb` 2025-03-25 #10109
+- `c220b4aa` 2025-03-25 #10109
+- `6b29c0af` 2025-03-25 #10109
+- `5c338304` 2025-03-25 #10109
+- `a391e39a` 2025-03-25 #10109 loading
+- `ae8e87f4` 2025-03-25 #10109
+- `b9621a2b` 2025-03-25 Merge branch 'feat/10109' into 'pv/2.9.b8-32'
+- `aa3f6af2` 2025-03-25 #10109
+- `6c93c33d` 2025-03-25 Merge branch 'feat/10109' into 'pv/2.9.b8-32'
+- `92468374` 2025-03-25 Merge branch 'pv/2.9.b8-32' into 'master'
+- `3b4c4b58` 2025-03-26 #10109
+- `7ee9f47c` 2025-03-26 hotfix 锁定提示乱码
+- `ca9e04f6` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `5406946a` 2025-03-26 更改高亮组件的宽度
+- `38da6000` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `6b563593` 2025-03-26 更改按钮之间的边距 10 => 5
+- `14e27a22` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `c2545b75` 2025-03-26 更改高亮组件的属性，为折叠的
+- `1d46e692` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `6ee2db36` 2025-03-26 style
+- `762d3510` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `6ce21548` 2025-03-26 部分js文件请求添加后缀
+- `d2e8623e` 2025-03-26 style
+- `bc4168e4` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `d853bcdc` 2025-03-26 hotfix 修复不能框选的问题
+- `5d44d303` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `44381590` 2025-03-26 hotfix
+- `6c40100d` 2025-03-26 hotfix
+- `687c6aa3` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `3737a83c` 2025-03-26 hotfix
+- `83f66339` 2025-03-26 hotfix
+- `ae74f282` 2025-03-26 Merge branch 'hotfix-sly' into 'master'
+- `102b9100` 2025-03-26 Merge branch 'hotfix-sly' into hotfix-sly-test
+- `cf892ccc` 2025-03-26 框选操作 & 活动其他位置不可点击
+- `5bf64a5e` 2025-03-26 Merge branch 'hotfix-sly-test' into 'master'
+- `21e2c704` 2025-03-26 关闭也要清除草稿
+- `2d7d0c87` 2025-03-26 Merge branch 'hotfix-sly-test' into 'master'
+- `a0f0f57c` 2025-03-27 保存快照描述弹出框中input组件添加placeholder属性
+- `63d382a2` 2025-03-27 删除泳道的时候添加校验
+- `9bc3af9f` 2025-03-27 泳池元素不可删除
+- `cc82bd6e` 2025-03-27 Merge branch 'hotfix-sly' into 'master'
+- `b8b71581` 2025-03-28 生成快照文案修改
+- `5f9f38f1` 2025-03-28 #11123
+- `94e7d6df` 2025-03-28  #11123 修改图例说明放置位置
+- `672c1e2a` 2025-04-03 #11123
+- `1fa03314` 2025-04-03 #11123
+- `6d56e784` 2025-04-03 #11123
+- `b4462fd0` 2025-04-03 #11123
+- `311bdacc` 2025-04-03 Merge branch 'feat/11123' into 'pv/2.9.b9-6'
+- `bb768e4b` 2025-04-06 Merge branch 'pv/2.9.b9-6' into 'master'
+- `c597136d` 2025-04-06 hotfix
+- `6cd5067f` 2025-04-06 Merge branch 'hotfix' into 'master'
+- `fd7e6b15` 2025-04-06 Merge branch 'master' into 'pv/2.9.b9-6'
+- `3f001b66` 2025-04-07 hotfix 调整detail图形的坐标计算方式
+- `d7702e9d` 2025-04-07 Merge branch 'hotfix' into 'master'
+- `a08a90bd` 2025-04-16 #11252
+- `4dc7a176` 2025-04-16 Merge branch 'hotfix' into 'master'
+- `054deef7` 2025-04-18 #11264 同步失败抛出报错信息
+- `ce6932dd` 2025-04-18 #11264
+- `fa6f0cd3` 2025-04-18 Merge branch 'fix/11264' into 'pv/2.9.b9-9'
+- `fb265d9e` 2025-04-18 Merge branch 'pv/2.9.b9-9' into 'master'
+- `9ea75f5f` 2025-04-24 #11235
+- `c326b3fd` 2025-04-24 11235
+- `5f2e6a84` 2025-04-24 11235
+- `5744ec6a` 2025-04-24 11235
+- `b9c245a3` 2025-04-24 Merge branch 'feat/11235' into 'master'
+- `94497342` 2025-04-25 hotfix 保存并退出的时候添加loading
+- `0a157561` 2025-04-25 hotfix
+- `0fa851f0` 2025-04-25 Merge branch 'master' into hotfix
+- `e5691b09` 2025-04-25 hotfix
+- `d8abfe96` 2025-04-25 Merge branch 'hotfix' into 'master'
+- `d8dfb8f3` 2025-04-27 #8535 选择泳道时,左下角不再出现,匹配的活动
+- `c9f6156e` 2025-04-27 8535 粘贴流程元素时不再有弹框,全部自动为复制
+- `5971ad95` 2025-04-27 #8535 添加审计历史
+- `2e1d4991` 2025-04-27 8535 添加审计历史
+- `d522f1ce` 2025-04-28 #11298
+- `15caa373` 2025-04-28 ##
+- `014b89d8` 2025-04-28 ##
+- `e2d56019` 2025-04-28 ##
+- `0ab5ee8a` 2025-04-28 #11298
+- `52638ac8` 2025-04-28 11298
+- `bc0c73f3` 2025-04-28 #11298
+- `47db92a5` 2025-04-28 #11298
+- `210c2a4a` 2025-04-28 Merge branch 'feat/11298' into 'master'
+- `135c31ca` 2025-04-29 8535
+- `2c157f9f` 2025-05-07 #8535
+- `bb085afd` 2025-05-07 #8535
+- `745fbd23` 2025-05-08 Merge branch 'master' into 'feat/8535'
+- `dc5e21a8` 2025-05-09 #8535
+- `7b6b9c37` 2025-05-09 #8535
+- `a3a40e11` 2025-05-12 #8535
+- `c93318c8` 2025-05-12 #8535
+- `2fd9d511` 2025-05-12 Merge branch 'feat/8535' into 'pv/2.9.b9-16'
+- `93b50bda` 2025-05-12 Merge branch 'pv/2.9.b9-16' into 'master'
+- `ffedb1b0` 2025-05-15 hotfix 强制updateAct不校验名字重复
+- `bcd2da0c` 2025-05-15 Merge branch 'feat/8535' into 'master'
+- `ad7d58f0` 2025-05-19 #11383
+- `83f369aa` 2025-05-21 #11383 debug
+- `1d25f455` 2025-05-21 #11383
+- `20f2de7c` 2025-05-21 Merge branch 'feat/11383' into 'pv/2.9.b9-19'
+- `28277001` 2025-05-21 Merge branch 'pv/2.9.b9-19' into 'master'
+- `510abbf8` 2025-06-05 debug
+- `59a4c214` 2025-06-05 Merge branch 'feat/11383' into 'master'
+- `2cca3e94` 2025-06-20 #11505
+- `1877453b` 2025-06-20 #11505
+- `67a3db82` 2025-06-20 #11505
+- `3488569b` 2025-06-20 Merge branch 'fix/11505' into 'master'
+- `9babf554` 2025-06-23 hotfix 所有的保存接口在保存之前要进行校验
+- `8e6e0120` 2025-06-23 hotfix 所有的保存接口在保存之前要进行校验
+- `1baa9d4f` 2025-07-01 #11422
+- `6b2b03ed` 2025-07-01 #11422
+- `3869c142` 2025-07-01 #11544
+- `a5c8d84f` 2025-07-01 #11544
+- `aaf70450` 2025-07-01 #11544
+- `f92de21b` 2025-07-01 #11544
+- `e3a92e1c` 2025-07-01 Merge branch 'fix/11544' into 'pv/2.9.b9-27'
+- `355927f3` 2025-07-01 Merge branch 'pv/2.9.b9-27' into 'master'
+- `6a382261` 2025-07-02 #11422
+- `8c00f9af` 2025-07-02 #11422
+- `d849765b` 2025-07-02 #11422
+- `d027c3e9` 2025-07-02 #11422
+- `4a275a46` 2025-07-02 #11422
+- `61dc71b2` 2025-07-02 #11422
+- `6e11728b` 2025-07-02 #11422
+- `a8a58bf7` 2025-07-03 Merge branch 'master' into 'feat/11422'
+- `0d8dccaf` 2025-07-03 #11422
+- `cb0e8152` 2025-07-03 #11422
+- `7787a43b` 2025-07-03 #11422
+- `22e7a171` 2025-07-03 Merge branch 'feat/11422' into 'pv/2.9.b9-29'
+- `15317f28` 2025-07-03 Merge branch 'pv/2.9.b9-29' into 'master'
+- `d08e2d87` 2025-07-07 #11572
+- `e901edb2` 2025-07-07 Merge branch 'feat/11572' into 'pv/2.9.b9-30'
+- `4e4759e7` 2025-07-07 Merge branch 'feat/11572' into 'master'
+- `eb968118` 2025-07-10 hotfix 删除usedByFLowIds字段相关的逻辑 以前就没用到，被注释掉了，现在只是将注释掉的内容删除掉
+- `2f04c505` 2025-07-10 #11591
+- `fc39a9c5` 2025-07-10 Merge branch 'feat/11591' into 'master'
+- `f7ae2601` 2025-07-22 feat 修改给图形添加标记的前缀
+- `97a4395c` 2025-07-22 #11648
+- `83f5413d` 2025-07-22 #11609
+- `f32b76d1` 2025-07-22 #11610
+- `59b08451` 2025-07-22 hotfix 暂时删除阶段元素
+- `085b2f41` 2025-07-22 Merge branch 'hotfix' into 'master'
+- `7b2df162` 2025-07-23 hotfix 阶段元素图形放开
+- `483706f0` 2025-07-23 #11610
+- `d83296c5` 2025-07-23 #11610
+- `6fc2dfbb` 2025-07-23 #11610
+- `1c1f6bfe` 2025-07-23 #11610
+- `a8222e77` 2025-07-23 #11610
+- `ad9d2784` 2025-07-23 Merge branch 'hotfix' into 'master'
+- `a1dccd29` 2025-07-23 #11627
+- `52cfeb89` 2025-07-23 #11626
+- `4d0d4b0a` 2025-07-23 Merge branch 'feat/11648' into 'hotfix'
+- `4651e264` 2025-07-23 Merge branch 'hotfix' into 'pv/2.9.b9-33'
+- `836d6624` 2025-07-23 hotfix
+- `2fcffc0c` 2025-07-23 Merge branch 'hotfix' into 'pv/2.9.b9-33'
+- `065d3781` 2025-07-23 Merge branch 'pv/2.9.b9-33' into 'master'
+- `8641d66a` 2025-07-25 #11667 精简一下saveFlowchartXmlMethods的promise函数参数
+- `88159eaa` 2025-07-25 #11667
+- `4ee0824e` 2025-07-25 #11667
+- `4a26b706` 2025-07-25 Merge branch 'feat/11667' into 'master'
+- `0eb1bda7` 2025-07-25 #11667
+- `06df6975` 2025-07-25 Merge branch 'feat/11667' into 'master'
+- `c729afc9` 2025-07-25 #11667
+- `4e7f4716` 2025-07-25 Merge branch 'feat/11667' into 'master'
+- `f3e901b1` 2025-07-25 #11667
+- `65719df6` 2025-07-25 #11667
+- `a8fe4a2c` 2025-07-25 Merge branch 'feat/11667' into 'master'
+- `ce868da1` 2025-07-28 hotfix 兜底流程图保存操作id取不到的问题，拿urlParams去补上
+- `41a27bc8` 2025-07-28 Merge branch 'hotfix' into 'master'
+- `713160d9` 2025-07-30 #11658
+- `7e6bc62f` 2025-07-30 #11658
+- `d20ac537` 2025-07-30 #11658
+- `c05c03b2` 2025-07-30 Merge branch 'fix/11658' into 'master'
+- `17091184` 2025-07-31 hotfix 修复单个拷贝流程图时活动id取之不正确
+- `9b0c08ed` 2025-07-31 Merge branch 'fix/11689' into 'master'
+- `c2839efb` 2025-08-05 hotfix active-edge线段的宽度改为2个像素，dashPattern改为2，以前都是1
+- `2834a478` 2025-08-05 Merge branch 'hotfix' into 'master'
+- `bd8b4930` 2025-08-07 11713
+- `1af2f05b` 2025-08-07 Merge branch 'hotfix' into 'master'
+- `41b685a4` 2025-08-08 #11725
+- `3e4c4de8` 2025-08-08 #标记差异 添加图形表示
+- `d3b7dcb6` 2025-08-08 Merge branch 'hotfix' into 'master'
+- `828e007a` 2025-08-11 hotfix 更改水印在父元素中插入的位置
+- `294ddf31` 2025-08-11 Merge branch 'hotfix' into 'master'
+- `6ca57cc5` 2025-09-03 #11737
+- `54e479d3` 2025-09-04 11737
+- `2778e635` 2025-09-04 #11737
+- `679b5269` 2025-09-05 #11737
+- `ae4a2146` 2025-09-05 #11737
+- `b658475f` 2025-09-05 #11737
+- `9dcde83d` 2025-09-05 #11737
+- `c168f1cf` 2025-09-05 #11737
+- `c7704c7d` 2025-09-05 #11737
+- `2581e43a` 2025-09-05 #11737
+- `4a7de699` 2025-09-05 #11737
+- `1ca8b929` 2025-09-05 #11737
+- `9d02a0c7` 2025-09-05 #11737
+- `c12d77ae` 2025-09-05 #11737
+- `e5f1c42f` 2025-09-05 Merge branch 'feat/11737' into 'master'
+- `2f546cbe` 2025-09-05 #11737
+- `7f589610` 2025-09-05 #11737
+- `b73b4719` 2025-09-05 #11737
+- `2528474b` 2025-09-05 Merge branch 'feat/11737' into 'master'
+- `01092aa9` 2025-09-05 #11737
+- `9d1032bd` 2025-09-05 Merge branch 'feat/11737' into 'master'
+- `79d307a3` 2025-09-16 #11595 前端重写刷新序号功能
+- `f6abd99b` 2025-09-18 #11595
+- `86e9eeb4` 2025-09-23 #11841
+- `e8ea659d` 2025-09-23 #11841
+- `2c25720c` 2025-09-23 #11841
+- `9780ff06` 2025-09-23 #11841
+- `825e9e9f` 2025-09-23 #11841
+- `c1071e40` 2025-09-23 #11841
+- `d86191d2` 2025-09-23 #11841
+- `3291d881` 2025-09-23 #11841
+- `c4f4c815` 2025-09-23 #11841
+- `49f51543` 2025-09-23 #11841
+- `7f177a00` 2025-09-23 #11841
+- `51e94e5e` 2025-09-23 #11841
+- `13a95e7d` 2025-09-23 #11841
+- `4c3f5140` 2025-09-23 Merge branch 'feat/11841' into 'pv/2.9.b11'
+- `57e7d584` 2025-09-23 Merge branch 'pv/2.9.b11' into 'master'
+- `13b35a4e` 2025-09-24 #11841
+- `32859eab` 2025-09-24 Merge branch 'feat/11841' into 'master'
+- `a69d4d35` 2025-09-24 添加nextActs属性
+- `e6ea1fea` 2025-09-24 hotfix
+- `61fae34c` 2025-09-24 Merge branch 'hotfix' into 'feat/11870'
+- `44f06cba` 2025-09-24 Merge branch 'feat/11870' into 'pv/2.9.b11-1'
+- `a8bcd33b` 2025-09-24 Merge branch 'pv/2.9.b11-1' into 'master'
+- `5a378c0e` 2025-09-25 hotfix 校验泳道重复忽略自身
+- `7e56abfb` 2025-09-25 Merge branch 'hotfix' into 'master'
+- `7a5eec0d` 2025-09-25 hotfix
+- `626166ce` 2025-09-25 Merge branch 'hotfix' into 'master'
+- `bf3ceaa1` 2025-09-25 hotfix 校验泳道重复忽略自身
+- `c2b00f2f` 2025-09-25 hotfix
+- `1ddd106f` 2025-09-25 hotfix
+- `e277efc5` 2025-09-25 hotfix
+- `ae31b4aa` 2025-09-25 Merge branch 'hotfix' into 'master'
+- `ceae72e1` 2025-09-25 Merge branch 'master' into 'pv/2.9.b11-1'
+- `5006b8d2` 2025-09-26 hotfix 修复生成json造成栈溢出的问题
+- `f5b2e23e` 2025-09-26 hotfix
+- `3b43d2d2` 2025-09-26 hotfix
+- `56379c4e` 2025-09-26 Merge branch 'hotfix' into 'master'
+- `0335bd03` 2025-09-26 hotfix
+- `8122361d` 2025-09-26 Merge branch 'hotfix' into 'master'
+- `b6798509` 2025-09-28 hotfix
+- `08d6c610` 2025-09-28 Merge branch 'hotfix' into 'master'
+- `626dd9ea` 2025-09-29 #11860
+- `db5d1a9f` 2025-09-29 #11860
+- `8baf66ab` 2025-09-29 #11860
+- `1a59b40a` 2025-09-29 #11860
+- `17c00e8e` 2025-09-29 #11860
+- `076996a7` 2025-09-29 #11860
+- `bbd1a1d5` 2025-09-29 #11860
+- `a19565a1` 2025-09-29 Merge branch 'feat/11860' into 'master'
+- `f2665170` 2025-09-30 hotfix
+- `993156f4` 2025-09-30 Merge branch 'feat/11860' into 'master'
+- `0a8ed6c4` 2025-10-09 hotfix 连续保存造成的version问题
+- `584b2e46` 2025-10-09 hotfix
+- `bc0d9b4f` 2025-10-09 hotfix
+- `b949b29a` 2025-10-09 Merge branch 'hotfix' into 'master'
+- `3a65b36e` 2025-10-14 #11599
+- `6400899c` 2025-10-14 #11599
+- `69620497` 2025-10-14 #11599
+- `a82a8d8d` 2025-10-14 #11599
+- `fc440ae5` 2025-10-15 #11905
+- `df527adb` 2025-10-15 #11905
+- `81a75aa6` 2025-10-15 #11905
+- `a4bb165d` 2025-10-15 Merge branch 'fix/11905' into 'master'
+- `c27d7f91` 2025-10-16 #
+- `127a5bb8` 2025-10-16 #
+- `84bedf8c` 2025-10-16 #
+- `573d1a47` 2025-10-16 #
+- `e2fc45fc` 2025-10-16 #
+- `73b04a9f` 2025-10-17 #
+- `dbc11a3a` 2025-10-17 Merge branch 'master' into feat/11599
+- `e8a56512` 2025-10-20 #11599
+- `edc11684` 2025-10-20 #11599
+- `1fed483a` 2025-10-20 #11599
+- `56c7863e` 2025-10-20 #11599
+- `6e771564` 2025-10-20 #11599
+- `435f138b` 2025-10-20 #11599
+- `b3b0e2e4` 2025-10-20 #11599
+- `a70dc7ca` 2025-10-20 #11599
+- `6053f785` 2025-10-20 #11599
+- `8e7e1bad` 2025-10-20 #11599
+- `f385c7dd` 2025-10-20 #11599
+- `01b1482c` 2025-10-21 #11599
+- `9b68016c` 2025-10-23 Merge branch 'feat/11599' into 'pv/2.9.b11-6'
+- `de9bfcf2` 2025-10-23 #11599
+- `46bbebc4` 2025-10-23 Merge branch 'feat/11599' into 'pv/2.9.b11-6'
+- `f6b8a78a` 2025-10-23 #11599
+- `fb71a0e0` 2025-10-23 Merge branch 'feat/11599' into 'pv/2.9.b11-6'
+- `ad80d779` 2025-10-23 Merge branch 'pv/2.9.b11-6' into 'master'
+- `3e14a9cb` 2025-11-18 #11794
+- `59dba8e8` 2025-11-18 #11794
+- `96ad2c4e` 2025-11-18 #11794
+- `e97ee56e` 2025-11-18 #11794
+- `baaa48ec` 2025-11-18 #11794
+- `c205c250` 2025-11-20 #11944
+- `0f1028dc` 2025-11-20 #11944
+- `ada8775f` 2025-11-20 #11944
+- `d9b82a9a` 2025-11-20 #12027
+- `6e4349bf` 2025-11-20 @12027
+- `6ab37c4f` 2025-11-20 #12027
+- `0e361632` 2025-11-21 Merge branch 'feat/11794' into 'pv/2.9.b11-10'
+- `17a401ee` 2025-11-21 Merge branch 'pv/2.9.b11-10' into 'master'
+- `a2a2bcd1` 2025-11-24 Merge branch 'master' into 'feat/11944'
+- `24df6ff0` 2025-11-24 Merge branch 'feat/12027' into 'pv/2.9.b11-11'
+- `f73749ae` 2025-11-24 Merge branch 'feat/11944' into 'pv/2.9.b11-11'
+- `01453c05` 2025-11-24 Merge branch 'pv/2.9.b11-11' into 'master'
+- `bfb64b51` 2025-11-26 #12027
+- `6c7cd688` 2025-11-26 Merge branch 'feat/12027' into 'master'
+- `deb6cb5e` 2025-11-27 hotfix 修复没有内容节点造成的获取内容参数错误
+- `a61e4c1d` 2025-11-27 HOTFIX  parallel_mode可以旋转
+- `353d7a47` 2025-11-27 hotfix 修复非关键活动编号不会更新的问题
+- `480d9dfc` 2025-11-27 hotfix
+- `813837d3` 2025-11-27 Merge branch 'hotfix' into 'master'
+- `9c8668f9` 2026-01-15 #12129
+- `a4ccdc76` 2026-01-15 #12129
+- `35b838b7` 2026-01-15 #12129
+- `90c47a17` 2026-01-15 #12129
+- `678e6da4` 2026-01-15 #12129
+- `c3b53cd4` 2026-01-15 #12129
+- `c3f3a44a` 2026-01-15 #12129
+- `5caed00d` 2026-01-15 #12129
+- `165f1505` 2026-01-15 #12129
+- `21b05a7c` 2026-01-15 #12129
+- `c85e8c27` 2026-01-15 #12129
+- `a1c7e43b` 2026-01-15 #12129
+- `920b81d3` 2026-01-15 12129
+- `3ed32c7e` 2026-01-15 #12129
+- `776d4a5c` 2026-01-15 #12129
+- `efef21d9` 2026-01-15 #12129
+- `0ae29c22` 2026-01-15 #12129
+- `2714ae1f` 2026-01-15 #12129
+- `c329d031` 2026-01-15 #12129
+- `5bdc3863` 2026-01-16 #12129
+- `ae758f5b` 2026-01-16 #12129
+- `c0a2682d` 2026-01-16 #12129
+- `51e2a405` 2026-01-16 #12129
+- `e94f8e7e` 2026-01-16 hotfix
+- `70620a2f` 2026-01-16 #12129
+- `abbb06c3` 2026-01-16 #12129
+- `24b1e3e8` 2026-01-16 #12129
+- `c79cd407` 2026-01-16 #12129
+- `9a026750` 2026-01-16 12129
+- `cd1c2d9d` 2026-01-16 #12129
+- `a311f68b` 2026-01-16 12129
+- `01475f86` 2026-01-16 #12129
+- `10220822` 2026-01-16 #12129
+- `ab1ca081` 2026-01-16 #12129
+- `0ec3e2ce` 2026-01-16 #12129
+- `c731f76b` 2026-01-17 12129
+- `bc216c30` 2026-01-17 #12129
+- `4a41d00b` 2026-02-04 hotfix 修复因为helpIds的返回值 变动，造成的icon误添加
+- `7096d717` 2026-02-04 Merge branch 'hotfix' into 'master'
+- `2e4455fd` 2026-02-04 #12192
+- `5dccfa85` 2026-02-04 #12192
+- `78c7bcc9` 2026-02-05 #12192
+- `bad139e2` 2026-02-05 #12192
+- `06254189` 2026-02-05 #12192
+- `54d29822` 2026-02-05 #12192
+- `2d3f0387` 2026-02-05 Merge branch 'feat/12192' into 'pv/2.9.b11-24'
+- `0d8b03c3` 2026-02-05 Merge branch 'pv/2.9.b11-24' into 'master'
+- `9b599304` 2026-02-10 #8488
+- `70925d80` 2026-03-02 hotfix 补充生成序号的逻辑
+- `1c39fc4f` 2026-03-02 Merge branch 'hotfix' into 'master'
+- `5f75529c` 2026-03-02 hotfix
+- `97be5e39` 2026-03-02 hotfix
+- `e5a2b6a0` 2026-03-02 hotfix
+- `d0a7a48d` 2026-03-02 Merge branch 'hotfix' into 'master'
+- `1d1b99b5` 2026-03-24 Merge branch 'feat/12129' into 'master'
+- `5e4b6b6f` 2026-03-26 hotfix 修改因为playwright变量读取报错造成的逻辑中断
+- `29d843e1` 2026-03-26 Merge branch 'hotfix' into 'master'
+- `396c286f` 2026-03-27 12255
+- `59bec441` 2026-03-30 #11773
+- `50aa4508` 2026-03-31 11773
+- `d0a8d59c` 2026-03-31 11773
+- `41286edf` 2026-03-31 11773
+- `d244e820` 2026-03-31 11773
+- `a7af41ef` 2026-03-31 11773
+- `f93dbc5a` 2026-03-31 11773
+- `9d3a13ca` 2026-03-31 11773
+- `ec5d0164` 2026-03-31 11773
+- `52746bf0` 2026-03-31 11773
+- `6eb6d21c` 2026-03-31 11773
+- `13a60ee3` 2026-03-31 11773
+- `d82678d0` 2026-03-31 11773
+- `944dbb08` 2026-03-31 11773
+- `904c0956` 2026-03-31 11773
+- `4e5e5927` 2026-03-31 11773
+- `e719b0d1` 2026-03-31 11773
+- `aa64bbf2` 2026-03-31 11773
+- `56c3bf38` 2026-03-31 11773
+- `4293a9bc` 2026-03-31 11773
+- `b23e52e6` 2026-03-31 11733
+- `d8bc1120` 2026-03-31 11773
+- `4adfc363` 2026-03-31 11773
+- `fc625569` 2026-03-31 #11773
+- `65072f7a` 2026-03-31 11773
+- `b6724b98` 2026-03-31 11773
+- `e249ed62` 2026-04-01 11773
+- `83fa43d5` 2026-04-01 11773
+- `5d43c1dc` 2026-04-01 11773
+- `a2312c00` 2026-04-01 11773
+- `264d4550` 2026-04-01 11773
+- `32d94985` 2026-04-01 Merge branch 'hotfix' into 'master'
+- `3c03730e` 2026-04-01 11773
+- `1e8b9410` 2026-04-01 11773
+- `9cd4895f` 2026-04-01 11773
+- `7f99d234` 2026-04-02 11773
+- `0cf434f5` 2026-04-02 11773
+- `f8e61460` 2026-04-02 11773
+- `88ba93d7` 2026-04-02 11773
+- `4371498b` 2026-04-02 11773
+- `cb0cedef` 2026-04-02 11773
+- `625d894e` 2026-04-02 11773
+- `cb8de319` 2026-04-03 #yjs
+- `fd4b46a1` 2026-04-03 #
+- `0a81a70b` 2026-04-03 #yjs
+- `3f707b19` 2026-04-03 11773
+- `c83f3235` 2026-04-03 11773
+- `a0797167` 2026-04-03 11773
+- `32604e15` 2026-04-03 11773
+- `1c1ddd85` 2026-04-03 11773
+- `1ad85b53` 2026-04-03 11773
+- `fc55cfbf` 2026-04-03 11773
+- `5902fe77` 2026-04-03 11773
+- `7f956ad7` 2026-04-03 11773
+- `280e51a9` 2026-04-03 11773
+- `15e74d55` 2026-04-03 Merge branch 'feat/11773' into dev-sketch-yjs
+- `66b6b095` 2026-04-03 #
+- `67722f4e` 2026-04-04 #
+- `b4332983` 2026-04-04 #
+- `56593276` 2026-04-04 #
+- `e89652e9` 2026-04-04 #
+- `f8558e9c` 2026-04-05 #
+- `da8d8fa9` 2026-04-05 #
+- `07ea9785` 2026-04-05 #
+- `4cba1ea6` 2026-04-05 同步用户选中其他图形的操作
+- `cfbe7a08` 2026-04-05 #
+- `0fd4b038` 2026-04-07 Merge branch 'feat/11773' into 'pv/2.9.b11-32'
+- `6ea0dc5d` 2026-04-07 Merge branch 'pv/2.9.b11-32' into 'master'
+- `dfb570d5` 2026-04-08 11773
+- `821515bc` 2026-04-08 11773
+- `19aeed04` 2026-04-08 Merge branch 'feat/11773' into 'pv/2.9.b11-32'
+- `8f86e6f2` 2026-04-08 Merge branch 'pv/2.9.b11-32' into 'master'
+- `f7f03e41` 2026-04-08 11773
+- `b72b57ac` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `237b7301` 2026-04-08 11773
+- `f7a93117` 2026-04-08 11773
+- `387e560c` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `f50faeae` 2026-04-08 11773
+- `6510b369` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `e07e2ab5` 2026-04-08 11773
+- `ec293863` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `d9021aaa` 2026-04-08 11773
+- `90822c17` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `173b0dfb` 2026-04-08 11773
+- `d34ee9ae` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `34b158f6` 2026-04-08 11773
+- `82c2eb5a` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `b71cf393` 2026-04-08 11773
+- `80837dc3` 2026-04-08 Merge branch 'feat/11773' into 'master'
+- `8b3a792e` 2026-04-10 hotfix 为泳道设置角色的数据源要进行排序
+- `89ff9840` 2026-04-10 Merge branch 'hotfix' into 'master'
+- `5f6e78a4` 2026-04-15 hotfix 给测试环境添加mockEdgeClick方法
+- `df13c9e5` 2026-04-15 Merge branch 'hotfix' into 'master'
+- `506ab5f6` 2026-05-12 12298
+- `5e70b342` 2026-05-15 Merge branch 'feat/12298' into 'pv/2.9.b11-35'
+- `f0f49c61` 2026-05-15 Merge branch 'pv/2.9.b11-35' into 'master'
+- `e4813d8c` 2026-07-03 hotfix 修复图中有环时刷新序号的问题
+- `e730fb2a` 2026-07-03 Merge branch 'hotfix' into 'master'
+- `dac5a9a9` 2026-10-16 hotfix 修复其他图形无法复制粘贴的问题
+- `9d89294f` 2026-10-16  hotfix 修复重复活动存在重复id保存报错的问题
+- `e0f0cddf` 2026-10-16 Merge branch 'hotfix' into 'master'
+- `ba1620e1` 2026-10-16  hotfix 修复重复活动存在重复id保存报错的问题

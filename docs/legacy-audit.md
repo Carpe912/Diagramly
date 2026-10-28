@@ -1,0 +1,95 @@
+# coopwire-drawio 改造分析与迁移清单
+
+本报告保留第一版审计时的迁移判断；随后已实现既有 Coopwire 远程接口与本次流程的受限 XML 转换，当前状态以 [远程接入文档](coopwire-integration.md) 为准。
+
+## 检查范围与可复现材料
+
+检查来源：本机 `/Users/coopwire-test/coop-frontend/coopwire-drawio`，当前工作树检查时无未提交改动，HEAD `ba1620e`。没有修改旧仓库或向远程服务发请求。
+
+完整枚举所有本地分支和标签可达的 **1,765 个提交**，其中 **485 个合并提交、1,280 个非合并提交**，时间范围 2020-07-06 至 2026-10-16。逐提交记录摘要、父提交、文件增删行统计；合并提交按父提交分别比较。完整索引见 [legacy-commits.md](research/legacy-commits.md)，机器可读清单见 [legacy-history.json](research/legacy-history.json)。
+
+这不是宣称逐行审阅全部历史补丁。全历史用于功能/文件热点分析，针对组合活动、复制、泳道、编号、保存和协同等关键功能阅读当前实现、历史版本及代表性补丁。大量 `#任务号` 提交无法仅凭标题恢复完整业务需求，后续迁移仍需对应议题与真实样图。
+
+仓库早期直接导入完整 draw.io 源码，之后也有上游升级；未建立逐版本干净 upstream 对照，因此不将基线以来所有差异都归因于你们的业务新增。
+
+运行：
+
+```sh
+python3 scripts/audit_legacy.py /path/to/coopwire-drawio
+```
+
+| 年份 | 所有提交 | 非合并提交 |
+| --- | ---: | ---: |
+| 2020 | 73 | 65 |
+| 2021 | 191 | 134 |
+| 2022 | 231 | 160 |
+| 2023 | 512 | 359 |
+| 2024 | 226 | 162 |
+| 2025 | 372 | 267 |
+| 2026 | 160 | 133 |
+
+## 改了哪些内容
+
+| 功能 | 代码/历史依据 | 新工程中的处理 |
+| --- | --- | --- |
+| 嵌入宿主、关闭、保存、草稿、CSV 导入、导出及字典图形库 | 2020 年开始修改 App、Api、EditorUi；2021 年导出/PDF 和资源 hash 改造 | 宿主、存储、导入导出应是独立 adapter，不属于图形内核 |
+| flowchart 模式、白名单图形库、角色泳道、活动详情侧栏 | `ca9a0f6`、`ed4aa2d`、`6a3a840`、`2755105`、`68c92ef`，以及 `更新日志.md` | 注册表提供图形能力；角色数据来自业务 adapter；约束在领域层执行 |
+| 组合活动、标题/编号/图标/输入输出/底部信息、引用活动 | `CoopwireCreateCell.js`、`Sidebar.js`；活动拆成 header/content/footer/input/output 多个 mxCell | 一个业务节点，纯函数派生视图部件；不持久化部件身份 |
+| 活动周期/时间要求、异常、痛点、文档、功能清单、应用/设备/终端/接口 | `Api.js`、`Format.js`、`CoopwireComponents.js`；`CoopwireUtils.getActionDetail` 和 view watchers | 当前仅建立基础实体属性；详细业务模型和表单待逐项迁移 |
+| 泳道放置与跨泳道约束、禁止内部部件连接或旋转、删除规则 | `c492277`、`8512d17`、`de1e31c`、`062fd88`，Graph/Actions/Sidebar 多处拦截 | parentId + 相对坐标 + 容器一致性规则；UI 和 Agent 共用 |
+| 进度/阶段、自定义 sketch 图形、描述附属节点、关联标记与差异显示 | `CoopwireSketch.js`、`BatchPatchGraph.js`、`BatchUpdateGraphCell.js`、动态字典 XML | 图形插件定义 + 业务派生状态；不让样式字符串担当类型系统 |
+| 快照、草稿、编辑锁、版本与批量刷新 | `50095e6`（10109）、`HandleBatchRefresh.js`、`BatchUpdateGraphCell.js` | 独立远程保存与业务仓储；当前本机版本只做文档保存与 revision |
+| 流程关系与编号 | `79d307a`、`5006b8d`、`e4813d8`，`CoopwireCreateOrder.js` | 拓扑查询基于 nodes/edges；环显式处理；当前不迁移旧编号算法 |
+| 活动/普通图形复制粘贴、重复活动去重 | `c9f6156`、`1709118`、`dac5a9a`、`9d89294`、`ba1620e` | 创建时一次生成独立身份，外部业务复制另走明确命令；不靠 CHANGE 后扫描补救 |
+| Yjs 协同、断网操作缓存、用户与选中状态同步 | `dev-sketch-yjs` 分支的 `CoopwireCollab.js`、`CoopwireCollabOps.js`，`0a81a70`、`4cba1ea` | 是分支中的实现，不应误说当前 HEAD 已启用；新项目尚未迁移协同 |
+
+## 耦合集中在哪里
+
+以下是**非合并提交**中修改对应文件的提交数；避免把合并分支反复计作独立开发次数。
+
+| 文件 | 修改次数 | 观察 |
+| --- | ---: | --- |
+| `coopwire/CoopwireUtils.js` | 397 | 业务请求、DOM 状态、视图派生、事件与复制逻辑聚合 |
+| `js/diagramly/App.js` | 228 | 宿主生命周期、草稿、锁定、保存与业务数据交织 |
+| `js/mxgraph/Sidebar.js` | 184 | 图形工厂同时了解业务 ID、接口、布局和侧栏 UI |
+| `js/mxgraph/Format.js` | 129 | 原始通用属性与定制业务表单混合 |
+| `coopwire/BatchUpdateGraphCell.js` | 126 | 后续补丁与历史兼容逻辑持续累积 |
+| `js/diagramly/Api.js` | 106 | API、预置数据加载与 App 原型扩展混合 |
+| `js/mxgraph/Graph.js` | 94 | 通用引擎层被业务连接、复制与选择逻辑侵入 |
+
+这些修改并非“写错了”，而是功能长期叠加在已有编辑器上的结果。继续 fork draw.io 再裁剪，仍然会保留同样的升级边界问题。
+
+## 三个具体失效链条
+
+### 复制与重复 ID
+
+2026-10-16 的 `ba1620e` 引入 `HandleCopyDuplicateAct.js`：同一 cell 的 copyAct 在途去重、串行队列、合并重扫、重试上限。这是在解决“模型 CHANGE → 异步复制请求 → refreshActDetail → 再次 CHANGE”的反馈循环。
+
+新架构把复制放进显式命令，先分配节点/实体 ID，一次提交图形；如果要复制远程活动，由服务端命令建立新业务实体并回传 externalRef。投影变化不能触发业务创建请求。当前工程只实现本地身份复制，没有伪造远程 copyAct 成功。
+
+### 数据与视图部件混在一起
+
+`CoopwireCreateCell.js` 让活动根保存 DOM `data-id`、`data-act-name`、`data-act-type`，同时内部 content 保存名称；`CoopwireUtils.js` 又在 DOM 上挂 Vue observable 的 `_flowchart` 和销毁队列，并通过 watcher 更新 header/footer/io 等。
+
+一个活动因此涉及 DOM 属性、远程返回、Vue 状态与多个子 Cell。复制、刷新、换类型都要保持这些状态一致。新工程用独立 Entity 作为名称/编号/IO 的来源，内部子 Cell 全部派生，不是第二份数据。
+
+### 环、编号与保存版本
+
+`5006b8d` 修正生成 JSON 栈溢出，`e4813d8` 给编号遍历增加 visited 集合；`0a8ed6c` 修正连续保存的 version 问题。它们分别说明拓扑算法需要显式环处理，保存需要清晰的并发版本边界。
+
+新文档直接持久化规范化 nodes/edges，连接关系不靠递归展开保存。命令 expectedRevision + 单调 revision 能拒绝本机会话失效写入；远程并发仍需服务端执行同一校验，不能将前端 revision 当作完整协同方案。
+
+## 协同分支的额外观察
+
+`dev-sketch-yjs` 使用 Y.Array(`ops`) 传播 mxGraph change，包含 ADD 幂等、transaction.local 过滤、首次全量回放、断网本机 op 合并、XML 保存成功后 clearOps 以及 iframe 销毁时断连。这些细节说明你们已遇到或考虑过重复回放、旧 XML 与新 op 重叠、连接生命周期和离线恢复。
+
+建议新项目不要复用“保存 XML + 清空共享操作数组”作为默认领域持久化机制。应单独定义共享文档结构、持久化水位、删除冲突、断网重放与撤销语义，完成并发测试后再接入。当前工程先给命令和文档建立可验证边界。
+
+## 迁移验收清单
+
+- 先提供真实历史样图 fixture：正常流程、有环、多泳道、引用活动、重复外部 ID、未知自定义图形、已有草稿/锁定状态。
+- 逐字段确认旧 API 的业务所有权：删除图形是否删除业务活动，复制图形是创建新活动还是引用同一活动。
+- 拆出 `legacy-import`，输出无法映射的数据诊断并对比节点数、连线数、角色和业务字段；保留原始 XML 便于回退。
+- 旧侧栏的业务能力逐项迁移到独立模块，不复制 `Format.js` 大文件。
+- 远程保存、编辑锁、快照和业务事务先接稳，再接 Agent 远程写入和多人协同。
+- draw.io 完整 XML/stencil/格式兼容并非 maxGraph 的自动承诺。若要求所有历史图无损编辑，迁移器和兼容图形库应单独评估工作量。
