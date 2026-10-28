@@ -47,6 +47,7 @@ import LaneToolbar from './LaneToolbar.vue';
 import ActivityDetails from './ActivityDetails.vue';
 import CanvasSettingsPanel from './CanvasSettings.vue';
 import ResizableSidebar from './ResizableSidebar.vue';
+import CanvasScrollbars from './CanvasScrollbars.vue';
 import StyleInspector from './StyleInspector.vue';
 import AlignmentInspector from './AlignmentInspector.vue';
 import type { Alignment } from '../domain/alignment';
@@ -266,7 +267,7 @@ const canvasStyle = computed(() => {
       ? `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`
       : 'none',
     backgroundSize: `${settings.gridSize * scale}px ${settings.gridSize * scale}px`,
-    backgroundPosition: `${(translate?.x ?? 0) * scale + (canvas?.graph.getPanDx() ?? 0)}px ${(translate?.y ?? 0) * scale + (canvas?.graph.getPanDy() ?? 0) + (graphEl.value?.offsetTop ?? 0)}px`,
+    backgroundPosition: `${(translate?.x ?? 0) * scale - (graphEl.value?.scrollLeft ?? 0) + (canvas?.graph.getPanDx() ?? 0)}px ${(translate?.y ?? 0) * scale - (graphEl.value?.scrollTop ?? 0) + (canvas?.graph.getPanDy() ?? 0) + (graphEl.value?.offsetTop ?? 0)}px`,
   };
 });
 function updateCanvas(patch: Partial<CanvasSettings>) {
@@ -695,9 +696,12 @@ function setTool(tool: typeof activeTool.value) {
     const panning =
       canvas.graph.getPlugin<import('@maxgraph/core').PanningHandler>('PanningHandler');
     if (panning) {
-      panning.useLeftButtonForPanning = tool !== 'connect';
+      panning.useLeftButtonForPanning = tool === 'hand';
       panning.ignoreCell = tool === 'hand';
     }
+    canvas.graph
+      .getPlugin<import('@maxgraph/core').RubberBandHandler>('RubberBandHandler')
+      ?.setEnabled(tool === 'select');
     canvas.graph.setCellsMovable(tool === 'select');
     canvas.graph.isCellMovable = (cell) => tool === 'select' && !!canvas?.canMove(cell.id ?? '');
   }
@@ -1099,12 +1103,14 @@ onBeforeUnmount(() => {
           <p>让复杂的业务，清晰地流动。</p>
         </div>
         <div
+          id="diagram-canvas"
           ref="graphEl"
           :class="['graph-container', `tool-${activeTool}`]"
           data-testid="graph"
           @dragover.prevent
           @drop="dropShape"
         ></div>
+        <CanvasScrollbars v-if="graphEl" :container="graphEl" :tick="viewportTick" />
         <div class="canvas-tools" role="toolbar" aria-label="画布工具">
           <button
             :class="{ active: activeTool === 'select' }"
@@ -1161,8 +1167,7 @@ onBeforeUnmount(() => {
           {{ connectSource ? '选择终点节点' : '选择起点节点' }}<span>Esc 退出</span>
         </div>
         <div v-else class="canvas-tip">
-          <Grip :size="12" /> 滚轮缩放 <span>·</span> 拖动空白处平移 <span>·</span> 空格拖拽 /
-          中键平移
+          <Grip :size="12" /> 拖拽框选 <span>·</span> 滚轮缩放 <span>·</span> 滚动条 / 空格拖拽平移
         </div>
         <div class="zoom-control">
           <button aria-label="缩小" @click="canvas?.zoom(-1)"><Minus :size="14" /></button

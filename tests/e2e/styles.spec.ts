@@ -90,10 +90,11 @@ test('节点边框、配色与不透明度应用到实际 SVG，支持批量设�
       opacity: 50,
     });
     const shape = page.locator(`[data-element-id="${id}"]`).first();
-    await expect(shape.locator('[stroke="#82b366"]').first()).toHaveAttribute(
-      'stroke-dasharray',
-      /4 8/,
-    );
+    const outline = shape.locator('[stroke="#82b366"]').first();
+    const dash = (await outline.getAttribute('stroke-dasharray'))!.split(' ').map(Number);
+    const scale = Number(await outline.getAttribute('width')) / doc.nodes[id].bounds.width;
+    expect(dash[0]).toBeCloseTo(4 * scale, 2);
+    expect(dash[1]).toBeCloseTo(8 * scale, 2);
     await expect(shape.locator('[fill="#d5e8d4"]').first()).toHaveAttribute('fill-opacity', '0.5');
   }
   await page.getByLabel('显示线条', { exact: true }).uncheck();

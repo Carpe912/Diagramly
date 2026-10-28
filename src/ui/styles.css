@@ -583,11 +583,16 @@ button:hover:not(:disabled) {
   right: 0;
   top: 180px;
   bottom: 105px;
-  overflow: hidden;
+  overflow: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
   touch-action: none;
 }
 .graph-container.tool-hand {
   cursor: grab;
+}
+.graph-container::-webkit-scrollbar {
+  display: none;
 }
 .graph-container.tool-hand:active {
   cursor: grabbing;

@@ -9,7 +9,6 @@ import {
   EdgeMarker,
   EdgeMarkerRegistry,
   EllipseShape,
-  FitPlugin,
   Geometry,
   HandleConfig,
   ImageBox,
@@ -30,11 +29,9 @@ import {
   registerElbowEdgeStyle,
   registerEntityRelationEdgeStyle,
   type CellStyle,
-  type EventSource,
-  type InternalMouseEvent,
 } from '@maxgraph/core';
 import '@maxgraph/core/css/common.css';
-import { isManagedLane, nodeDepth, poolOf } from '../../domain/pools';
+import { isManagedLane, isPoolType, nodeDepth, poolOf, POOL_HEADER } from '../../domain/pools';
 import { nodePresentation } from '../../shapes/presentation';
 import {
   edgeLineAppearance,
@@ -47,7 +44,14 @@ import { lineJumps } from '../../domain/lineJumps';
 import { JumpConnectorShape, LinkLineShape, SimpleArrowShape } from './lineShapes';
 import type { Editor } from '../../application/editor';
 import type { Operation } from '../../application/commands';
-import { MAX_ZOOM, MIN_ZOOM, zoomViewport } from './viewport';
+import {
+  MAX_ZOOM,
+  MIN_ZOOM,
+  zoomViewport,
+  scrollViewport,
+  documentExtent,
+  type Viewport,
+} from './viewport';
 import {
   defaultCanvasSettings,
   newId,
@@ -90,20 +94,6 @@ interface CanvasCallbacks {
   zoom: (scale: number) => void;
   viewport?: () => void;
 }
-/** 当前引擎会忽略单轴平移；在实例插件中补齐提交，保留原有手势和结束事件。 */
-class ViewportPanningHandler extends PanningHandler {
-  override mouseUp(sender: EventSource, event: InternalMouseEvent) {
-    if (this.active && ((this.dx !== 0 && this.dy === 0) || (this.dx === 0 && this.dy !== 0))) {
-      const { scale, translate } = this.graph.view;
-      this.graph.panGraph(0, 0);
-      this.panGraph(translate.x + this.dx / scale, translate.y + this.dy / scale);
-      this.dx = 0;
-      this.dy = 0;
-      event.consume();
-    }
-    super.mouseUp(sender, event);
-  }
-}
 /** 泳道起点由泳池管理，从右侧和底部缩放时不移动内部节点。 */
 class LaneVertexHandler extends VertexHandler {
   override isSizerVisible(index: number) {
@@ -126,6 +116,8 @@ export class DiagramCanvas {
   private disposed = false;
   private spacePressed = false;
   private updatingJumps = false;
+  private updatingViewport = false;
+  private resizeObserver: ResizeObserver;
   constructor(
     private container: HTMLElement,
     private editor: Editor,
@@ -141,19 +133,18 @@ export class DiagramCanvas {
         SelectionCellsHandler,
         ConnectionHandler,
         SelectionHandler,
-        ViewportPanningHandler,
+        PanningHandler,
         RubberBandHandler,
-        FitPlugin,
       ],
     }));
     graph.view.setAllowEval(false);
     graph.setHtmlLabels(false);
     graph.setPanning(true);
-    graph.useScrollbarsForPanning = false;
+    graph.useScrollbarsForPanning = true;
     graph.autoScroll = false;
-    graph.ignoreScrollbars = true;
+    graph.ignoreScrollbars = false;
     const panning = graph.getPlugin<PanningHandler>('PanningHandler')!;
-    panning.useLeftButtonForPanning = true;
+    panning.useLeftButtonForPanning = false;
     panning.minScale = MIN_ZOOM;
     panning.maxScale = MAX_ZOOM;
     const forcePanning = panning.isForcePanningEvent.bind(panning);
@@ -163,18 +154,38 @@ export class DiagramCanvas {
         native.button === 1 || (this.spacePressed && native.button === 0) || forcePanning(event)
       );
     };
-    const panningTrigger = panning.isPanningTrigger.bind(panning);
-    panning.isPanningTrigger = (event) => {
-      const native = event.getEvent();
+    const rubberband = graph.getPlugin<RubberBandHandler>('RubberBandHandler')!;
+    const forceRubberband = rubberband.isForceRubberbandEvent.bind(rubberband);
+    rubberband.isForceRubberbandEvent = (event) => {
       if (
-        native.button === 0 &&
-        (native.shiftKey || native.altKey) &&
-        !native.ctrlKey &&
-        !this.spacePressed &&
-        !panning.ignoreCell
+        !graph.isEnabled() ||
+        !graph.isCellsMovable() ||
+        this.spacePressed ||
+        panning.ignoreCell ||
+        event.getEvent().button !== 0
       )
         return false;
-      return panningTrigger(event);
+      const owner = this.ownerCell(event.getCell()),
+        node = this.editor.snapshot.nodes[owner?.id ?? ''];
+      const handler = owner
+        ? graph.getPlugin<SelectionCellsHandler>('SelectionCellsHandler')!.getHandler(owner)
+        : undefined;
+      if (handler instanceof VertexHandler && handler.getHandleForEvent(event) !== null)
+        return false;
+      if (forceRubberband(event)) return true;
+      if (!node || !this.editor.registry.get(node.type).container || !owner) return false;
+      const state = graph.view.getState(owner);
+      if (!state) return false;
+      const x = event.getGraphX() - state.x,
+        y = event.getGraphY() - state.y;
+      // 容器内容区的空白可直接框选，标题区保留容器选择和整体拖动。
+      return isPoolType(node.type)
+        ? node.type === 'pool-horizontal'
+          ? x > POOL_HEADER
+          : y > POOL_HEADER
+        : poolOf(this.editor.snapshot, node)?.type === 'pool-vertical'
+          ? y > 40
+          : x > 80;
     };
     panning.addListener(InternalEvent.PAN_START, () => container.classList.add('is-panning'));
     panning.addListener(InternalEvent.PAN_END, () => container.classList.remove('is-panning'));
@@ -194,6 +205,11 @@ export class DiagramCanvas {
     graph.isCellFoldable = () => false;
     graph.recursiveResize = false;
     graph.setResizeContainer(false);
+    const sizeDidChange = graph.sizeDidChange.bind(graph);
+    graph.sizeDidChange = () => {
+      sizeDidChange();
+      this.updateScrollViewport();
+    };
     const validateView = graph.view.validate.bind(graph.view);
     graph.view.validate = (...args) => {
       validateView(...args);
@@ -356,10 +372,15 @@ export class DiagramCanvas {
       });
     this.unsubscribe = editor.subscribe(() => this.render());
     this.interactionSurface.addEventListener('wheel', this.onWheel, { passive: false });
+    container.tabIndex = 0;
+    container.addEventListener('pointerdown', this.focusCanvas, { capture: true });
+    container.addEventListener('scroll', this.onScroll);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', this.releaseSpace);
     this.render();
+    this.resizeObserver = new ResizeObserver(() => this.updateScrollViewport());
+    this.resizeObserver.observe(container);
   }
   private ownerCell(cell: Cell | null): Cell | null {
     if (!cell) return null;
@@ -595,8 +616,8 @@ export class DiagramCanvas {
       state = cell ? this.graph.view.getState(cell) : undefined;
     return state
       ? {
-          x: state.x + this.graph.getPanDx(),
-          y: state.y + this.graph.getPanDy(),
+          x: state.x + this.graph.getPanDx() - this.container.scrollLeft,
+          y: state.y + this.graph.getPanDy() - this.container.scrollTop,
           width: state.width,
           height: state.height,
         }
@@ -619,23 +640,75 @@ export class DiagramCanvas {
   }
   private zoomAt(scale: number, x: number, y: number) {
     const view = this.graph.view;
-    const next = zoomViewport(
-      { scale: view.scale, x: view.translate.x, y: view.translate.y },
-      scale,
-      { x, y },
-    );
-    if (next.scale !== view.scale) view.scaleAndTranslate(next.scale, next.x, next.y);
+    const next = zoomViewport(this.camera(), scale, { x, y });
+    if (next.scale !== view.scale) this.updateScrollViewport(next);
   }
-  private panBy(x: number, y: number) {
+  private camera(): Viewport {
     const { scale, translate } = this.graph.view;
-    this.graph.view.setTranslate(translate.x + x / scale, translate.y + y / scale);
+    return {
+      scale,
+      x: translate.x - this.container.scrollLeft / scale,
+      y: translate.y - this.container.scrollTop / scale,
+    };
+  }
+  private contentBounds() {
+    const { scale, translate } = this.graph.view,
+      bounds = this.graph.getGraphBounds();
+    if (!bounds.width && !bounds.height) return { x: 0, y: 0, width: 0, height: 0 };
+    return {
+      x: bounds.x / scale - translate.x,
+      y: bounds.y / scale - translate.y,
+      width: bounds.width / scale,
+      height: bounds.height / scale,
+    };
+  }
+  private updateScrollViewport(camera = this.camera()) {
+    if (this.disposed || this.updatingViewport) return;
+    this.updatingViewport = true;
+    try {
+      const bounds = this.contentBounds(),
+        view = this.graph.view;
+      // 经典滚动条会占用布局空间，再计算一次消除横纵滚动条相互影响。
+      for (let i = 0; i < 3; i++) {
+        const width = this.container.clientWidth,
+          height = this.container.clientHeight;
+        if (!width || !height) break;
+        const next = scrollViewport(camera, bounds, { width, height });
+        if (view.scale !== next.scale || view.translate.x !== next.x || view.translate.y !== next.y)
+          view.scaleAndTranslate(next.scale, next.x, next.y);
+        const svg = view.getDrawPane().closest('svg');
+        if (svg) {
+          svg.style.minWidth = `${next.width}px`;
+          svg.style.minHeight = `${next.height}px`;
+        }
+        this.container.scrollLeft = next.scrollLeft;
+        this.container.scrollTop = next.scrollTop;
+        if (width === this.container.clientWidth && height === this.container.clientHeight) break;
+      }
+      this.callbacks.viewport?.();
+    } finally {
+      this.updatingViewport = false;
+    }
+  }
+  private onScroll = () => this.callbacks.viewport?.();
+  private focusCanvas = (event: PointerEvent) => {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('input, textarea, select, button, [contenteditable], .mxCellEditor')
+    )
+      return;
+    this.container.focus({ preventScroll: true });
+  };
+  private panBy(x: number, y: number) {
+    this.container.scrollLeft -= x;
+    this.container.scrollTop -= y;
   }
   private onWheel = (event: WheelEvent) => {
     const target = event.target;
     if (
       target instanceof Element &&
       target.closest(
-        'button, input, textarea, select, details, [role="toolbar"], [role="tablist"], .mxCellEditor',
+        'button, input, textarea, select, details, [role="toolbar"], [role="scrollbar"], [role="tablist"], .mxCellEditor',
       )
     )
       return;
@@ -664,7 +737,7 @@ export class DiagramCanvas {
     if (
       event.target instanceof Element &&
       event.target.closest(
-        'input, textarea, select, button, summary, [contenteditable="true"], [role="separator"]',
+        'input, textarea, select, button, summary, [contenteditable="true"], [role="separator"], [role="scrollbar"]',
       )
     )
       return;
@@ -685,7 +758,22 @@ export class DiagramCanvas {
     if (event.code === 'Space') this.releaseSpace();
   };
   fit() {
-    this.graph.getPlugin<FitPlugin>('fit')?.fitCenter({ margin: 65 });
+    const bounds = documentExtent(this.contentBounds()),
+      width = this.container.clientWidth,
+      height = this.container.clientHeight;
+    if (!width || !height) return;
+    const scale =
+      bounds.width && bounds.height
+        ? Math.max(
+            MIN_ZOOM,
+            Math.min(MAX_ZOOM, (width - 130) / bounds.width, (height - 130) / bounds.height),
+          )
+        : 1;
+    this.updateScrollViewport({
+      scale,
+      x: (width - bounds.width * scale) / (2 * scale) - bounds.x,
+      y: (height - bounds.height * scale) / (2 * scale) - bounds.y,
+    });
   }
   destroy() {
     this.disposed = true;
@@ -693,6 +781,9 @@ export class DiagramCanvas {
     this.releaseSpace();
     this.container.classList.remove('is-panning');
     this.interactionSurface.removeEventListener('wheel', this.onWheel);
+    this.container.removeEventListener('scroll', this.onScroll);
+    this.container.removeEventListener('pointerdown', this.focusCanvas, { capture: true });
+    this.resizeObserver.disconnect();
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.releaseSpace);
