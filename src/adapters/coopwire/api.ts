@@ -80,6 +80,25 @@ let auth: { headers?: () => HeadersInit | Promise<HeadersInit>; refresh?: () => 
 export function configureCoopwireAuth(provider: typeof auth) {
   auth = provider;
 }
+/** 使用 Coopwire 已有 Cookie 刷新登录态；请求体与原前端保持一致。 */
+export async function refreshCoopwireSession(baseUrl = '', fetcher: typeof fetch = fetch) {
+  const response = await fetcher(`${baseUrl.replace(/\/$/, '')}/rest/platform/refreshToken`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: null,
+    redirect: 'error',
+  });
+  if (!response.ok) throw new CoopwireError('Coopwire 登录刷新失败', 'auth', response.status);
+  const result = envelopeSchema.parse(await response.json());
+  if (result.code !== 0)
+    throw new CoopwireError(
+      result.msg || 'Coopwire 登录刷新失败',
+      'auth',
+      response.status,
+      result.code,
+    );
+}
 const envelopeSchema = z.object({
   code: z.number(),
   msg: z.string().nullish(),
