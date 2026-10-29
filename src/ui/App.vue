@@ -9,6 +9,7 @@ import {
   shallowRef,
   triggerRef,
   watch,
+  type Component,
 } from 'vue';
 import {
   Activity,
@@ -44,6 +45,8 @@ import EmbeddedBusinessDetails from './EmbeddedBusinessDetails.vue';
 import EmbeddedLinkedChooser from './EmbeddedLinkedChooser.vue';
 import { flowchartContext, selectionFor, type LinkedChoice } from '../adapters/coopwire/portrait';
 import CanvasTopbar from './CanvasTopbar.vue';
+import ShapeToolbar from './ShapeToolbar.vue';
+import type { PaletteShape } from './palette';
 import ResizableSidebar from './ResizableSidebar.vue';
 import CanvasScrollbars from './CanvasScrollbars.vue';
 import StyleInspector from './StyleInspector.vue';
@@ -62,7 +65,7 @@ import {
 } from '../domain/pools';
 import { Editor } from '../application/editor';
 import { demoDocument } from '../application/demo';
-import { createShapeRegistry, type ShapeDefinition } from '../shapes/registry';
+import { createShapeRegistry } from '../shapes/registry';
 import { DiagramCanvas } from '../adapters/maxgraph/canvas';
 import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
@@ -108,6 +111,20 @@ const selection = ref<string[]>([]),
   libraryTab = ref<'shapes' | 'layers'>('shapes');
 const panelTab = ref<'properties' | 'details' | 'agent'>('properties'),
   activeTool = ref<'select' | 'hand' | 'connect'>('select');
+const libraryMode = ref<'sidebar' | 'toolbar'>('sidebar');
+try {
+  if (localStorage.getItem('diagramly.library.mode') === 'toolbar') libraryMode.value = 'toolbar';
+} catch {
+  /* 本机布局偏好不可读时使用侧栏模式。 */
+}
+watch(libraryMode, (mode) => {
+  try {
+    localStorage.setItem('diagramly.library.mode', mode);
+  } catch {
+    /* 本机偏好保存失败不影响图形编辑。 */
+  }
+  void resizePanel();
+});
 const graphEl = ref<HTMLElement>(),
   fileInput = ref<HTMLInputElement>();
 let canvas: DiagramCanvas | undefined,
@@ -248,7 +265,7 @@ watch(
   },
   { immediate: true },
 );
-const icons: Record<string, unknown> = {
+const icons: Record<string, Component> = {
   square: Square,
   diamond: Diamond,
   circle: Circle,
@@ -258,10 +275,7 @@ const icons: Record<string, unknown> = {
   'pool-horizontal': PanelTop,
   'pool-vertical': PanelTop,
 };
-const paletteShapes: (ShapeDefinition & {
-  id: string;
-  activityType?: BusinessEntity['activityType'];
-})[] = registry
+const paletteShapes: PaletteShape[] = registry
   .list()
   .filter((shape) => shape.type !== 'swimlane')
   .flatMap((shape) =>
@@ -1047,6 +1061,7 @@ onBeforeUnmount(() => {
 
     <div class="workspace-body">
       <ResizableSidebar
+        v-show="libraryMode === 'sidebar'"
         class="library-panel"
         side="left"
         label="图形库侧栏"
@@ -1060,6 +1075,14 @@ onBeforeUnmount(() => {
             图形库</button
           ><button :class="{ active: libraryTab === 'layers' }" @click="libraryTab = 'layers'">
             图层 <span>{{ nodeCount }}</span>
+          </button>
+          <button
+            class="library-mode-toggle"
+            aria-label="切换到图形库工具栏模式"
+            title="工具栏模式"
+            @click="libraryMode = 'toolbar'"
+          >
+            <PanelTop :size="15" />
           </button>
         </div>
         <template v-if="libraryTab === 'shapes'">
@@ -1221,6 +1244,15 @@ onBeforeUnmount(() => {
           @drop="dropShape"
         ></div>
         <CanvasScrollbars v-if="graphEl" :container="graphEl" :tick="viewportTick" />
+        <ShapeToolbar
+          v-if="libraryMode === 'toolbar'"
+          :shapes="paletteShapes"
+          :icons="icons"
+          :busy="editor.busy"
+          @sidebar="libraryMode = 'sidebar'"
+          @add="(shape) => addShape(shape.type, undefined, shape.activityType)"
+          @drag="(event, shape) => dragShape(event, shape.type, shape.activityType)"
+        />
         <div class="zoom-control">
           <button aria-label="缩小" @click="canvas?.zoom(-1)"><Minus :size="14" /></button
           ><span>{{ Math.round(zoom * 100) }}%</span
