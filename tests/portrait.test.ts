@@ -14,7 +14,7 @@ import {
 import { refreshCoopwireSession } from '../src/adapters/coopwire/api';
 import { CoopwireApi } from '../src/adapters/coopwire/api';
 import { CoopwireSession } from '../src/adapters/coopwire/session';
-import { readFlow } from '../src/adapters/coopwire/codec';
+import { readFlow, writeFlow } from '../src/adapters/coopwire/codec';
 import { FakeCoopwire, MemoryJournal, testConfig } from './support/coopwire';
 
 describe('嵌入业务面板', () => {
@@ -171,6 +171,51 @@ describe('嵌入业务面板', () => {
       expect(parts.some((part) => part.key.startsWith('line-'))).toBe(true);
     }
     expect(Object.keys(editor.snapshot.nodes)).toHaveLength(2);
+  });
+
+  it('阶段无边框，文字样式可撤销并随 XML 保存', () => {
+    const registry = createShapeRegistry();
+    const editor = new Editor(emptyDocument(), registry);
+    const create = editor.createNode('stage-horizontal', 20, 30);
+    editor.dispatch('添加阶段', [create]);
+    if (create.type !== 'node.create') throw new Error('创建操作无效');
+    const id = create.node.id;
+    editor.dispatch('修改阶段文字', [
+      {
+        type: 'node.appearance',
+        id,
+        fontColor: '#aabbcc',
+        fontSize: 18,
+        fontBold: false,
+        textDirection: 'vertical',
+      },
+    ]);
+    const stage = editor.snapshot.nodes[id];
+    const projection = nodePresentation(editor.snapshot, stage, registry);
+    expect(projection).toMatchObject({ fill: 'none', stroke: 'none' });
+    expect(projection.parts[0]).toMatchObject({
+      fill: 'none',
+      color: '#aabbcc',
+      fontSize: 18,
+      bold: false,
+      vertical: true,
+    });
+    expect(projection.parts.slice(1).every((part) => part.key.startsWith('line-'))).toBe(true);
+    const xml = writeFlow(editor.snapshot, registry, 'flow_test');
+    expect(xml).toContain('strokeColor=none;');
+    expect(xml).toContain('fontColor=#aabbcc;fontSize=18;fontStyle=0;');
+    const restored = readFlow(
+      { id: 'flow_test', name: '阶段', version: 1, drawioXml: xml },
+      registry,
+    ).document;
+    expect(restored.nodes[id].appearance).toMatchObject({
+      fontColor: '#aabbcc',
+      fontSize: 18,
+      fontBold: false,
+      textDirection: 'vertical',
+    });
+    editor.undo();
+    expect(editor.snapshot.nodes[id].appearance.fontSize).toBeUndefined();
   });
 
   it('旧流程的阶段标题条和装饰虚线合并为单个节点', () => {

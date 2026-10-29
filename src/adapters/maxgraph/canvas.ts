@@ -502,6 +502,7 @@ export class DiagramCanvas {
       perimeter: `${definition.primitive}Perimeter`,
       fillColor: presentation.fill,
       ...strokeStyle(nodeLineAppearance(node)),
+      strokeColor: presentation.stroke,
       arcSize: 8,
       fontSize: 12,
       fontColor: presentation.fontColor,

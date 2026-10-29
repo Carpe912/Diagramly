@@ -293,7 +293,10 @@ export function readFlow(
     node.bounds.height = vertical ? 300 : 42;
     const style = styleValues(cell);
     node.appearance.headerFill = color(style.fillColor) ?? '#1ba1e2';
-    node.appearance.fontColor = color(style.fontColor) ?? '#ffffff';
+    node.appearance.fontColor =
+      color(style.fontColor)?.toLowerCase() === '#ffffff'
+        ? '#334155'
+        : (color(style.fontColor) ?? '#334155');
     node.appearance.accent = color(style.strokeColor) ?? '#006eaf';
   }
   for (const pool of Object.values(doc.nodes).filter((n) => isPoolType(n.type))) {
@@ -593,7 +596,7 @@ export function writeFlow(
     const cell = element('mxCell', {
       vertex: 1,
       parent: node.parentId ?? '1',
-      style: `${isBusinessNode(node) ? (node.type === 'activity' ? 'active;' : node.type === 'decision' ? 'rhombus;' : 'process;') : ''}shape=${shape.primitive};whiteSpace=wrap;html=0;fillColor=${presentation.fill};fontColor=${presentation.fontColor};${styleToXml(strokeStyle(nodeLineAppearance(node)))}${isBusinessNode(node) ? 'cflowchart=1;' : ''}${node.type === 'swimlane' ? `swimlaneLane;coopwireSwimlane=1;horizontal=${poolOf(doc, node)?.type === 'pool-vertical' ? 1 : 0};roleId=${entity.roleIds.join(',')};` : ''}${isPoolType(node.type) ? `swimlaneContainer;${node.type === 'pool-vertical' ? 'verticalSwimlane' : 'horizontalSwimlane'};horizontal=${node.type === 'pool-vertical' ? 1 : 0};startSize=36;` : ''}`,
+      style: `${isBusinessNode(node) ? (node.type === 'activity' ? 'active;' : node.type === 'decision' ? 'rhombus;' : 'process;') : ''}shape=${shape.primitive};whiteSpace=wrap;html=0;fillColor=${presentation.fill};fontColor=${presentation.fontColor};${styleToXml(strokeStyle(nodeLineAppearance(node)))}${node.type.startsWith('stage-') ? 'strokeColor=none;' : ''}${isBusinessNode(node) ? 'cflowchart=1;' : ''}${node.type === 'swimlane' ? `swimlaneLane;coopwireSwimlane=1;horizontal=${poolOf(doc, node)?.type === 'pool-vertical' ? 1 : 0};roleId=${entity.roleIds.join(',')};` : ''}${isPoolType(node.type) ? `swimlaneContainer;${node.type === 'pool-vertical' ? 'verticalSwimlane' : 'horizontalSwimlane'};horizontal=${node.type === 'pool-vertical' ? 1 : 0};startSize=36;` : ''}`,
     });
     cell.append(element('mxGeometry', { ...b, as: 'geometry' }));
     wrapper.append(cell);
@@ -605,7 +608,7 @@ export function writeFlow(
         value: part.text,
         vertex: 1,
         parent: node.id,
-        style: `${part.key === 'title' ? 'act-content;' : `act-${part.key};`}shape=${part.primitive};html=0;fillColor=${part.fill};strokeColor=${part.stroke ?? 'none'};fontColor=${part.color ?? '#334155'};fontSize=${part.fontSize ?? 12};opacity=${node.appearance.opacity ?? 100};textOpacity=${node.appearance.opacity ?? 100};horizontal=${part.vertical ? 0 : 1};movable=0;deletable=0;connectable=0;`,
+        style: `${part.key === 'title' ? 'act-content;' : `act-${part.key};`}shape=${part.primitive};html=0;fillColor=${part.fill};strokeColor=${part.stroke ?? 'none'};fontColor=${part.color ?? '#334155'};fontSize=${part.fontSize ?? 12};fontStyle=${part.bold ? 1 : 0};opacity=${node.appearance.opacity ?? 100};textOpacity=${node.appearance.opacity ?? 100};horizontal=${part.vertical ? 0 : 1};movable=0;deletable=0;connectable=0;`,
       });
       child.append(element('mxGeometry', { ...part.bounds, as: 'geometry' }));
       root.append(child);

@@ -44,6 +44,7 @@ import {
 } from '@lucide/vue';
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
+import StageToolbar from './StageToolbar.vue';
 import EmbeddedBusinessDetails from './EmbeddedBusinessDetails.vue';
 import EmbeddedLinkedChooser from './EmbeddedLinkedChooser.vue';
 import { flowchartContext, selectionFor, type LinkedChoice } from '../adapters/coopwire/portrait';
@@ -87,6 +88,7 @@ import {
   type BusinessEntity,
   type CanvasSettings,
   type DiagramDocument,
+  type DiagramNode,
   type EdgeAppearance,
 } from '../domain/model';
 import type { Command, Operation } from '../application/commands';
@@ -294,6 +296,9 @@ const contextPool = computed(() =>
 const contextLane = computed(() =>
   selectedNode.value?.type === 'swimlane' ? selectedNode.value : undefined,
 );
+const contextStage = computed(() =>
+  selectedNode.value?.type.startsWith('stage-') ? selectedNode.value : undefined,
+);
 const viewportTick = ref(0);
 const canvasSettings = computed(() => doc.value.canvas ?? defaultCanvasSettings);
 const canvasStyle = computed(() => {
@@ -325,10 +330,10 @@ const poolToolbarPosition = computed(() => {
   void viewportTick.value;
   void zoom.value;
   void doc.value;
-  const target = contextPool.value ?? contextLane.value;
+  const target = contextPool.value ?? contextLane.value ?? contextStage.value;
   const bounds = target ? canvas?.bounds(target.id) : undefined;
   const width = graphEl.value?.clientWidth ?? 900,
-    toolbarWidth = Math.min(contextLane.value ? 340 : 650, width - 24);
+    toolbarWidth = Math.min(contextLane.value ? 340 : contextStage.value ? 440 : 650, width - 24);
   return {
     left: `${Math.max(12 + toolbarWidth / 2, Math.min(width - toolbarWidth / 2 - 12, (bounds?.x ?? 12) + (bounds?.width ?? toolbarWidth) / 2))}px`,
     top: `${Math.max(136, Math.min((graphEl.value?.offsetTop ?? 180) + (bounds?.y ?? 40) - 52, (graphEl.value?.parentElement?.clientHeight ?? 800) - 130))}px`,
@@ -638,6 +643,10 @@ function poolAppearance(patch: { fill?: string; headerFill?: string; fontColor?:
 function laneAppearance(patch: { fill?: string; headerFill?: string; fontColor?: string }) {
   if (contextLane.value)
     void run('修改泳道外观', [{ type: 'node.appearance', id: contextLane.value.id, ...patch }]);
+}
+function stageAppearance(patch: Partial<DiagramNode['appearance']>) {
+  if (contextStage.value)
+    void run('修改阶段文字', [{ type: 'node.appearance', id: contextStage.value.id, ...patch }]);
 }
 function changeLanePool() {
   if (selectedNode.value?.type === 'swimlane' && form.parentId)
@@ -1208,6 +1217,13 @@ onBeforeUnmount(() => {
           @appearance="laneAppearance"
           @roles="patchEntity"
           @assign-roles="assignLaneRoles"
+        />
+        <StageToolbar
+          v-else-if="contextStage"
+          :stage="contextStage"
+          :busy="editor.busy"
+          :position="poolToolbarPosition"
+          @appearance="stageAppearance"
         />
         <div class="canvas-heading">
           <div class="eyebrow">DESIGN YOUR PROCESS</div>

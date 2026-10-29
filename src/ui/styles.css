@@ -1814,6 +1814,18 @@ div.mxCellEditor {
 .lane-toolbar {
   gap: 10px;
 }
+.stage-toolbar .stage-font-size {
+  width: 44px;
+  height: 25px;
+  border: 1px solid #e6ebf1;
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #52637d;
+}
+.stage-toolbar button.active {
+  background: #eaf1fb;
+  color: #3b65a5;
+}
 .lane-role-picker {
   position: relative;
 }

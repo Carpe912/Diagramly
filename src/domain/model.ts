@@ -105,6 +105,9 @@ export const appearanceSchema = z
     fill: colorSchema.optional(),
     headerFill: colorSchema.optional(),
     fontColor: colorSchema.optional(),
+    fontSize: z.number().int().min(8).max(72).optional(),
+    fontBold: z.boolean().optional(),
+    textDirection: z.enum(['horizontal', 'vertical']).optional(),
   })
   .strict();
 export type NodeAppearance = z.infer<typeof appearanceSchema>;
