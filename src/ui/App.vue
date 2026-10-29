@@ -335,7 +335,6 @@ function updateCanvas(patch: Partial<CanvasSettings>) {
 }
 async function resizePanel() {
   await nextTick();
-  canvas?.fit();
   viewportTick.value++;
 }
 const poolToolbarPosition = computed(() => {

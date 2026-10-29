@@ -75,3 +75,30 @@ test('窗口缩小时重新约束侧栏上限，为画布保留空间', async ({
   const canvas = await page.getByTestId('canvas-area').boundingBox();
   expect(canvas!.width).toBeGreaterThan(300);
 });
+
+test('手动缩放后折叠展开、调整侧栏尺寸和切换图形库模式均保留比例', async ({ page }) => {
+  await page.goto('/');
+  const graph = (await page.getByTestId('graph').boundingBox())!;
+  await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
+  await page.mouse.wheel(0, -3000);
+  const zoom = page.locator('.zoom-control > span');
+  await expect(zoom).toHaveText('400%');
+  for (const label of ['图形库侧栏', '属性侧栏']) {
+    await page.getByRole('button', { name: `折叠${label}`, exact: true }).click();
+    await expect(page.getByRole('button', { name: `展开${label}`, exact: true })).toBeVisible();
+    await expect(zoom).toHaveText('400%');
+    await page.getByRole('button', { name: `展开${label}`, exact: true }).click();
+    await expect(zoom).toHaveText('400%');
+    await page.getByRole('separator', { name: `${label}宽度`, exact: true }).press('End');
+    await expect(zoom).toHaveText('400%');
+  }
+  await page.getByRole('button', { name: '切换到图形库工具栏模式' }).click();
+  await expect(page.getByRole('toolbar', { name: '图形库工具栏', exact: true })).toBeVisible();
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '切换到图形库侧栏模式' }).click();
+  await expect(page.locator('.library-panel')).toBeVisible();
+  await expect(zoom).toHaveText('400%');
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('diagramly.document.v1')!).revision),
+  ).toBe(0);
+});
