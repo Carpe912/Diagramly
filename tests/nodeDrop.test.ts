@@ -84,7 +84,7 @@ describe('节点跨泳道拖放', () => {
     expect(editor.snapshot.nodes).toEqual(before.nodes);
   });
 
-  it('落在所有泳道之外时仍保留边界校验，不自动解除角色归属', () => {
+  it('移出泳池时解除父容器并保留绝对位置，可以撤销', () => {
     const editor = new Editor(demoDocument(), registry),
       before = editor.snapshot;
     const operation = nodeDropOperation(before, 'receive', {
@@ -92,7 +92,39 @@ describe('节点跨泳道拖放', () => {
       x: -1000,
       y: -1000,
     });
-    expect(() => editor.dispatch('越界', [operation])).toThrow('泳道');
+    expect(operation).toMatchObject({ x: -1000, y: -1000, parentId: null });
+    editor.dispatch('移出泳池', [operation]);
+    expect(editor.snapshot.nodes.receive.parentId).toBeUndefined();
+    expect(editor.snapshot.nodes.receive.bounds).toMatchObject({ x: -1000, y: -1000 });
+    expect(editor.snapshot.entities).toEqual(before.entities);
+    expect(editor.snapshot.edges).toEqual(before.edges);
+    editor.undo();
+    expect(editor.snapshot.nodes).toEqual(before.nodes);
+  });
+  it('要求泳道的文档拒绝拖出时明确提示原因，不再误报标题区', () => {
+    const document = demoDocument();
+    document.policies.activityRequiresLane = true;
+    const editor = new Editor(document, registry),
+      before = editor.snapshot;
+    const operation = nodeDropOperation(before, 'receive', {
+      ...before.nodes.receive.bounds,
+      x: -1000,
+      y: -1000,
+    });
+    expect(() => editor.dispatch('越界', [operation])).toThrow('当前文档不允许放在泳池外');
     expect(editor.snapshot).toEqual(before);
+  });
+  it('命中泳池标题时吸附最近的泳道，不错误解除归属', () => {
+    const document = demoDocument();
+    const editor = new Editor(document, registry);
+    const b = absoluteBounds(document, document.nodes.pool_order);
+    const operation = nodeDropOperation(document, 'receive', {
+      ...document.nodes.receive.bounds,
+      x: b.x + 18 - document.nodes.receive.bounds.width / 2,
+      y: b.y + 80,
+    });
+    editor.dispatch('拖到泳池标题', [operation]);
+    expect(editor.snapshot.nodes.receive.parentId).toBe('lane_sales');
+    expect(editor.snapshot.nodes.receive.bounds.x).toBe(80);
   });
 });

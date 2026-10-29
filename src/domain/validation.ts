@@ -49,11 +49,11 @@ export function validateDocument(input: unknown, registry: ShapeRegistry): Diagr
           b.x + b.width > p.width - inset.right + 0.001 ||
           b.y + b.height > p.height - inset.bottom + 0.001
         ) {
-          throw new Error('图形须完整位于泳道内容区域内，不能覆盖泳道标题区');
+          throw new Error('图形超出泳道内容区域，请调整位置或扩大泳道');
         }
       } else throw new Error('不支持此容器层级');
     } else if (node.type === 'activity' && doc.policies.activityRequiresLane)
-      throw new Error('业务活动必须属于泳道');
+      throw new Error('业务活动必须属于泳道，当前文档不允许放在泳池外');
   }
   for (const pool of Object.values(doc.nodes).filter((node) => isPoolType(node.type))) {
     const lanes = poolLanes(doc, pool.id);

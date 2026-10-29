@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { DiagramDocument } from '../../src/domain/model';
+import { absoluteBounds } from '../../src/domain/pools';
 async function readDocument(page: Page): Promise<DiagramDocument> {
   await page.getByRole('button', { name: '文档数据', exact: true }).click();
   const data = JSON.parse(await page.getByTestId('document-json').innerText());
@@ -124,6 +125,65 @@ test('多选活动跨泳道拖动只产生一次可撤销的移动', async ({ pa
   expect(after.revision).toBe(before.revision + 1);
   await page.getByRole('button', { name: '撤销', exact: true }).click();
   expect((await readDocument(page)).nodes).toEqual(before.nodes);
+});
+
+test('活动拖出泳池后成为独立节点，可撤销并重新拖入泳道', async ({ page }) => {
+  const before = await readDocument(page);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  const graph = (await page.getByTestId('graph').boundingBox())!;
+  const destination = { x: graph.x + graph.width / 2, y: graph.y + 80 };
+  const original = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+  const originalScale = original.width / before.nodes.receive.bounds.width;
+  const originalPosition = absoluteBounds(before, before.nodes.receive);
+  async function dragTo(x: number, y: number) {
+    const source = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(x, y, { steps: 16 });
+    await page.mouse.up();
+  }
+  await dragTo(destination.x, destination.y);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const outside = await readDocument(page);
+  expect(outside.nodes.receive.parentId).toBeUndefined();
+  expect(outside.entities).toEqual(before.entities);
+  expect(outside.edges).toEqual(before.edges);
+  const expectedX =
+    originalPosition.x + (destination.x - original.x - original.width / 2) / originalScale;
+  const expectedY =
+    originalPosition.y + (destination.y - original.y - original.height / 2) / originalScale;
+  expect(Math.abs(outside.nodes.receive.bounds.x - expectedX)).toBeLessThan(3);
+  expect(Math.abs(outside.nodes.receive.bounds.y - expectedY)).toBeLessThan(3);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  expect((await readDocument(page)).nodes).toEqual(before.nodes);
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  const lane = (await page.locator('[data-element-id="lane_ops"]').first().boundingBox())!;
+  const scale = lane.width / before.nodes.lane_ops.bounds.width;
+  await dragTo(lane.x + 220 * scale, lane.y + 100 * scale);
+  expect((await readDocument(page)).nodes.receive.parentId).toBe('lane_ops');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('强制泳道归属的文档拖出泳池时明确提示并恢复原位', async ({ page }) => {
+  const document = await readDocument(page);
+  document.policies.activityRequiresLane = true;
+  await page.getByLabel('导入文档', { exact: true }).setInputFiles({
+    name: 'strict.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(document)),
+  });
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  const source = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+  const graph = (await page.getByTestId('graph').boundingBox())!;
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(graph.x + graph.width / 2, graph.y + 80, { steps: 16 });
+  await page.mouse.up();
+  await expect(page.getByRole('alert')).toContainText('当前文档不允许放在泳池外');
+  await expect(page.getByRole('alert')).not.toContainText('标题区');
+  expect((await readDocument(page)).nodes).toEqual(document.nodes);
 });
 test('creates horizontal and vertical pools from the palette, each owning its own lanes', async ({
   page,
