@@ -35,7 +35,7 @@ function changeFontSize(event: Event) {
       <input
         type="color"
         aria-label="阶段文字颜色"
-        :value="stage.appearance.fontColor ?? '#334155'"
+        :value="stage.appearance.fontColor ?? '#ffffff'"
         :disabled="busy"
         @change="emit('appearance', { fontColor: inputValue($event) })"
       />

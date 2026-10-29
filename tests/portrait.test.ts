@@ -168,12 +168,20 @@ describe('嵌入业务面板', () => {
       if (operation.type !== 'node.create') throw new Error('创建操作无效');
       const parts = nodePresentation(editor.snapshot, operation.node, registry).parts;
       expect(parts[0].text).toContain('阶段');
-      expect(parts.some((part) => part.key.startsWith('line-'))).toBe(true);
+      expect(parts[0]).toMatchObject({ fill: '#1ba1e2', stroke: operation.node.appearance.accent });
+      const line = parts.find((part) => part.key === 'line-0')!;
+      if (type === 'stage-horizontal') {
+        expect(line.bounds.x).toBe(parts[0].bounds.x + parts[0].bounds.width);
+        expect(line.bounds.y + line.bounds.height / 2).toBe(operation.node.bounds.height / 2);
+      } else {
+        expect(line.bounds.y).toBe(parts[0].bounds.y + parts[0].bounds.height);
+        expect(line.bounds.x + line.bounds.width / 2).toBe(operation.node.bounds.width / 2);
+      }
     }
     expect(Object.keys(editor.snapshot.nodes)).toHaveLength(2);
   });
 
-  it('阶段无边框，文字样式可撤销并随 XML 保存', () => {
+  it('阶段标题保留背景与边框，文字样式可撤销并随 XML 保存', () => {
     const registry = createShapeRegistry();
     const editor = new Editor(emptyDocument(), registry);
     const create = editor.createNode('stage-horizontal', 20, 30);
@@ -194,7 +202,8 @@ describe('嵌入业务面板', () => {
     const projection = nodePresentation(editor.snapshot, stage, registry);
     expect(projection).toMatchObject({ fill: 'none', stroke: 'none' });
     expect(projection.parts[0]).toMatchObject({
-      fill: 'none',
+      fill: '#1ba1e2',
+      stroke: stage.appearance.accent,
       color: '#aabbcc',
       fontSize: 18,
       bold: false,

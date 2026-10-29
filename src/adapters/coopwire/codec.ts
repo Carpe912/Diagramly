@@ -293,10 +293,7 @@ export function readFlow(
     node.bounds.height = vertical ? 300 : 42;
     const style = styleValues(cell);
     node.appearance.headerFill = color(style.fillColor) ?? '#1ba1e2';
-    node.appearance.fontColor =
-      color(style.fontColor)?.toLowerCase() === '#ffffff'
-        ? '#334155'
-        : (color(style.fontColor) ?? '#334155');
+    node.appearance.fontColor = color(style.fontColor) ?? '#ffffff';
     node.appearance.accent = color(style.strokeColor) ?? '#006eaf';
   }
   for (const pool of Object.values(doc.nodes).filter((n) => isPoolType(n.type))) {

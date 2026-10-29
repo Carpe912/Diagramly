@@ -25,6 +25,21 @@ test('四类活动共用业务节点结构并保留独立类型，阶段分别�
   await page.goto('/');
   for (const id of ['shape-stage-horizontal', 'shape-stage-vertical']) {
     await page.getByTestId(id).click();
+    const title = page.locator('[data-part-id$="::bar"] > rect[fill]').last();
+    await expect(title).toHaveAttribute('fill', '#1ba1e2');
+    await expect(title).toHaveAttribute('stroke', '#5d72bd');
+    const titleBounds = await title.boundingBox();
+    const lineBounds = await page
+      .locator('[data-part-id$="::line-0"] > rect[fill]')
+      .last()
+      .boundingBox();
+    if (!titleBounds || !lineBounds) throw new Error('缺少阶段标题或虚线');
+    const gap =
+      id === 'shape-stage-horizontal'
+        ? lineBounds.x - titleBounds.x - titleBounds.width
+        : lineBounds.y - titleBounds.y - titleBounds.height;
+    expect(gap).toBeLessThanOrEqual(0.01);
+    expect(gap).toBeGreaterThanOrEqual(-1);
   }
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '销售团队', exact: true }).click();
