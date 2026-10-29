@@ -1101,6 +1101,7 @@ onBeforeUnmount(() => {
                     v-for="shape in filteredShapes.filter((s) => s.category === category)"
                     :key="shape.id"
                     class="shape-item"
+                    :class="{ 'activity-shape': shape.type === 'activity' }"
                     draggable="true"
                     :data-testid="`shape-${shape.id}`"
                     :title="`点击或拖入：${shape.label}`"

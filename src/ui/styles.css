@@ -1749,7 +1749,7 @@ div.mxCellEditor {
   grid-column: 1/-1;
   height: 71px !important;
 }
-.business-grid .shape-item:not([data-testid='shape-activity']) {
+.business-grid .shape-item:not(.activity-shape) {
   height: 75px;
 }
 .inspector-pool-actions {
@@ -1804,7 +1804,7 @@ div.mxCellEditor {
   padding: 10px 17px;
   border-top: 1px solid #f0f3f7;
 }
-.business-grid .shape-item[data-testid='shape-activity'] {
+.business-grid .shape-item.activity-shape {
   height: 128px;
 }
 

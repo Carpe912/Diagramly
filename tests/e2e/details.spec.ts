@@ -19,6 +19,15 @@ test('本机示例没有远程业务 ID 时隐藏详情，图形库明确列出�
   ]) {
     await expect(page.getByTestId(id)).toBeVisible();
   }
+  const activitySizes = await page.locator('.mini-activity').evaluateAll((previews) =>
+    previews.map((preview) => {
+      const card = preview.closest('button')!.getBoundingClientRect();
+      const shape = preview.getBoundingClientRect();
+      return { cardHeight: card.height, width: shape.width, height: shape.height };
+    }),
+  );
+  expect(activitySizes).toHaveLength(5);
+  for (const size of activitySizes) expect(size).toEqual(activitySizes[0]);
 });
 
 test('四类活动共用业务节点结构并保留独立类型，阶段分别为一个节点', async ({ page }) => {
