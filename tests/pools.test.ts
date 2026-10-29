@@ -113,7 +113,7 @@ describe('pool hierarchy and deterministic layout', () => {
     expect(editor.snapshot.nodes).toEqual(before.nodes);
     expect(editor.snapshot.edges).toEqual(before.edges);
   });
-  it('changes header placement and content constraints without replacing any business IDs or edges', () => {
+  it('changes direction and reflows endpoints without replacing business or connection IDs', () => {
     const editor = make(),
       before = structuredClone(editor.snapshot);
     editor.dispatch('改方向', [
@@ -121,7 +121,12 @@ describe('pool hierarchy and deterministic layout', () => {
     ]);
     const doc = editor.snapshot;
     expect(doc.nodes.pool_order.type).toBe('pool-vertical');
-    expect(doc.edges).toEqual(before.edges);
+    expect(Object.keys(doc.edges)).toEqual(Object.keys(before.edges));
+    for (const edge of Object.values(doc.edges)) {
+      expect(edge.source.nodeId).toBe(before.edges[edge.id].source.nodeId);
+      expect(edge.target.nodeId).toBe(before.edges[edge.id].target.nodeId);
+      expect(edge.label).toBe(before.edges[edge.id].label);
+    }
     expect(doc.entities).toEqual(before.entities);
     expect(doc.nodes.lane_sales.bounds.y).toBe(36);
     expect(doc.nodes.lane_ops.bounds.x).toBe(doc.nodes.lane_sales.bounds.width);
@@ -136,6 +141,7 @@ describe('pool hierarchy and deterministic layout', () => {
       expect(node.bounds.y).toBeGreaterThanOrEqual(52);
     editor.undo();
     expect(editor.snapshot.nodes).toEqual(before.nodes);
+    expect(editor.snapshot.edges).toEqual(before.edges);
   });
   it('moves a lane between differently oriented pools with its activities and role bindings intact', () => {
     const editor = make(),

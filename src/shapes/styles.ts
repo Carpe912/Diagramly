@@ -4,8 +4,9 @@ import {
   type DiagramNode,
   type EdgeAppearance,
   type NodeAppearance,
+  type DiagramDocument,
 } from '../domain/model';
-import { isPoolType } from '../domain/pools';
+import { childrenOf, isPoolType } from '../domain/pools';
 export const dashPatterns = {
   solid: '',
   dashed: '8 4',
@@ -118,6 +119,68 @@ export function edgeRenderStyle(edge: DiagramEdge) {
     jumpSize: a.jumpSize,
   };
 }
+/** 同侧回退线使用泳道外侧的独立通道，随节点移动实时计算，不保存过时的折点。 */
+export function edgeRouteStyle(
+  doc: DiagramDocument,
+  edge: DiagramEdge,
+  sourcePort: { x: number; y: number },
+  targetPort: { x: number; y: number },
+) {
+  const source = doc.nodes[edge.source.nodeId],
+    target = doc.nodes[edge.target.nodeId];
+  const laneId = source.parentId,
+    appearance = edgeLineAppearance(edge);
+  if (
+    !laneId ||
+    laneId !== target.parentId ||
+    doc.nodes[laneId]?.type !== 'swimlane' ||
+    source.id === target.id ||
+    appearance.routing !== 'orthogonal' ||
+    appearance.shape === 'simple-arrow'
+  )
+    return {};
+  const side =
+    sourcePort.y === 0 && targetPort.y === 0
+      ? 'top'
+      : sourcePort.x === 0 && targetPort.x === 0
+        ? 'left'
+        : sourcePort.y === 1 && targetPort.y === 1
+          ? 'bottom'
+          : sourcePort.x === 1 && targetPort.x === 1
+            ? 'right'
+            : undefined;
+  if (!side) return {};
+  const siblings = childrenOf(doc, laneId);
+  const channels = Object.values(doc.edges)
+    .filter(
+      (item) =>
+        doc.nodes[item.source.nodeId]?.parentId === laneId &&
+        doc.nodes[item.target.nodeId]?.parentId === laneId &&
+        item.source.portId === edge.source.portId &&
+        item.target.portId === edge.target.portId,
+    )
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const gap =
+    24 +
+    Math.max(
+      0,
+      channels.findIndex((item) => item.id === edge.id),
+    ) *
+      16;
+  const vertical = side === 'top' || side === 'bottom';
+  const start = (node: DiagramNode) => (vertical ? node.bounds.y : node.bounds.x);
+  const end = (node: DiagramNode) =>
+    start(node) + (vertical ? node.bounds.height : node.bounds.width);
+  const before = side === 'top' || side === 'left';
+  const channel = before
+    ? Math.min(...siblings.map(start)) - gap
+    : Math.max(...siblings.map(end)) + gap;
+  return {
+    sourceJettySize: before ? start(source) - channel : channel - end(source),
+    targetJettySize: before ? start(target) - channel : channel - end(target),
+  };
+}
+
 /** 固定端口不会读取外围间距，需沿端口外法线写入锚点偏移。 */
 export function edgePortOffsets(
   edge: DiagramEdge,

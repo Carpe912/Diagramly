@@ -20,6 +20,7 @@ import { nodePresentation } from '../../shapes/presentation';
 import {
   edgeRenderStyle,
   edgePortOffsets,
+  edgeRouteStyle,
   lineStyleFromXml,
   nodeLineAppearance,
   nodeStrokePatch,
@@ -628,6 +629,7 @@ export function writeFlow(
       style: styleToXml({
         ...edgeRenderStyle(edge),
         ...edgePortOffsets(edge, source, target),
+        ...edgeRouteStyle(doc, edge, source, target),
         shape: (
           {
             line: 'connector',

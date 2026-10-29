@@ -126,7 +126,12 @@ export function createShapeRegistry() {
       defaultSize: [68, 32],
       minSize: [32, 32],
       primitive: 'ellipse',
-      ports: [{ id: 'out', x: 1, y: 0.5, direction: 'output' }],
+      ports: [
+        { id: 'out', x: 1, y: 0.5, direction: 'output' },
+        ...allPorts
+          .filter((port) => port.id !== 'right')
+          .map((port) => ({ ...port, direction: 'output' as const })),
+      ],
     })
     .register({
       type: 'end',
@@ -137,7 +142,12 @@ export function createShapeRegistry() {
       defaultSize: [68, 32],
       minSize: [32, 32],
       primitive: 'ellipse',
-      ports: [{ id: 'in', x: 0, y: 0.5, direction: 'input' }],
+      ports: [
+        { id: 'in', x: 0, y: 0.5, direction: 'input' },
+        ...allPorts
+          .filter((port) => port.id !== 'left')
+          .map((port) => ({ ...port, direction: 'input' as const })),
+      ],
     })
     .register({
       type: 'parallel',

@@ -1,4 +1,6 @@
 import { newEntity, type Bounds, type DiagramDocument, type DiagramNode } from './model';
+import { layoutPoolFlow } from './poolFlowLayout';
+import type { ShapeRegistry } from '../shapes/registry';
 
 export type PoolOrientation = 'horizontal' | 'vertical';
 export const POOL_HEADER = 36;
@@ -155,25 +157,16 @@ export function switchPoolOrientation(
   doc: DiagramDocument,
   poolId: string,
   orientation: PoolOrientation,
+  registry: ShapeRegistry,
 ) {
   const pool = doc.nodes[poolId];
   if (!pool || !isPoolType(pool.type)) throw new Error('请选择有效泳池');
   if (poolOrientation(pool) === orientation) return;
   const lanes = poolLanes(doc, poolId),
-    oldInsets = new Map(lanes.map((lane) => [lane.id, laneInsets(doc, lane)]));
+    previousVertical = pool.type === 'pool-vertical';
   pool.type = `pool-${orientation}`;
-  [pool.bounds.width, pool.bounds.height] = [pool.bounds.height, pool.bounds.width];
-  for (const lane of lanes) {
-    const old = oldInsets.get(lane.id)!,
-      next = laneInsets(doc, lane);
-    for (const child of childrenOf(doc, lane.id)) {
-      const { x, y } = child.bounds;
-      child.bounds.x = Math.max(next.left, y - old.top + next.left);
-      child.bounds.y = Math.max(next.top, x - old.left + next.top);
-    }
-    [lane.bounds.width, lane.bounds.height] = [lane.bounds.height, lane.bounds.width];
-  }
-  layoutPool(doc, poolId);
+  layoutPoolFlow(doc, pool, lanes, registry, POOL_HEADER, previousVertical);
+  layoutPool(doc, poolId, false);
 }
 export function movePoolLane(doc: DiagramDocument, laneId: string, poolId: string) {
   const lane = doc.nodes[laneId],

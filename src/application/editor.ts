@@ -151,7 +151,7 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
       break;
     }
     case 'pool.orientation':
-      switchPoolOrientation(doc, operation.id, operation.orientation);
+      switchPoolOrientation(doc, operation.id, operation.orientation, registry);
       break;
     case 'pool.lane.add':
       ensureFresh(operation.laneId);

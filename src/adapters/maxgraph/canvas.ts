@@ -36,6 +36,7 @@ import { nodePresentation } from '../../shapes/presentation';
 import {
   edgeLineAppearance,
   edgePortOffsets,
+  edgeRouteStyle,
   edgeRenderStyle,
   nodeLineAppearance,
   strokeStyle,
@@ -450,6 +451,7 @@ export class DiagramCanvas {
           model.setStyle(cell, {
             ...edgeRenderStyle(edge),
             ...edgePortOffsets(edge, sourcePort, targetPort),
+            ...edgeRouteStyle(doc, edge, sourcePort, targetPort),
             fontColor: '#7a8292',
             fontSize: 11,
             labelBackgroundColor: '#ffffff',

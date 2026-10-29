@@ -32,6 +32,39 @@ test('selecting a pool on the actual canvas reveals the pool toolbar', async ({ 
   );
   await expect(page.getByRole('button', { name: '添加泳道', exact: true }).first()).toBeEnabled();
 });
+
+test('泳池切换方向后交接连线直接对齐，端点和布局一起撤销且缩放不变', async ({ page }) => {
+  const before = await readDocument(page);
+  const zoom = await page.locator('.zoom-control > span').innerText();
+  await poolSelection(page);
+  await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+  const vertical = await readDocument(page);
+  expect(vertical.edges.edge_deliver.source.portId).toBe('right');
+  expect(vertical.edges.edge_deliver.target.portId).toBe('left');
+  expect(vertical.entities).toEqual(before.entities);
+  const line = () =>
+    page
+      .locator('[data-element-id="edge_deliver"] path[stroke="#8e99ad"]')
+      .first()
+      .getAttribute('d');
+  const horizontalPath = (await line())!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+  expect(horizontalPath).toHaveLength(4);
+  expect(horizontalPath[1]).toBe(horizontalPath[3]);
+  expect(horizontalPath[2]).toBeGreaterThan(horizontalPath[0]);
+  await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  const restored = await readDocument(page);
+  expect(restored.nodes).toEqual(before.nodes);
+  expect(restored.edges).toEqual(before.edges);
+  await page.getByRole('button', { name: '重做', exact: true }).click();
+  expect((await readDocument(page)).nodes).toEqual(vertical.nodes);
+  await page.getByRole('button', { name: '水平布局', exact: true }).click();
+  const verticalPath = (await line())!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+  expect(verticalPath).toHaveLength(4);
+  expect(verticalPath[0]).toBe(verticalPath[2]);
+  expect(verticalPath[3]).toBeGreaterThan(verticalPath[1]);
+  await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
+});
 test('creates horizontal and vertical pools from the palette, each owning its own lanes', async ({
   page,
 }) => {

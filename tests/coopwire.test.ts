@@ -493,6 +493,9 @@ describe('remote pools', () => {
     expect(restored.nodes.lane_sales.parentId).toBe('pool_order');
     expect(restored.nodes.pool_order.appearance.fill).toBe('#edf7f0');
     expect(backend.flow.drawioXml).toContain('verticalSwimlane');
+    expect(backend.flow.drawioXml).toContain('sourceJettySize=');
+    expect(restored.edges.edge_deliver.source.portId).toBe('right');
+    expect(restored.edges.edge_deliver.target.portId).toBe('left');
     expect(flowRelations(restored).otherCells.some((n) => n.xmlId === 'pool_order')).toBe(false);
   });
   it('preserves pool direction, organization IDs and colors from the old XML container structure', () => {
