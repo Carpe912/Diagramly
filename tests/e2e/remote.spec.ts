@@ -194,6 +194,42 @@ test('原业务面板嵌入后按活动 ID 同步外部修改，不重复写业�
     ['saveFlowDiagramRelation'],
   );
 });
+test('引用活动先通过原选择器返回目标，再创建带关联信息的业务节点', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await page.route('**/enterprise/diagramly/portrait/**', async (route) => {
+    await route.fulfill({
+      contentType: 'text/html',
+      body: `<!doctype html><script>
+        const query = new URLSearchParams(location.search);
+        const parentOrigin = query.get('parentOrigin');
+        const sessionId = query.get('sessionId');
+        const send = (type, data = {}) => parent.postMessage({channel:'diagramly.portrait',version:1,sessionId,type,...data},parentOrigin);
+        addEventListener('message', event => {
+          if(event.source !== parent || event.origin !== parentOrigin || event.data.sessionId !== sessionId) return;
+          if(event.data.type === 'chooseLinked') send('linkedChosen',{
+            requestId:event.data.requestId,
+            form:{linkFlow:'flow_other',linkAct:'activity_other',showOrgName:true}
+          });
+        });
+        send('ready');
+      </script>`,
+    });
+  });
+  await connect(page, backend);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await page.getByRole('button', { name: '图形库', exact: true }).click();
+  await page.getByTestId('shape-activity-linked').click();
+  await expect.poll(() => backend.flow.version).toBe(9);
+  expect(backend.calls.find((call) => call.action === 'addActs')?.body).toMatchObject([
+    {
+      actType: 'linkAct',
+      linkFlow: 'flow_other',
+      linkAct: 'activity_other',
+      showOrgName: true,
+    },
+  ]);
+});
 test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持关闭', async ({ page }) => {
   const backend = new FakeCoopwire();
   await connect(page, backend);
