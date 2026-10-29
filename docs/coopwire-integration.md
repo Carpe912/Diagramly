@@ -26,11 +26,11 @@
 | 保存图形/关系 | POST `{scopeDefine}/saveFlowDiagramRelation`                | multipart `file` 为实际 PNG，`data` 为 JSON Blob，含 flowDiagramId、version、drawioXml、data  |
 | 删除图形      | 上述完整流程关系保存                                        | 从 acts/nodes/edges 中移除关联；**不调用 portrait/delAct 永久删除业务活动**                   |
 
-创建时 `belongType = flowchartType + 'Act'`。人工、系统、接口、判断、子流程分别映射 manualOnline、systemOperate、interfaceDocking、decide、subAct。复制旧 manualOffline 活动保留原类型和富文本，不因前端统一显示“人工活动”而将其重写。
+创建时 `belongType = flowchartType + 'Act'`。调色板的四个活动入口分别映射 manualOnline、manualOffline、systemOperate、interfaceDocking；判断、子流程、并行分别映射 decide、subAct、parallel。引用活动先通过原 `addLinkActForm` 选择目标，再在创建载荷中传入 linkFlow、linkAct、showOrgName。复制旧活动保留原类型和富文本。
 
 泳道组织选择使用真正的 roleIds 数组。角色变化通过活动更新和流程关系一起提交。仅移动位置、改变颜色或改连线时，不更新无关业务活动。真实详情接口的组织字段为 orgRelation；适配器以文档原/新角色归属比较变化，不因响应中没有 orgId 就反复写入全部活动。
 
-文本输入输出编辑按原记录位置匹配，保存时保留原 IO 对象的其他字段；新增简单文本 IO 使用 `formatType: text`、`dataObjectType: text`。更复杂的对象、文档、接口等应继续扩展领域表单。现有富文本描述仅在用户明确编辑描述时写入纯文本版本；单纯复制、拖动、换色不会覆写它。
+文本输入输出编辑按原记录位置匹配，保存时保留原 IO 对象的其他字段；新增简单文本 IO 使用 `formatType: text`、`dataObjectType: text`。完整业务编辑由嵌入的原 `UserPortrait` 和引用活动表单承担。原组件保存后只刷新该活动并同步流程关系，不重复提交业务字段。现有富文本描述仅在用户明确通过基础属性编辑描述时写入纯文本版本；单纯复制、拖动、换色不会覆写它。
 
 画布标题保存在规范化元数据中；当前不调用缺少完整参数契约的 editFlowDiagram 重命名后端流程列表条目。
 
@@ -52,7 +52,7 @@ configureCoopwireAuth({
 });
 ```
 
-只有业务响应明确返回 `code=1002` 时，才允许宿主刷新登录后重发一次；网络错误、超时和 5xx 不会自动重发业务写入。401/403、409、非零业务 code、部分批量成功 code、错误响应结构均作为失败处理。
+只有业务响应明确返回 `code=1002` 时，才向 `/rest/platform/refreshToken` 发送带 Cookie、JSON Content-Type、空请求体的 POST，成功后重发一次；网络错误、超时和 5xx 不会自动重发业务写入。401/403、409、非零业务 code、部分批量成功 code、错误响应结构均作为失败处理。嵌入面板的部署与源地址配置见[业务图形详情](activity-details.md)。
 
 ### 本机开发代理
 
@@ -63,7 +63,7 @@ COOPWIRE_TARGET=https://your-coopwire.example
 COOPWIRE_SESSION_FILE=/absolute/private/coopwire-session.json
 ```
 
-鉴权文件仅保存在本机、Git 外，内容为 JSON `{ "cookie": "..." }`，权限设为 600。不要给密钥变量添加 VITE_ 前缀。代理在每次转发时读取会话文件中的 Cookie，仅附加到转发请求；不会将上游 Set-Cookie 下发到本机页面。本项目 dev 监听 127.0.0.1；开发代理不作为公开部署服务器。
+鉴权文件仅保存在本机、Git 外，内容为 JSON `{ "cookie": "..." }`，权限设为 600。不要给密钥变量添加 VITE_ 前缀。代理在每次转发时读取会话文件中的 Cookie，仅附加到转发请求；刷新接口成功返回的新 Cookie 原子更新到该私有文件，不会下发到本机页面。本项目 dev 监听 127.0.0.1；开发代理不作为公开部署服务器。
 
 测试与源码不包含本次用户的 Cookie。实际鉴权文件位于临时目录，过期后替换文件即可，无需重启 dev。仅更新 access_token 时应移除已过期的 GSESSION 等旧登录字段，避免它们优先参与鉴权。生产环境应使用现有宿主的会话与反向代理，不部署这个开发鉴权文件。
 
@@ -85,7 +85,7 @@ COOPWIRE_SESSION_FILE=/absolute/private/coopwire-session.json
 
 ## 旧 XML 与数据保留
 
-`readFlow` 支持本次流程涉及的水平/垂直泳池、归属泳道、人工/接口/系统活动、判断、子流程、开始/结束、描述附属框及可映射连线。水平/垂直泳池的方向和泳道归属被保留，泳道尺寸适配当前布局约束，活动内部 Cell 合并为一个业务节点。无法识别的业务图形、未知顶点、非法端点和压缩/非法 XML 会停止加载，保留当前画布，避免静默丢数据。
+`readFlow` 支持本次流程涉及的水平/垂直泳池、归属泳道、四类活动、引用活动、判断、子流程、并行、开始/结束、阶段标题条与装饰虚线、描述附属框及可映射连线。水平/垂直泳池的方向和泳道归属被保留，泳道尺寸适配当前布局约束，活动内部 Cell 合并为一个业务节点。无法识别的业务图形、未知顶点、非法端点和压缩/非法 XML 会停止加载，保留当前画布，避免静默丢数据。
 
 发现只在 flowObj 中存在、XML 中不存在的活动时，会保留一个待核对节点并读取其真实业务详情。已知 `#active-edge#` 无终点装饰标记不转成业务连线，界面显示迁移说明。
 
@@ -95,7 +95,7 @@ COOPWIRE_SESSION_FILE=/absolute/private/coopwire-session.json
 
 ## 验证范围
 
-2026-10-28 使用用户提供的环境做了真实只读联调：组织接口成功返回 40 条记录，目标流程 version 28，读取为 9 个节点、3 条有效连线、4 个业务活动；没有向目标环境发出写请求。
+2026-10-29 使用用户最新提供的 Cookie 再次做了真实只读核对：组织接口返回 40 条记录，目标流程 version 28、4 个关联业务活动，抽样活动详情可读取；旧 XML 中包括 manualOnline、subAct、interfaceDocking。会话有效，因此没有调用刷新接口；没有向目标环境发出业务写请求。
 
 写操作使用隔离的 Coopwire 契约测试验证，包括创建、复制、修改、描述/IO、多步骤失败续传、响应丢失后的停止重发、版本冲突、恢复记录、远程撤销重做和 Agent。浏览器测试实际走 fetch、真实 XML 编码与 SVG → Canvas → PNG → multipart 上传链路，但 `/rest` 请求全部由测试后端拦截，无法修改真实项目。
 
