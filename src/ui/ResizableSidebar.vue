@@ -170,7 +170,7 @@ onBeforeUnmount(() => observer?.disconnect());
       :aria-expanded="!collapsed"
       @click="toggle"
     >
-      <component :is="(side === 'left') !== collapsed ? ChevronLeft : ChevronRight" :size="12" />
+      <component :is="(side === 'left') !== collapsed ? ChevronLeft : ChevronRight" :size="14" />
     </button>
     <span v-if="collapsed" class="collapsed-label">{{
       label === '图形库侧栏' ? '图形库' : '属性面板'
@@ -243,29 +243,22 @@ onBeforeUnmount(() => observer?.disconnect());
 }
 .sidebar-collapse {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 40px;
+  right: 7px;
+  top: 13px;
+  width: 22px;
+  height: 23px;
   display: grid;
   place-items: center;
   border-radius: 5px;
-  color: #9caabd;
-  opacity: 0.55;
+  color: #8a99af;
   z-index: 10;
-  background: transparent;
+  background: white;
 }
-.sidebar-collapse:hover,
-.sidebar-collapse:focus-visible {
-  color: #607b9d;
-  opacity: 1;
+.sidebar-collapse:hover {
   background: #edf1f8;
 }
-.sidebar-left .sidebar-collapse {
-  right: -7px;
-}
-.sidebar-right .sidebar-collapse {
-  left: -7px;
+.collapsed .sidebar-collapse {
+  right: 6px;
 }
 .collapsed-label {
   writing-mode: vertical-rl;
@@ -276,7 +269,7 @@ onBeforeUnmount(() => observer?.disconnect());
   letter-spacing: 3px;
 }
 .sidebar-content :deep(.panel-tabs) {
-  padding-right: 20px;
+  padding-right: 36px;
   gap: 18px;
 }
 .sidebar-resize-width {

@@ -19,12 +19,6 @@ for (const side of [
     await page.goto('/');
     const panel = page.locator(`[data-resizable-sidebar="${side.id}"]`);
     const before = await panel.boundingBox();
-    const toggle = (await page
-      .getByRole('button', { name: `折叠${side.label}`, exact: true })
-      .boundingBox())!;
-    expect(toggle.y + toggle.height / 2).toBeCloseTo(before!.y + before!.height / 2, 0);
-    const edge = side.id === 'left' ? before!.x + before!.width : before!.x;
-    expect(Math.abs(toggle.x + toggle.width / 2 - edge)).toBeLessThan(2);
     const graph = (await page.getByTestId('graph').boundingBox())!;
     await page.getByRole('button', { name: `折叠${side.label}`, exact: true }).click();
     await expect(panel).toHaveCSS('width', '36px');
