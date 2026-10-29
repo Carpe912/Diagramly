@@ -552,32 +552,6 @@ button:hover:not(:disabled) {
   align-items: center;
   gap: 6px;
 }
-.canvas-heading {
-  position: absolute;
-  left: 40px;
-  top: 82px;
-  pointer-events: none;
-  z-index: 1;
-}
-.eyebrow {
-  font-size: 8px;
-  font-weight: 600;
-  color: #9caabd;
-  letter-spacing: 2.3px;
-}
-.canvas-heading h1 {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: #3a495f;
-  margin: 11px 0 8px;
-}
-.canvas-heading p {
-  font-size: 10px;
-  color: #a0a9b7;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
 .graph-container {
   position: absolute;
   left: var(--canvas-gutter);
@@ -604,41 +578,9 @@ button:hover:not(:disabled) {
   cursor: crosshair;
 }
 /* 拖动图形或缩放手柄时，让手势穿过浮动控件，避免中途丢失释放事件。 */
-.canvas-area:has(.graph-container:active) :is(.canvas-tools, .zoom-control, .pool-toolbar) {
+.canvas-area:has(.graph-container:active) :is(.shape-toolbar, .zoom-control, .pool-toolbar) {
   pointer-events: none;
 }
-.canvas-tools {
-  position: absolute;
-  bottom: 66px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  border: 1px solid #e3e7ed;
-  border-radius: 10px;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 5px 20px #3045680b;
-  z-index: 4;
-  height: 47px;
-}
-.canvas-tools > button {
-  width: 33px;
-  height: 33px;
-  display: grid;
-  place-items: center;
-  color: #8a96a7;
-  border-radius: 5px;
-}
-.canvas-tools > button:hover:not(:disabled) {
-  background: #f0f3f9;
-}
-.canvas-tools > button.active {
-  color: #496089;
-  background: #edf1f8;
-}
-.canvas-tools > i,
 .zoom-control > i {
   height: 19px;
   width: 1px;
@@ -646,18 +588,12 @@ button:hover:not(:disabled) {
   margin: 0 5px;
 }
 .canvas-tip {
-  position: absolute;
-  bottom: 34px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #a1aaba;
+  color: #9aa6b8;
   font-size: 9px;
   white-space: nowrap;
-  z-index: 4;
-  pointer-events: none;
 }
 .canvas-tip > span {
   color: #c7cdd6;
@@ -725,25 +661,6 @@ button:hover:not(:disabled) {
   top: 3px;
   left: 2px;
   background: #bcc6d4;
-}
-.connection-hint {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #edf2fa;
-  border: 1px solid #dce5f5;
-  color: #5d75a6;
-  font-size: 10px;
-  padding: 7px 12px;
-  border-radius: 5px;
-  z-index: 4;
-  pointer-events: none;
-}
-.connection-hint > span {
-  margin-left: 15px;
-  font-size: 9px;
-  color: #99a8c0;
 }
 .inspector-panel {
   width: 274px;
@@ -1459,12 +1376,6 @@ div.mxCellEditor {
     bottom: 24px;
     left: 20px;
   }
-  .canvas-tools {
-    bottom: 66px;
-  }
-  .canvas-heading {
-    left: 28px;
-  }
   .library-note {
     padding: 12px 10px;
   }
@@ -1485,12 +1396,6 @@ div.mxCellEditor {
   .library-note {
     display: none;
   }
-  .canvas-heading {
-    top: 74px;
-  }
-  .canvas-heading h1 {
-    font-size: 21px;
-  }
   .empty-inspector {
     padding-top: 45px;
   }
@@ -1502,9 +1407,6 @@ div.mxCellEditor {
   }
   .property-section {
     padding: 15px 18px;
-  }
-  .canvas-heading p {
-    font-size: 9px;
   }
 }
 .canvas-file-actions {

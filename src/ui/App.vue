@@ -21,25 +21,20 @@ import {
   Circle,
   CircleDot,
   Code2,
-  Copy,
   Diamond,
   FileJson,
   FolderOpen,
   GitBranch,
   Grip,
-  Hand,
   Layers,
   Maximize,
   Minus,
   MousePointer2,
   PanelTop,
   Plus,
-  Redo2,
   Search,
   Sparkles,
   Square,
-  Trash2,
-  Undo2,
   X,
 } from '@lucide/vue';
 import PoolToolbar from './PoolToolbar.vue';
@@ -48,7 +43,7 @@ import StageToolbar from './StageToolbar.vue';
 import EmbeddedBusinessDetails from './EmbeddedBusinessDetails.vue';
 import EmbeddedLinkedChooser from './EmbeddedLinkedChooser.vue';
 import { flowchartContext, selectionFor, type LinkedChoice } from '../adapters/coopwire/portrait';
-import CanvasSettingsPanel from './CanvasSettings.vue';
+import CanvasTopbar from './CanvasTopbar.vue';
 import ResizableSidebar from './ResizableSidebar.vue';
 import CanvasScrollbars from './CanvasScrollbars.vue';
 import StyleInspector from './StyleInspector.vue';
@@ -1167,35 +1162,26 @@ onBeforeUnmount(() => {
 
       <main class="canvas-area" :style="canvasStyle" data-testid="canvas-area">
         <div v-if="editor.busy" class="remote-saving">正在提交远程操作…</div>
-        <div class="canvas-topbar">
-          <div>
-            <span class="canvas-tag"><GitBranch :size="13" /> 流程图</span
-            ><span class="subtle"
-              >{{ nodeCount }} 个节点 <span class="middot">·</span>
-              {{ Object.keys(doc.edges).length }} 条连线</span
-            >
-          </div>
-          <div class="canvas-file-actions">
-            <CanvasSettingsPanel
-              :value="canvasSettings"
-              :busy="editor.busy"
-              @change="updateCanvas"
-            />
-            <button
-              class="quiet-button"
-              :disabled="!!remoteSession || editor.busy"
-              @click="showReset = 'empty'"
-            >
-              <Plus :size="14" /> 新建画布</button
-            ><button
-              class="quiet-button"
-              :disabled="!!remoteSession || editor.busy"
-              @click="showReset = 'sample'"
-            >
-              <FolderOpen :size="14" /> 打开示例
-            </button>
-          </div>
-        </div>
+        <CanvasTopbar
+          :tool="activeTool"
+          :node-count="nodeCount"
+          :edge-count="Object.keys(doc.edges).length"
+          :busy="editor.busy"
+          :remote="!!remoteSession"
+          :can-undo="editor.canUndo"
+          :can-redo="editor.canRedo"
+          :selected="!!selection.length"
+          :settings="canvasSettings"
+          @tool="
+            select([]);
+            setTool($event);
+          "
+          @history="history"
+          @duplicate="duplicateSelection"
+          @remove="removeSelection"
+          @reset="showReset = $event"
+          @settings="updateCanvas"
+        />
         <PoolToolbar
           v-if="contextPool"
           :document="doc"
@@ -1226,11 +1212,6 @@ onBeforeUnmount(() => {
           :position="poolToolbarPosition"
           @appearance="stageAppearance"
         />
-        <div class="canvas-heading">
-          <div class="eyebrow">DESIGN YOUR PROCESS</div>
-          <h1>{{ doc.title }}</h1>
-          <p>让复杂的业务，清晰地流动。</p>
-        </div>
         <div
           id="diagram-canvas"
           ref="graphEl"
@@ -1240,64 +1221,6 @@ onBeforeUnmount(() => {
           @drop="dropShape"
         ></div>
         <CanvasScrollbars v-if="graphEl" :container="graphEl" :tick="viewportTick" />
-        <div class="canvas-tools" role="toolbar" aria-label="画布工具">
-          <button
-            :class="{ active: activeTool === 'select' }"
-            title="选择 (V)"
-            aria-label="选择工具"
-            @click="setTool('select')"
-          >
-            <MousePointer2 :size="18" />
-          </button>
-          <button
-            :class="{ active: activeTool === 'hand' }"
-            title="平移 (H)"
-            aria-label="平移工具"
-            @click="setTool('hand')"
-          >
-            <Hand :size="18" />
-          </button>
-          <button
-            :class="{ active: activeTool === 'connect' }"
-            title="连接 (C)，依次选择起点与终点"
-            aria-label="连接工具"
-            @click="
-              select([]);
-              setTool('connect');
-            "
-          >
-            <GitBranch :size="18" />
-          </button>
-          <i></i
-          ><button
-            :disabled="editor.busy || !editor.canUndo"
-            title="撤销 (⌘Z)"
-            aria-label="撤销"
-            @click="history('undo')"
-          >
-            <Undo2 :size="17" /></button
-          ><button
-            :disabled="editor.busy || !editor.canRedo"
-            title="重做 (⇧⌘Z)"
-            aria-label="重做"
-            @click="history('redo')"
-          >
-            <Redo2 :size="17" />
-          </button>
-          <template v-if="selection.length"
-            ><i></i
-            ><button title="复制 (⌘D)" aria-label="复制所选" @click="duplicateSelection">
-              <Copy :size="16" /></button
-            ><button title="删除 (Delete)" aria-label="删除所选" @click="removeSelection">
-              <Trash2 :size="16" /></button
-          ></template>
-        </div>
-        <div v-if="activeTool === 'connect'" class="connection-hint">
-          {{ connectSource ? '选择终点节点' : '选择起点节点' }}<span>Esc 退出</span>
-        </div>
-        <div v-else class="canvas-tip">
-          <Grip :size="12" /> 拖拽框选 <span>·</span> 滚轮缩放 <span>·</span> 滚动条 / 空格拖拽平移
-        </div>
         <div class="zoom-control">
           <button aria-label="缩小" @click="canvas?.zoom(-1)"><Minus :size="14" /></button
           ><span>{{ Math.round(zoom * 100) }}%</span
@@ -1736,9 +1659,14 @@ onBeforeUnmount(() => {
         ><span class="online-dot"></span
         >{{ remoteSession ? 'Coopwire 远程流程' : '本地工作空间' }}</span
       ><span>{{ remoteSession ? remoteStatus.message : '所有更改保存在当前浏览器' }}</span>
-      <div>
-        <span>⌘ Z 撤销</span><span>⌘ D 复制</span><span>Delete 删除</span
-        ><span class="schema-tag">SCHEMA 1.0</span>
+      <div class="status-hints">
+        <span v-if="activeTool === 'connect'" class="canvas-tip"
+          >{{ connectSource ? '选择终点节点' : '选择起点节点' }} · Esc 退出</span
+        >
+        <span v-else class="canvas-tip"
+          ><Grip :size="12" /> 拖拽框选 <span>·</span> 滚轮缩放 <span>·</span> 滚动条 /
+          空格拖拽平移</span
+        >
       </div>
     </footer>
     <div

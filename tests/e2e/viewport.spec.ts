@@ -56,10 +56,11 @@ test('内容未溢出时与可见区域同大，放大后通过横纵滚动条�
   expect(area.x + area.width - graph.x - graph.width).toBe(12);
   expect(graph.y - topbar.y - topbar.height).toBe(12);
   expect(area.y + area.height - graph.y - graph.height).toBe(12);
-  const heading = (await page.locator('.canvas-heading').boundingBox())!,
-    tools = (await page.getByRole('toolbar', { name: '画布工具' }).boundingBox())!;
-  expect(heading.y).toBeGreaterThan(graph.y);
-  expect(tools.y + tools.height).toBeLessThan(graph.y + graph.height);
+  await expect(page.locator('.canvas-heading, .canvas-tools')).toHaveCount(0);
+  const tools = (await page.getByRole('toolbar', { name: '画布工具' }).boundingBox())!;
+  expect(tools.y).toBeGreaterThanOrEqual(topbar.y);
+  expect(tools.y + tools.height).toBeLessThanOrEqual(topbar.y + topbar.height);
+  await expect(page.locator('.status-bar .canvas-tip')).toBeVisible();
   await expect(page.locator('.scroll-shadow')).toHaveCount(0);
   const sizes = () =>
     page.getByTestId('graph').evaluate((el) => ({
