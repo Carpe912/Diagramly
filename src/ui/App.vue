@@ -190,7 +190,7 @@ const embeddedSelection = computed(() => {
       )
     : undefined;
 });
-const portraitOrigin = import.meta.env.VITE_COOPWIRE_FRONTEND_ORIGIN || window.location.origin;
+const portraitOrigin = ref(import.meta.env.VITE_COOPWIRE_FRONTEND_ORIGIN || '');
 const externalChanges = new Set<string>();
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 function refreshFromPortrait(actId: string) {
@@ -1870,6 +1870,12 @@ onBeforeUnmount(() => {
           </button>
         </header>
         <p>连接时只读取远端流程；后续编辑会提交到该流程。本机画布另行保留。</p>
+        <label
+          >业务详情前端地址<input
+            v-model="portraitOrigin"
+            aria-label="业务详情前端地址"
+            placeholder="留空使用本页域名"
+        /></label>
         <template v-if="!remoteSession"
           ><label
             >接口地址<input

@@ -16,7 +16,7 @@ Diagramly 不再维护一套简化的活动表单。右侧 iframe 加载 `coopwi
 
 ## 部署与鉴权
 
-需要同时部署 Diagramly 和修改后的 `coopwire-frontend`。同域部署时保持 `VITE_COOPWIRE_FRONTEND_ORIGIN` 为空；跨源部署时填原前端源地址，并在原前端构建环境设置 `VUE_APP_DIAGRAMLY_EMBED_ORIGINS` 为允许嵌入的 Diagramly 源地址，多个源用逗号分隔。部署时需确认反向代理与 CSP 允许该页面作为 iframe 加载。
+需要同时部署 Diagramly 和修改后的 `coopwire-frontend`。同域部署时保持 `VITE_COOPWIRE_FRONTEND_ORIGIN` 为空；跨源部署时填原前端源地址，也可在「连接 Coopwire」面板临时填写业务详情前端地址。原前端构建环境设置 `VUE_APP_DIAGRAMLY_EMBED_ORIGINS` 为允许嵌入的 Diagramly 源地址，多个源用逗号分隔。部署时需确认反向代理与 CSP 允许该页面作为 iframe 加载。
 
 浏览器请求沿用 Coopwire Cookie。业务响应明确返回登录过期码时，编辑器按原前端契约向 `/rest/platform/refreshToken` 发送空体 POST，刷新后最多重试一次；网络不确定的业务写入不自动重试。Cookie 和令牌不放入仓库、URL、文档或 iframe 消息。
 
