@@ -6,6 +6,7 @@ test('本机示例没有远程业务 ID 时隐藏详情，图形库明确列出�
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
   await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '图形库', exact: true }).click();
+  await expect(page.getByTestId('shape-swimlane')).toHaveCount(0);
   for (const id of [
     'shape-activity',
     'shape-activity-offline',

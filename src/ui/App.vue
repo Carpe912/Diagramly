@@ -266,17 +266,20 @@ const icons: Record<string, unknown> = {
 const paletteShapes: (ShapeDefinition & {
   id: string;
   activityType?: BusinessEntity['activityType'];
-})[] = registry.list().flatMap((shape) =>
-  shape.type === 'activity'
-    ? ([
-        { ...shape, id: 'activity', label: '人工线上', activityType: 'manual' },
-        { ...shape, id: 'activity-offline', label: '人工线下', activityType: 'offline' },
-        { ...shape, id: 'activity-system', label: '系统操作', activityType: 'system' },
-        { ...shape, id: 'activity-interface', label: '接口', activityType: 'interface' },
-        { ...shape, id: 'activity-linked', label: '引用活动', activityType: 'linked' },
-      ] as const)
-    : [{ ...shape, id: shape.type }],
-);
+})[] = registry
+  .list()
+  .filter((shape) => shape.type !== 'swimlane')
+  .flatMap((shape) =>
+    shape.type === 'activity'
+      ? ([
+          { ...shape, id: 'activity', label: '人工线上', activityType: 'manual' },
+          { ...shape, id: 'activity-offline', label: '人工线下', activityType: 'offline' },
+          { ...shape, id: 'activity-system', label: '系统操作', activityType: 'system' },
+          { ...shape, id: 'activity-interface', label: '接口', activityType: 'interface' },
+          { ...shape, id: 'activity-linked', label: '引用活动', activityType: 'linked' },
+        ] as const)
+      : [{ ...shape, id: shape.type }],
+  );
 const filteredShapes = computed(() =>
   paletteShapes.filter(
     (shape) =>
@@ -1115,9 +1118,6 @@ onBeforeUnmount(() => {
                       <div><span></span>ACT · {{ shape.label }}</div>
                       <strong>{{ shape.label }}</strong>
                       <footer>○ 常规活动</footer>
-                    </div>
-                    <div v-else-if="shape.type === 'swimlane'" class="mini-lane">
-                      <span></span><i></i><i></i>
                     </div>
                     <component
                       :is="icons[shape.icon]"
