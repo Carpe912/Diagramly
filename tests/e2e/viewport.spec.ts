@@ -50,6 +50,17 @@ test('内容未溢出时与可见区域同大，放大后通过横纵滚动条�
   const doc = await readDocument(page),
     graph = await page.getByTestId('graph').boundingBox();
   if (!graph) throw Error('缺少画布');
+  const area = (await page.getByTestId('canvas-area').boundingBox())!,
+    topbar = (await page.locator('.canvas-topbar').boundingBox())!;
+  expect(graph.x - area.x).toBe(12);
+  expect(area.x + area.width - graph.x - graph.width).toBe(12);
+  expect(graph.y - topbar.y - topbar.height).toBe(12);
+  expect(area.y + area.height - graph.y - graph.height).toBe(12);
+  const heading = (await page.locator('.canvas-heading').boundingBox())!,
+    tools = (await page.getByRole('toolbar', { name: '画布工具' }).boundingBox())!;
+  expect(heading.y).toBeGreaterThan(graph.y);
+  expect(tools.y + tools.height).toBeLessThan(graph.y + graph.height);
+  await expect(page.locator('.scroll-shadow')).toHaveCount(0);
   const sizes = () =>
     page.getByTestId('graph').evaluate((el) => ({
       width: el.clientWidth,
@@ -72,9 +83,19 @@ test('内容未溢出时与可见区域同大，放大后通过横纵滚动条�
   expect(expanded.scrollWidth).toBeGreaterThan(expanded.width);
   expect(expanded.scrollHeight).toBeGreaterThan(expanded.height);
   await page.getByTestId('graph').evaluate((el) => {
+    el.scrollLeft = 0;
+    el.scrollTop = 0;
+  });
+  await expect(page.locator('.scroll-shadow.right')).toHaveCount(1);
+  await expect(page.locator('.scroll-shadow.bottom')).toHaveCount(1);
+  await expect(page.locator('.scroll-shadow.left, .scroll-shadow.top')).toHaveCount(0);
+  await page.getByTestId('graph').evaluate((el) => {
     el.scrollLeft = el.scrollWidth;
     el.scrollTop = el.scrollHeight;
   });
+  await expect(page.locator('.scroll-shadow.left')).toHaveCount(1);
+  await expect(page.locator('.scroll-shadow.top')).toHaveCount(1);
+  await expect(page.locator('.scroll-shadow.right, .scroll-shadow.bottom')).toHaveCount(0);
   const after = await bounds(page, 'end');
   expect(after.x).toBeGreaterThan(graph.x);
   expect(after.x + after.width).toBeLessThan(graph.x + graph.width);
@@ -84,6 +105,7 @@ test('内容未溢出时与可见区域同大，放大后通过横纵滚动条�
   const fitted = await sizes();
   expect(fitted.scrollWidth).toBe(fitted.width);
   expect(fitted.scrollHeight).toBe(fitted.height);
+  await expect(page.locator('.scroll-shadow')).toHaveCount(0);
   expect(await readDocument(page)).toEqual(doc);
 });
 test('鼠标可拖动横纵滚动条并使用键盘定位，画布工具栏不随内容滚动', async ({ page }) => {
@@ -218,7 +240,8 @@ test('平移工具、中键与空格只滚动视口，切回选择工具后仍�
   await page.mouse.wheel(0, -500);
   await page.getByTestId('graph').evaluate((el) => {
     el.scrollLeft = 200;
-    el.scrollTop = 200;
+    // 扩大的视口中预留连续两次纵向平移的空间，避免提前到达滚动尽头。
+    el.scrollTop = 100;
   });
   let before = await bounds(page, 'receive');
   await page.getByRole('button', { name: '平移工具', exact: true }).click();

@@ -318,7 +318,7 @@ const canvasStyle = computed(() => {
       ? `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`
       : 'none',
     backgroundSize: `${settings.gridSize * scale}px ${settings.gridSize * scale}px`,
-    backgroundPosition: `${(translate?.x ?? 0) * scale - (graphEl.value?.scrollLeft ?? 0) + (canvas?.graph.getPanDx() ?? 0)}px ${(translate?.y ?? 0) * scale - (graphEl.value?.scrollTop ?? 0) + (canvas?.graph.getPanDy() ?? 0) + (graphEl.value?.offsetTop ?? 0)}px`,
+    backgroundPosition: `${(translate?.x ?? 0) * scale - (graphEl.value?.scrollLeft ?? 0) + (canvas?.graph.getPanDx() ?? 0) + (graphEl.value?.offsetLeft ?? 0)}px ${(translate?.y ?? 0) * scale - (graphEl.value?.scrollTop ?? 0) + (canvas?.graph.getPanDy() ?? 0) + (graphEl.value?.offsetTop ?? 0)}px`,
   };
 });
 function updateCanvas(patch: Partial<CanvasSettings>) {
@@ -338,8 +338,8 @@ const poolToolbarPosition = computed(() => {
   const width = graphEl.value?.clientWidth ?? 900,
     toolbarWidth = Math.min(contextLane.value ? 340 : contextStage.value ? 440 : 650, width - 24);
   return {
-    left: `${Math.max(12 + toolbarWidth / 2, Math.min(width - toolbarWidth / 2 - 12, (bounds?.x ?? 12) + (bounds?.width ?? toolbarWidth) / 2))}px`,
-    top: `${Math.max(136, Math.min((graphEl.value?.offsetTop ?? 180) + (bounds?.y ?? 40) - 52, (graphEl.value?.parentElement?.clientHeight ?? 800) - 130))}px`,
+    left: `${(graphEl.value?.offsetLeft ?? 0) + Math.max(12 + toolbarWidth / 2, Math.min(width - toolbarWidth / 2 - 12, (bounds?.x ?? 12) + (bounds?.width ?? toolbarWidth) / 2))}px`,
+    top: `${Math.max((graphEl.value?.offsetTop ?? 61) + 8, Math.min((graphEl.value?.offsetTop ?? 61) + (bounds?.y ?? 40) - 52, (graphEl.value?.parentElement?.clientHeight ?? 800) - 130))}px`,
   };
 });
 const layerRows = computed(() => {

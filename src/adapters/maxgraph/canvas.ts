@@ -763,11 +763,12 @@ export class DiagramCanvas {
       width = this.container.clientWidth,
       height = this.container.clientHeight;
     if (!width || !height) return;
+    // 自动适应时避开浮动标题和底部工具，完整视口仍可拖放、框选与滚动。
     const scale =
       bounds.width && bounds.height
         ? Math.max(
             MIN_ZOOM,
-            Math.min(MAX_ZOOM, (width - 130) / bounds.width, (height - 130) / bounds.height),
+            Math.min(MAX_ZOOM, (width - 130) / bounds.width, (height - 240) / bounds.height),
           )
         : 1;
     this.updateScrollViewport({

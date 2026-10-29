@@ -46,6 +46,22 @@ const bars = computed(() => {
     ];
   });
 });
+const shadows = computed(() =>
+  bars.value.flatMap((bar) => [
+    ...(bar.scroll > 1 ? [bar.axis === 'horizontal' ? 'left' : 'top'] : []),
+    ...(bar.scroll < bar.maximum - 1 ? [bar.axis === 'horizontal' ? 'right' : 'bottom'] : []),
+  ]),
+);
+const frameStyle = computed(() => {
+  void props.tick;
+  const el = props.container;
+  return {
+    left: `${el.offsetLeft}px`,
+    top: `${el.offsetTop}px`,
+    width: `${el.clientWidth}px`,
+    height: `${el.clientHeight}px`,
+  };
+});
 function position(axis: Axis, value: number) {
   if (axis === 'horizontal') props.container.scrollLeft = value;
   else props.container.scrollTop = value;
@@ -112,6 +128,9 @@ function wheel(event: WheelEvent, axis: Axis) {
 }
 </script>
 <template>
+  <div v-if="shadows.length" class="canvas-scroll-shadows" :style="frameStyle" aria-hidden="true">
+    <span v-for="edge in shadows" :key="edge" :class="['scroll-shadow', edge]"></span>
+  </div>
   <div
     v-for="bar in bars"
     :key="bar.axis"
@@ -144,6 +163,44 @@ function wheel(event: WheelEvent, axis: Axis) {
   </div>
 </template>
 <style scoped>
+.canvas-scroll-shadows {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.scroll-shadow {
+  position: absolute;
+}
+.scroll-shadow.left,
+.scroll-shadow.right {
+  top: 0;
+  bottom: 0;
+  width: 20px;
+}
+.scroll-shadow.top,
+.scroll-shadow.bottom {
+  left: 0;
+  right: 0;
+  height: 20px;
+}
+.scroll-shadow.left {
+  left: 0;
+  background: linear-gradient(to right, #31456320, #31456300);
+}
+.scroll-shadow.right {
+  right: 0;
+  background: linear-gradient(to left, #31456320, #31456300);
+}
+.scroll-shadow.top {
+  top: 0;
+  background: linear-gradient(to bottom, #31456320, #31456300);
+}
+.scroll-shadow.bottom {
+  bottom: 0;
+  background: linear-gradient(to top, #31456320, #31456300);
+}
 .canvas-scrollbar {
   position: absolute;
   z-index: 3;
