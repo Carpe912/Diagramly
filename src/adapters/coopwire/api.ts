@@ -1,21 +1,35 @@
 import { z } from 'zod';
+const baseUrlSchema = z
+  .string()
+  .trim()
+  .refine((value) => {
+    const path = value.replace(/\/+$/, '');
+    if (!path || path === '/rest') return true;
+    try {
+      const url = new URL(value);
+      return (
+        ['http:', 'https:'].includes(url.protocol) &&
+        !url.username &&
+        !url.password &&
+        !url.search &&
+        !url.hash
+      );
+    } catch {
+      return false;
+    }
+  }, '接口地址请填写 HTTP(S) 后端地址、/rest 或留空，不支持凭证、查询参数和片段')
+  .transform((value) => {
+    const path = value.replace(/\/+$/, '');
+    if (!path || path === '/rest') return '';
+    const url = new URL(value);
+    url.search = '';
+    url.hash = '';
+    url.pathname = url.pathname.replace(/\/+$/, '').replace(/(?:\/rest)+$/, '') || '/';
+    return url.toString().replace(/\/$/, '');
+  });
 export const coopwireConfigSchema = z
   .object({
-    baseUrl: z.string().refine((value) => {
-      if (!value) return true;
-      try {
-        const url = new URL(value);
-        return (
-          ['http:', 'https:'].includes(url.protocol) &&
-          !url.username &&
-          !url.password &&
-          !url.search &&
-          !url.hash
-        );
-      } catch {
-        return false;
-      }
-    }, '接口地址须为不含凭证的 HTTP(S) 地址或留空使用同域'),
+    baseUrl: baseUrlSchema,
     projectId: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
     flowchartId: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
     flowchartType: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/),
@@ -82,7 +96,7 @@ export function configureCoopwireAuth(provider: typeof auth) {
 }
 /** 使用 Coopwire 已有 Cookie 刷新登录态；请求体与原前端保持一致。 */
 export async function refreshCoopwireSession(baseUrl = '', fetcher: typeof fetch = fetch) {
-  const response = await fetcher(`${baseUrl.replace(/\/$/, '')}/rest/platform/refreshToken`, {
+  const response = await fetcher(`${baseUrlSchema.parse(baseUrl)}/rest/platform/refreshToken`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

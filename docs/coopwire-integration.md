@@ -40,7 +40,7 @@
 
 ### 同域生产部署
 
-将编辑器与 Coopwire 的 `/rest` 放在同域代理之后，前端接口地址留空。HTTP 请求使用 `credentials: include` 和 `x-logwireCloud-resource: drawio`，无需把 Cookie 放进浏览器 JavaScript、JSON 文档或 localStorage。
+将编辑器与 Coopwire 的 `/rest` 放在同域代理之后，前端接口地址留空或填写 `/rest`。也支持完整后端地址（例如 `https://your-coopwire.example` 或 `https://your-coopwire.example/rest`）；自动去掉尾部的 `/rest` 与斜杠，再统一拼接业务路径，登录刷新使用同一规则，避免 `/rest/rest`。接口地址不能包含用户名、密码、查询参数或片段。HTTP 请求使用 `credentials: include` 和 `x-logwireCloud-resource: drawio`，无需把 Cookie 放进浏览器 JavaScript、JSON 文档或 localStorage。
 
 如果宿主用请求头鉴权，可以在受信任的宿主集成代码中调用：
 

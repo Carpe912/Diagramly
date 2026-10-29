@@ -11,6 +11,7 @@ import {
   watch,
   type Component,
 } from 'vue';
+import { ZodError } from 'zod';
 import {
   Activity,
   ArrowDownToLine,
@@ -96,7 +97,12 @@ const registry = createShapeRegistry();
 const error = ref(''),
   saveState = ref('已保存到本机');
 const showError = (e: unknown) => {
-  error.value = e instanceof Error ? e.message : String(e);
+  error.value =
+    e instanceof ZodError
+      ? [...new Set(e.issues.map((issue) => issue.message))].join('；')
+      : e instanceof Error
+        ? e.message
+        : String(e);
 };
 let initial: DiagramDocument = demoDocument();
 try {
@@ -1852,7 +1858,7 @@ onBeforeUnmount(() => {
             >接口地址<input
               v-model="remoteConfig.baseUrl"
               aria-label="远程接口地址"
-              placeholder="留空使用同域 /rest 或开发代理" /></label
+              placeholder="留空或填 /rest 使用代理，也可填后端 HTTP(S) 地址" /></label
           ><label
             >Project ID<input v-model="remoteConfig.projectId" aria-label="远程项目 ID" /></label
           ><label
@@ -1862,7 +1868,10 @@ onBeforeUnmount(() => {
           ><label
             >Flowchart Type<input v-model="remoteConfig.flowchartType" aria-label="远程流程类型"
           /></label>
-          <p class="field-help">同域使用 Cookie。跨域开发请使用本机代理，Cookie 仅由服务端持有。</p>
+          <p class="field-help">
+            留空或填写 /rest 使用同域代理；完整地址可带 /rest，系统会统一处理路径。同域使用
+            Cookie，跨域开发请使用本机代理。
+          </p>
           <button class="button primary full-width" :disabled="connecting" @click="connectRemote">
             {{ connecting ? '正在读取…' : '连接并读取流程' }}
           </button></template

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FakeCoopwire, testConfig, embed } from '../support/coopwire';
-async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = false) {
+async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = false, baseUrl = '') {
   // 所有 /rest 请求均由进程内的测试后端响应，不会访问真实服务。
   await page.route('**/rest/**', async (route) => {
     const source = route.request(),
@@ -27,7 +27,7 @@ async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = fa
     await expect(page.locator('.zoom-control > span')).toHaveText('400%');
   }
   await page.getByRole('button', { name: '连接 Coopwire', exact: true }).click();
-  await page.getByRole('textbox', { name: '远程接口地址', exact: true }).fill('');
+  await page.getByRole('textbox', { name: '远程接口地址', exact: true }).fill(baseUrl);
   await page.getByRole('textbox', { name: '远程项目 ID', exact: true }).fill(testConfig.projectId);
   await page
     .getByRole('textbox', { name: '远程流程 ID', exact: true })
@@ -35,6 +35,29 @@ async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = fa
   await page.getByRole('button', { name: '连接并读取流程' }).click();
   await expect(page.getByRole('button', { name: 'Coopwire 已连接', exact: true })).toBeVisible();
 }
+test('连接面板支持填写 /rest，发出的路径没有重复前缀', async ({ page }) => {
+  const paths: string[] = [];
+  page.on('request', (request) => paths.push(new URL(request.url()).pathname));
+  await connect(page, new FakeCoopwire(), false, '/rest');
+  expect(paths.some((path) => path.startsWith('/rest/quality/'))).toBe(true);
+  expect(paths.some((path) => path.startsWith('/rest/rest/'))).toBe(false);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+test('地址格式不正确时显示明确文字而非校验 JSON', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '连接 Coopwire', exact: true }).click();
+  await page.getByRole('textbox', { name: '远程接口地址', exact: true }).fill('notaurl');
+  await page.getByRole('textbox', { name: '远程项目 ID', exact: true }).fill(testConfig.projectId);
+  await page
+    .getByRole('textbox', { name: '远程流程 ID', exact: true })
+    .fill(testConfig.flowchartId);
+  await page.getByRole('button', { name: '连接并读取流程', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText(
+    '接口地址请填写 HTTP(S) 后端地址、/rest 或留空',
+  );
+  await expect(page.getByRole('alert')).not.toContainText('"code"');
+  await expect(page.getByRole('alert')).not.toContainText('"path"');
+});
 test('手动连接重读与断开远程流程保留比例，仅首次进入远程页面适应画布', async ({ page }) => {
   const backend = new FakeCoopwire();
   await connect(page, backend, true);
