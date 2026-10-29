@@ -317,6 +317,32 @@ export class Editor {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
+  /** 外部业务表单已独立保存；同步后建立历史边界，防止旧撤销覆盖外部修改。 */
+  async synchronizeExternal(load: (before: DiagramDocument) => Promise<DiagramDocument>) {
+    if (!this.transport || this.working) throw new Error('当前不能同步外部业务');
+    const before = this.document;
+    this.working = true;
+    this.notify();
+    try {
+      const document = validateDocument(await load(before), this.registry);
+      if (document.id !== before.id || document.revision !== before.revision + 1)
+        throw new Error('外部业务同步的文档或版本不匹配');
+      this.document = freeze(document);
+      this.undoStack = [];
+      this.redoStack = [];
+      this.receipts.clear();
+      this.retryAction = undefined;
+      this.activity.unshift({
+        label: '同步嵌入业务面板',
+        origin: 'system',
+        revision: document.revision,
+      });
+      this.activity.splice(50);
+    } finally {
+      this.working = false;
+      this.notify();
+    }
+  }
   private notify() {
     for (const listener of this.listeners) listener();
   }

@@ -42,6 +42,8 @@ export const activityDetailsSchema = z
     nonFixedCycleDesc: z.string().max(10000),
     progressRate: z.number().min(0).max(100),
     linkFlow: z.string().max(160),
+    linkAct: z.string().max(160),
+    showOrgName: z.boolean(),
     interviewers: ids,
     interviewees: z
       .array(

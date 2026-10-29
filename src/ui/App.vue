@@ -44,7 +44,9 @@ import {
 } from '@lucide/vue';
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
-import ActivityDetails from './ActivityDetails.vue';
+import EmbeddedBusinessDetails from './EmbeddedBusinessDetails.vue';
+import EmbeddedLinkedChooser from './EmbeddedLinkedChooser.vue';
+import { flowchartContext, selectionFor, type LinkedChoice } from '../adapters/coopwire/portrait';
 import CanvasSettingsPanel from './CanvasSettings.vue';
 import ResizableSidebar from './ResizableSidebar.vue';
 import CanvasScrollbars from './CanvasScrollbars.vue';
@@ -64,12 +66,16 @@ import {
 } from '../domain/pools';
 import { Editor } from '../application/editor';
 import { demoDocument } from '../application/demo';
-import { createShapeRegistry } from '../shapes/registry';
+import { createShapeRegistry, type ShapeDefinition } from '../shapes/registry';
 import { DiagramCanvas } from '../adapters/maxgraph/canvas';
 import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
-import { CoopwireApi, type ActivityOptions } from '../adapters/coopwire/api';
-import { isBusinessNode } from '../adapters/coopwire/codec';
+import {
+  CoopwireApi,
+  configureCoopwireAuth,
+  refreshCoopwireSession,
+} from '../adapters/coopwire/api';
+import { activityType, isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
 import { exportDiagramPng } from '../adapters/maxgraph/export';
 import { createAgentTools } from '../agent/tools';
@@ -161,34 +167,59 @@ function alignSelection(mode: Alignment) {
   ]);
 }
 const remoteSession = shallowRef<CoopwireSession>();
-const businessOptions = shallowRef<ActivityOptions>(),
-  loadingOptions = ref(false);
 const hasBusinessDetails = computed(() => {
   const node = selectedNode.value;
   if (!node || !isBusinessNode(node)) return false;
-  if (!remoteSession.value) return true;
+  if (!remoteSession.value) return false;
   const id = selectedEntity.value?.externalRef?.id;
   return !!id && remoteSession.value.activityDetails.has(id);
 });
+const embeddedSelection = computed(() => {
+  const session = remoteSession.value,
+    node = selectedNode.value,
+    entity = selectedEntity.value;
+  return session && node && entity?.externalRef && hasBusinessDetails.value
+    ? selectionFor(
+        session.api.config,
+        node.id,
+        entity.externalRef.id,
+        activityType(node, entity),
+        new URLSearchParams(window.location.search).get('senceId') ??
+          new URLSearchParams(window.location.search).get('sceneId') ??
+          '',
+      )
+    : undefined;
+});
+const portraitOrigin = import.meta.env.VITE_COOPWIRE_FRONTEND_ORIGIN || window.location.origin;
+const externalChanges = new Set<string>();
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+function refreshFromPortrait(actId: string) {
+  externalChanges.add(actId);
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => void flushPortraitChanges(), 100);
+}
+async function flushPortraitChanges() {
+  const session = remoteSession.value;
+  if (!session || !externalChanges.size) return;
+  if (editor.value.busy) {
+    refreshTimer = setTimeout(() => void flushPortraitChanges(), 100);
+    return;
+  }
+  const ids = [...externalChanges];
+  externalChanges.clear();
+  try {
+    await editor.value.synchronizeExternal((before) => session.refreshActivities(before, ids));
+  } catch (error) {
+    showError(error);
+  }
+}
 watch(panelTab, async () => {
   await nextTick();
-  canvas?.fit();
+  viewportTick.value++;
 });
 watch(hasBusinessDetails, (available) => {
   if (!available && panelTab.value === 'details') panelTab.value = 'properties';
 });
-async function loadBusinessOptions() {
-  const session = remoteSession.value;
-  if (!session || loadingOptions.value) return;
-  loadingOptions.value = true;
-  try {
-    businessOptions.value = await session.api.activityOptions();
-  } catch (e) {
-    showError(e);
-  } finally {
-    loadingOptions.value = false;
-  }
-}
 const form = reactive({
   name: '',
   description: '',
@@ -230,13 +261,25 @@ const icons: Record<string, unknown> = {
   'pool-horizontal': PanelTop,
   'pool-vertical': PanelTop,
 };
+const paletteShapes: (ShapeDefinition & {
+  id: string;
+  activityType?: BusinessEntity['activityType'];
+})[] = registry.list().flatMap((shape) =>
+  shape.type === 'activity'
+    ? ([
+        { ...shape, id: 'activity', label: '人工线上', activityType: 'manual' },
+        { ...shape, id: 'activity-offline', label: '人工线下', activityType: 'offline' },
+        { ...shape, id: 'activity-system', label: '系统操作', activityType: 'system' },
+        { ...shape, id: 'activity-interface', label: '接口', activityType: 'interface' },
+        { ...shape, id: 'activity-linked', label: '引用活动', activityType: 'linked' },
+      ] as const)
+    : [{ ...shape, id: shape.type }],
+);
 const filteredShapes = computed(() =>
-  registry
-    .list()
-    .filter(
-      (shape) =>
-        shape.label.includes(search.value) || shape.type.includes(search.value.toLowerCase()),
-    ),
+  paletteShapes.filter(
+    (shape) =>
+      shape.label.includes(search.value) || shape.type.includes(search.value.toLowerCase()),
+  ),
 );
 const roots = computed(() => Object.values(doc.value.nodes).filter((node) => !node.parentId));
 const lanes = computed(() =>
@@ -337,6 +380,15 @@ function selectLayer(id: string, event: MouseEvent) {
 let connectSource: string | undefined;
 function onSelection(ids: string[]) {
   selection.value = [...new Set(ids)];
+  const selected = ids.length === 1 ? doc.value.nodes[ids[0]] : undefined;
+  if (
+    activeTool.value === 'select' &&
+    selected &&
+    remoteSession.value &&
+    isBusinessNode(selected) &&
+    doc.value.entities[selected.entityId]?.externalRef
+  )
+    panelTab.value = 'details';
   if (activeTool.value === 'connect' && ids.length === 1 && doc.value.nodes[ids[0]]) {
     const node = doc.value.nodes[ids[0]],
       ports = registry.get(node.type).ports;
@@ -407,13 +459,35 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   connectSource = undefined;
   editor.value = new Editor(document, registry);
   remoteSession.value = session;
+  externalChanges.clear();
+  clearTimeout(refreshTimer);
   if (session) editor.value.attachTransport(session);
   panelTab.value = 'properties';
-  businessOptions.value = undefined;
   bindEditor();
   setTool('select');
 }
-async function addShape(type: string, point?: { x: number; y: number }) {
+const linkedChooserOpen = ref(false);
+let linkedPoint: { x: number; y: number } | undefined;
+function onLinkedChosen(choice: LinkedChoice) {
+  linkedChooserOpen.value = false;
+  void addShape('activity', linkedPoint, 'linked', choice);
+  linkedPoint = undefined;
+}
+async function addShape(
+  type: string,
+  point?: { x: number; y: number },
+  preset?: string,
+  linkedChoice?: LinkedChoice,
+) {
+  if (type === 'activity' && preset === 'linked' && !linkedChoice) {
+    if (!remoteSession.value) {
+      error.value = '请先连接 Coopwire，再选择引用活动';
+      return;
+    }
+    linkedPoint = point;
+    linkedChooserOpen.value = true;
+    return;
+  }
   const definition = registry.get(type);
   if (type === 'swimlane') {
     const pool = selectedNode.value ? poolOf(doc.value, selectedNode.value) : undefined;
@@ -479,6 +553,16 @@ async function addShape(type: string, point?: { x: number; y: number }) {
     y = Math.max(inset.top, y);
   }
   const operation = editor.value.createNode(type, x, y, parentId);
+  if (operation.type === 'node.create' && preset) {
+    operation.entity.activityType = preset as BusinessEntity['activityType'];
+    operation.entity.name =
+      { manual: '人工线上', offline: '人工线下', system: '系统操作', interface: '接口' }[preset] ??
+      operation.entity.name;
+    if (linkedChoice) {
+      operation.entity.name = '引用活动';
+      operation.entity.details = linkedChoice;
+    }
+  }
   const result = await run(`添加${definition.label}`, [operation]);
   if (result && operation.type === 'node.create') {
     select([operation.node.id]);
@@ -569,11 +653,14 @@ function geometryDisabled(key: 'x' | 'y' | 'width' | 'height') {
 }
 function dropShape(event: DragEvent) {
   event.preventDefault();
-  const type = event.dataTransfer?.getData('application/x-diagramly-shape');
-  if (type && canvas) addShape(type, canvas.pointForEvent(event));
+  const payload = event.dataTransfer?.getData('application/x-diagramly-shape');
+  if (payload && canvas) {
+    const [type, preset] = payload.split(':');
+    void addShape(type, canvas.pointForEvent(event), preset);
+  }
 }
-function dragShape(event: DragEvent, type: string) {
-  event.dataTransfer?.setData('application/x-diagramly-shape', type);
+function dragShape(event: DragEvent, type: string, preset?: string) {
+  event.dataTransfer?.setData('application/x-diagramly-shape', `${type}:${preset ?? ''}`);
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
 }
 function patchEntity(patch: Partial<Omit<BusinessEntity, 'id'>>) {
@@ -897,8 +984,19 @@ async function exportFile() {
 onMounted(() => {
   bindEditor();
   window.addEventListener('keydown', keyboard);
+  configureCoopwireAuth({ refresh: () => refreshCoopwireSession(remoteConfig.baseUrl) });
+  try {
+    const context = flowchartContext(window.location.href);
+    if (context) {
+      Object.assign(remoteConfig, context.config);
+      void connectRemote();
+    }
+  } catch (cause) {
+    showError(cause);
+  }
 });
 onBeforeUnmount(() => {
+  clearTimeout(refreshTimer);
   stopAutosave?.();
   unsubscribe?.();
   canvas?.destroy();
@@ -967,7 +1065,10 @@ onBeforeUnmount(() => {
           <div class="library-content">
             <template v-for="category in ['容器', '基础图形', '业务图形']" :key="category">
               <section
-                v-if="filteredShapes.some((s) => s.category === category)"
+                v-if="
+                  filteredShapes.some((s) => s.category === category) ||
+                  (category === '业务图形' && (!search || '定向连接器'.includes(search)))
+                "
                 class="shape-category"
                 :class="{ 'container-category': category === '容器' }"
               >
@@ -977,21 +1078,31 @@ onBeforeUnmount(() => {
                 </h3>
                 <div :class="['shape-grid', { 'business-grid': category === '业务图形' }]">
                   <button
+                    v-if="category === '业务图形' && (!search || '定向连接器'.includes(search))"
+                    class="shape-item"
+                    data-testid="shape-connector"
+                    title="点击后依次选择起点和终点"
+                    @click="setTool('connect')"
+                  >
+                    <GitBranch :size="31" :stroke-width="1.1" class="shape-preview" />
+                    <span>定向连接器</span>
+                  </button>
+                  <button
                     v-for="shape in filteredShapes.filter((s) => s.category === category)"
-                    :key="shape.type"
+                    :key="shape.id"
                     class="shape-item"
                     draggable="true"
-                    :data-testid="`shape-${shape.type}`"
+                    :data-testid="`shape-${shape.id}`"
                     :title="`点击或拖入：${shape.label}`"
-                    @dragstart="dragShape($event, shape.type)"
-                    @click="addShape(shape.type)"
+                    @dragstart="dragShape($event, shape.type, shape.activityType)"
+                    @click="addShape(shape.type, undefined, shape.activityType)"
                   >
                     <div v-if="isPoolType(shape.type)" :class="['mini-pool', shape.type]">
                       <span></span><i></i><i></i>
                     </div>
                     <div v-else-if="shape.type === 'activity'" class="mini-activity">
-                      <div><span></span>ACT · 人工活动</div>
-                      <strong>业务活动</strong>
+                      <div><span></span>ACT · {{ shape.label }}</div>
+                      <strong>{{ shape.label }}</strong>
                       <footer>○ 常规活动</footer>
                     </div>
                     <div v-else-if="shape.type === 'swimlane'" class="mini-lane">
@@ -1222,17 +1333,16 @@ onBeforeUnmount(() => {
           role="tabpanel"
           aria-label="业务详情"
         >
-          <ActivityDetails
-            :key="selectedNode.id"
-            :entity="selectedEntity"
-            :node="selectedNode"
+          <EmbeddedBusinessDetails
+            v-if="embeddedSelection"
+            :key="remoteSession!.api.config.projectId + ':' + remoteSession!.api.config.flowchartId"
+            :selection="embeddedSelection"
+            :origin="portraitOrigin"
             :busy="editor.busy"
-            :remote="!!remoteSession"
-            :options="businessOptions"
-            :loading-options="loadingOptions"
-            :related="remoteSession?.activityDetails.get(selectedEntity.externalRef?.id ?? '')"
-            @patch="patchEntity"
-            @load-options="loadBusinessOptions"
+            :revision="doc.revision"
+            @changed="refreshFromPortrait"
+            @close="panelTab = 'properties'"
+            @error="showError"
           />
         </div>
         <div
@@ -1630,6 +1740,25 @@ onBeforeUnmount(() => {
     <div v-if="error" class="error-toast" role="alert">
       <span>{{ error }}</span
       ><button aria-label="关闭错误" @click="error = ''"><X :size="15" /></button>
+    </div>
+    <div
+      v-if="linkedChooserOpen && remoteSession"
+      class="modal-backdrop"
+      @click.self="linkedChooserOpen = false"
+    >
+      <EmbeddedLinkedChooser
+        :config="remoteSession.api.config"
+        :origin="portraitOrigin"
+        @chosen="onLinkedChosen"
+        @close="linkedChooserOpen = false"
+      />
+      <button
+        class="modal-close"
+        aria-label="关闭引用活动选择器"
+        @click="linkedChooserOpen = false"
+      >
+        <X :size="16" />
+      </button>
     </div>
     <div v-if="showData" class="modal-backdrop" @click.self="showData = false">
       <section class="data-modal">

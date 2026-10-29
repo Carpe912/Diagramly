@@ -182,7 +182,7 @@ test('drops a business activity into the content area of a nested vertical lane'
   expect(activity.bounds.x).toBeGreaterThanOrEqual(12);
   expect(activity.bounds.y).toBeGreaterThanOrEqual(52);
   await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue(
-    '业务活动',
+    '人工线上',
   );
 });
 test('lane selection has its own toolbar, appearance and role controls', async ({ page }) => {

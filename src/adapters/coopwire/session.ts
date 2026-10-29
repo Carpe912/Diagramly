@@ -7,6 +7,7 @@ import {
 } from '../../domain/activityDetails';
 import type { ShapeRegistry } from '../../shapes/registry';
 import { validateDocument } from '../../domain/validation';
+import { layoutPool, poolOf } from '../../domain/pools';
 import {
   activityType,
   flowRelations,
@@ -54,6 +55,8 @@ const emptyDetails: Required<ActivityDetails> = {
   nonFixedCycleDesc: '',
   progressRate: 0,
   linkFlow: '',
+  linkAct: '',
+  showOrgName: false,
   interviewers: [],
   interviewees: [],
   displaySetting: defaultDisplaySettings,
@@ -104,7 +107,6 @@ export class CoopwireSession implements EditorTransport {
   }
   async open(): Promise<DiagramDocument> {
     const [flow, organizations] = await Promise.all([this.api.flow(), this.api.organizations()]);
-    if (flow.lockUser) throw new Error('此流程已被锁定，请先在 Coopwire 中解除或取得编辑权');
     const loaded = readFlow(flow, this.registry);
     this.organizations = organizations;
     this.warnings = loaded.warnings;
@@ -133,6 +135,58 @@ export class CoopwireSession implements EditorTransport {
     }
     this.report('ready', `已重新加载远端 · v${this.version}`);
     return document;
+  }
+  /** 表单负责业务写入，这里只读取最新实体并保存派生的流程 XML／PNG。 */
+  async refreshActivities(before: DiagramDocument, actIds: string[]) {
+    if (this.pending) throw new Error('存在未完成保存，请先重新读取远端核对');
+    const baseline = structuredClone(before),
+      nodes = Object.values(baseline.nodes).filter((node) =>
+        actIds.includes(baseline.entities[node.entityId].externalRef?.id ?? ''),
+      );
+    if (
+      !actIds.length ||
+      actIds.some(
+        (id) => !nodes.some((node) => baseline.entities[node.entityId].externalRef?.id === id),
+      )
+    )
+      throw new Error('业务活动不属于当前画布');
+    const pools = new Set<string>();
+    for (const node of nodes) {
+      const id = baseline.entities[node.entityId].externalRef!.id,
+        detail = await this.api.activity(id);
+      if (detail.activity.id !== id) throw new Error('业务详情返回了不匹配的活动 ID');
+      hydrateEntity(baseline, node, detail);
+      node.type =
+        detail.activity.actType === 'decide'
+          ? 'decision'
+          : detail.activity.actType === 'subAct'
+            ? 'subprocess'
+            : detail.activity.actType === 'parallel'
+              ? 'parallel'
+              : 'activity';
+      const definition = this.registry.get(node.type);
+      node.bounds.width = Math.max(node.bounds.width, definition.minSize[0]);
+      node.bounds.height = Math.max(node.bounds.height, definition.minSize[1]);
+      const pool = poolOf(baseline, node);
+      if (pool) pools.add(pool.id);
+    }
+    for (const id of pools) layoutPool(baseline, id);
+    const document = validateDocument(
+      { ...baseline, revision: before.revision + 1 },
+      this.registry,
+    );
+    return this.commit({
+      kind: 'command',
+      before: baseline,
+      document,
+      command: {
+        commandId: newId('external'),
+        expectedRevision: before.revision,
+        origin: 'system',
+        label: '同步嵌入业务面板',
+        operations: [{ type: 'document.rename', title: document.title }],
+      },
+    });
   }
   private persist() {
     if (this.pending) this.storage.setItem(this.journalKey, JSON.stringify(this.pending));
@@ -208,15 +262,19 @@ export class CoopwireSession implements EditorTransport {
           throw new Error('同一远程活动不能重复放置，请使用复制活动');
         ids.add(entity.externalRef.id);
       }
-      if (!entity.externalRef && entity.activityType === 'linked')
-        throw new Error('新建引用活动需要关联对象，当前请使用普通活动或复制已有引用活动');
+      if (
+        !entity.externalRef &&
+        entity.activityType === 'linked' &&
+        (!entity.details?.linkFlow || !entity.details?.linkAct)
+      )
+        throw new Error('引用活动必须先选择关联流程和活动');
       if ((!node.parentId || !this.orgIds(desired, node).length) && !entity.externalRef)
         throw new Error('Coopwire 业务节点必须放在已选择组织角色的泳道内');
     }
     // 任何写入前先核对版本；重试时跳过日志中已确认的步骤。
     const flow = await this.api.flow();
-    if (flow.version !== this.version || flow.lockUser)
-      throw new CoopwireError('远端流程版本已变化或被锁定，请重新加载后再编辑', 'conflict');
+    if (flow.version !== this.version)
+      throw new CoopwireError('远端流程版本已变化，请重新加载后再编辑', 'conflict');
     if (!this.pending) {
       const expected = new Map<
         string,
@@ -291,6 +349,13 @@ export class CoopwireSession implements EditorTransport {
                 orgId: this.orgIds(desired, node),
                 belongId: this.api.config.flowchartId,
                 belongType: `${this.api.config.flowchartType}Act`,
+                ...(entity.activityType === 'linked'
+                  ? {
+                      linkFlow: entity.details!.linkFlow,
+                      linkAct: entity.details!.linkAct,
+                      showOrgName: entity.details!.showOrgName ?? false,
+                    }
+                  : {}),
               }),
             );
           }
@@ -310,6 +375,12 @@ export class CoopwireSession implements EditorTransport {
           patch.actType = activityType(node, entity);
         for (const key of activityDetailFields) {
           if (key === 'keyStep' || key === 'timeRanges') continue;
+          if (
+            !baseline &&
+            entity.activityType === 'linked' &&
+            ['linkFlow', 'linkAct', 'showOrgName'].includes(key)
+          )
+            continue;
           if (JSON.stringify(entity.details?.[key]) !== JSON.stringify(baseline?.details?.[key])) {
             patch[key] = entity.details?.[key] ?? emptyDetails[key];
             if (key === 'displaySetting')

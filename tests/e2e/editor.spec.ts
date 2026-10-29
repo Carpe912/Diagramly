@@ -193,7 +193,7 @@ test('creates a blank document and adds a complete composite from the palette', 
   await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
   await page.getByTestId('shape-activity').click();
   await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue(
-    '业务活动',
+    '人工线上',
   );
   const doc = await readDocument(page);
   expect(Object.keys(doc.nodes)).toHaveLength(1);

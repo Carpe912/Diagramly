@@ -1,74 +1,49 @@
-import { expect, test, type Page } from '@playwright/test';
-async function openDetails(page: Page) {
+import { expect, test } from '@playwright/test';
+
+test('本机示例没有远程业务 ID 时隐藏详情，图形库明确列出四类活动', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-}
-test('活动画像的说明、差异与图上描述可以保存并撤销', async ({ page }) => {
-  const failures: string[] = [];
-  page.on('pageerror', (error) => failures.push(error.message));
-  await openDetails(page);
-  await page.getByLabel('补充说明', { exact: true }).fill('核对库存后提交订单');
-  await page.getByLabel('补充说明', { exact: true }).press('Tab');
-  await page.getByLabel('差异新增', { exact: true }).check();
-  await page.getByLabel('在图上显示描述', { exact: true }).check();
-  await expect(page.locator('[data-part-id="receive::title"]').last()).toContainText(
-    '接收并核对客户订单的基础信息',
-  );
-  await page.getByRole('button', { name: '撤销', exact: true }).click();
-  await expect(page.getByLabel('在图上显示描述', { exact: true })).not.toBeChecked();
-  await page.getByRole('button', { name: '重做', exact: true }).click();
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          JSON.parse(localStorage.getItem('diagramly.document.v1')!).entities.entity_receive.details
-            ?.showInFlow,
-      ),
-    )
-    .toBe(true);
-  await page.reload();
-  await page.getByRole('button', { name: /^图层/ }).click();
-  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-  await expect(page.getByLabel('补充说明', { exact: true })).toHaveValue('核对库存后提交订单');
-  await expect(page.getByLabel('差异新增', { exact: true })).toBeChecked();
-  expect(failures).toEqual([]);
+  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '图形库', exact: true }).click();
+  for (const id of [
+    'shape-activity',
+    'shape-activity-offline',
+    'shape-activity-system',
+    'shape-activity-interface',
+    'shape-activity-linked',
+    'shape-parallel',
+    'shape-stage-horizontal',
+    'shape-stage-vertical',
+    'shape-connector',
+  ]) {
+    await expect(page.getByTestId(id)).toBeVisible();
+  }
 });
-test('显示设置展开时间和周期，切换节点时保持各自详情', async ({ page }) => {
-  await openDetails(page);
-  await page.getByText('显示设置', { exact: true }).click();
-  await page.getByLabel('显示活动时间要求', { exact: true }).check();
-  await page.getByLabel('显示活动周期要求', { exact: true }).check();
-  await page.getByText('显示设置', { exact: true }).click();
-  await page.getByLabel('单次活动用时', { exact: true }).fill('2.5');
-  await page.getByLabel('单次活动用时', { exact: true }).press('Tab');
-  await page.getByLabel('执行周期', { exact: true }).selectOption('week');
-  await page.getByLabel('执行星期', { exact: true }).fill('1,3,5');
-  await page.getByLabel('执行星期', { exact: true }).press('Tab');
-  await page.getByRole('button', { name: '确认订单信息', exact: true }).click();
-  await expect(page.getByLabel('单次活动用时', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await expect(page.getByLabel('单次活动用时', { exact: true })).toHaveValue('2.5');
-  await expect(page.getByLabel('执行星期', { exact: true })).toHaveValue('1,3,5');
-});
-test('业务详情是独立标签页，无详情的图形隐藏标签并返回属性', async ({ page }) => {
+
+test('四类活动共用业务节点结构并保留独立类型，阶段分别为一个节点', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  for (const id of ['shape-stage-horizontal', 'shape-stage-vertical']) {
+    await page.getByTestId(id).click();
+  }
   await page.getByRole('button', { name: /^图层/ }).click();
-  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
-  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-  await expect(page.getByRole('tabpanel', { name: '业务详情', exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: '属性', exact: true }).click();
-  await expect(page.getByLabel('节点名称', { exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-  await page.getByRole('button', { name: '开始', exact: true }).click();
-  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('tab', { name: '属性', exact: true })).toHaveAttribute(
-    'aria-selected',
-    'true',
-  );
   await page.getByRole('button', { name: '销售团队', exact: true }).click();
-  await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '图形库', exact: true }).click();
+  for (const id of [
+    'shape-activity',
+    'shape-activity-offline',
+    'shape-activity-system',
+    'shape-activity-interface',
+  ]) {
+    await page.getByTestId(id).click();
+  }
+  await page.getByRole('button', { name: '文档数据', exact: true }).click();
+  const doc = JSON.parse(await page.getByTestId('document-json').innerText());
+  const types = Object.values(doc.nodes)
+    .filter((node: any) => node.type === 'activity')
+    .map((node: any) => doc.entities[node.entityId].activityType);
+  expect(types).toEqual(expect.arrayContaining(['manual', 'offline', 'system', 'interface']));
+  expect(
+    Object.values(doc.nodes).filter((node: any) => node.type.startsWith('stage-')),
+  ).toHaveLength(2);
 });

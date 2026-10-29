@@ -32,6 +32,7 @@ async function connect(page: Page, backend: FakeCoopwire) {
 async function receive(page: Page) {
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  await page.getByRole('tab', { name: '属性', exact: true }).click();
 }
 test('远程样式编辑保存真实 XML 和 PNG，撤销还原且不调用活动修改接口', async ({ page }) => {
   const backend = new FakeCoopwire();
@@ -83,6 +84,7 @@ test('remote copy, remove relation and redo preserve business IDs', async ({ pag
   await receive(page);
   await page.getByRole('button', { name: '复制所选', exact: true }).click();
   await expect.poll(() => backend.flow.version).toBe(9);
+  await page.getByRole('tab', { name: '属性', exact: true }).click();
   await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue(
     '接收客户订单 副本',
   );
@@ -153,39 +155,44 @@ test('pool changes round-trip through remote XML and PNG without updating busine
   );
   await expect(page.getByLabel('泳池背景色', { exact: true })).toHaveValue('#eaf4ee');
 });
-test('活动详情加载业务选项并通过专用接口保存说明和时间', async ({ page }) => {
+test('原业务面板嵌入后按活动 ID 同步外部修改，不重复写业务接口', async ({ page }) => {
   const backend = new FakeCoopwire();
+  await page.route('**/enterprise/diagramly/portrait/**', async (route) => {
+    await route.fulfill({
+      contentType: 'text/html',
+      body: `<!doctype html><button id="save">模拟原面板保存</button><script>
+        const query = new URLSearchParams(location.search);
+        const parentOrigin = query.get('parentOrigin');
+        const sessionId = query.get('sessionId');
+        let requestId = 0, actId = '';
+        const send = (type, data = {}) => parent.postMessage({channel:'diagramly.portrait',version:1,sessionId,type,...data},parentOrigin);
+        addEventListener('message', event => {
+          if(event.source !== parent || event.origin !== parentOrigin || event.data.sessionId !== sessionId) return;
+          const data = event.data;
+          if(data.type === 'select') { requestId = data.requestId; actId = data.selection.actId; send('loaded',{requestId,actId}); }
+          if(data.type === 'refresh') send('loaded',{requestId,actId});
+        });
+        document.getElementById('save').onclick = () => send('changed',{requestId,actId});
+        send('ready');
+      </script>`,
+    });
+  });
   await connect(page, backend);
   await receive(page);
   await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-  await page.getByRole('button', { name: '加载业务选项', exact: true }).click();
-  await expect(
-    page
-      .getByLabel('活动使用的应用', { exact: true })
-      .getByRole('option', { name: '订单应用', exact: true }),
-  ).toHaveCount(1);
-  await page.getByLabel('活动使用的应用', { exact: true }).selectOption('app_erp');
+  await expect(page.getByTitle('Coopwire 业务详情')).toBeVisible();
+  const activity = backend.activities.get('remote_receive')!;
+  activity.activity.actName = '原面板已保存';
+  activity.activity.version++;
+  await page
+    .frameLocator('iframe[title="Coopwire 业务详情"]')
+    .getByRole('button', { name: '模拟原面板保存' })
+    .click();
   await expect.poll(() => backend.flow.version).toBe(9);
-  await page.getByLabel('补充说明', { exact: true }).fill('远程核对库存');
-  await page.getByLabel('补充说明', { exact: true }).press('Tab');
-  await expect.poll(() => backend.flow.version).toBe(10);
-  expect(backend.activities.get('remote_receive')?.activity).toMatchObject({
-    actSystemUsed: 'app_erp',
-    keyStep: '远程核对库存',
-  });
-  expect(backend.calls.filter((call) => call.action === 'updateActDetailDesc')).toHaveLength(1);
-  await page.getByText('显示设置', { exact: true }).click();
-  await page.getByLabel('显示活动时间要求', { exact: true }).check();
-  await expect.poll(() => backend.flow.version).toBe(11);
-  await page.getByText('显示设置', { exact: true }).click();
-  await page.getByLabel('活动开始小时', { exact: true }).fill('8');
-  await page.getByLabel('活动开始小时', { exact: true }).press('Tab');
-  await expect.poll(() => backend.flow.version).toBe(12);
-  expect(backend.calls.filter((call) => call.action === 'addTimeRange')).toHaveLength(1);
-  expect(backend.activities.get('remote_receive')?.activity.timeRanges).toMatchObject({
-    actTimeStart: 8,
-    actTimeEnd: 18,
-  });
+  await expect(page.getByRole('button', { name: '原面板已保存', exact: true })).toBeVisible();
+  expect(backend.calls.filter((call) => call.method === 'POST').map((call) => call.action)).toEqual(
+    ['saveFlowDiagramRelation'],
+  );
 });
 test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持关闭', async ({ page }) => {
   const backend = new FakeCoopwire();
