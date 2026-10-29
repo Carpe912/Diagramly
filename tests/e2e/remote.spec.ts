@@ -56,6 +56,30 @@ async function receive(page: Page) {
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
   await page.getByRole('tab', { name: '属性', exact: true }).click();
 }
+test('跨泳道拖动同步目标组织角色，远程撤销恢复原归属和业务 ID', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  const source = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+  const lane = (await page.locator('[data-element-id="lane_ops"]').first().boundingBox())!;
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(source.x + source.width / 2, lane.y + lane.height / 2, { steps: 16 });
+  await page.mouse.up();
+  await expect.poll(() => backend.flow.version).toBe(9);
+  expect(backend.activities.get('remote_receive')?.activity.orgId).toEqual(['role_ops']);
+  await page.getByRole('button', { name: '文档数据', exact: true }).click();
+  const moved = JSON.parse(await page.getByTestId('document-json').innerText());
+  expect(moved.nodes.receive.parentId).toBe('lane_ops');
+  expect(moved.entities.entity_receive.externalRef.id).toBe('remote_receive');
+  await page.getByRole('button', { name: '关闭文档数据' }).click();
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  await expect.poll(() => backend.flow.version).toBe(10);
+  expect(backend.activities.get('remote_receive')?.activity.orgId).toEqual(['role_sales']);
+  expect(
+    backend.calls.filter((call) => call.action === 'addActs' || call.action === 'copyAct'),
+  ).toHaveLength(0);
+});
 test('远程样式编辑保存真实 XML 和 PNG，撤销还原且不调用活动修改接口', async ({ page }) => {
   const backend = new FakeCoopwire();
   await connect(page, backend);

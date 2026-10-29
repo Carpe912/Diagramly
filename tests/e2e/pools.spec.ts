@@ -65,6 +65,66 @@ test('泳池切换方向后交接连线直接对齐，端点和布局一起撤�
   expect(verticalPath[3]).toBeGreaterThan(verticalPath[1]);
   await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
 });
+
+for (const orientation of ['horizontal', 'vertical'] as const)
+  test(`${orientation} 活动可真实拖入其他泳道，保持业务身份并整体撤销`, async ({ page }) => {
+    if (orientation === 'vertical') {
+      await poolSelection(page);
+      await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+      await page.getByRole('button', { name: '适应画布', exact: true }).click();
+    }
+    const before = await readDocument(page);
+    const zoom = await page.locator('.zoom-control > span').innerText();
+    await page.getByRole('button', { name: /^图层/ }).click();
+    await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+    const source = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+    const lane = (await page.locator('[data-element-id="lane_ops"]').first().boundingBox())!;
+    const scale = lane.width / before.nodes.lane_ops.bounds.width;
+    const targetX =
+      lane.x +
+      ((orientation === 'vertical' ? 12 : 80) + before.nodes.receive.bounds.width / 2 + 20) * scale;
+    const targetY =
+      lane.y +
+      ((orientation === 'vertical' ? 52 : 12) + before.nodes.receive.bounds.height / 2 + 20) *
+        scale;
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetX, targetY, { steps: 16 });
+    await page.mouse.up();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    const after = await readDocument(page);
+    expect(after.nodes.receive.parentId).toBe('lane_ops');
+    expect(after.entities).toEqual(before.entities);
+    expect(after.edges).toEqual(before.edges);
+    await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
+    await page.getByRole('button', { name: '撤销', exact: true }).click();
+    expect((await readDocument(page)).nodes).toEqual(before.nodes);
+    await page.getByRole('button', { name: '重做', exact: true }).click();
+    expect((await readDocument(page)).nodes).toEqual(after.nodes);
+  });
+
+test('多选活动跨泳道拖动只产生一次可撤销的移动', async ({ page }) => {
+  const before = await readDocument(page);
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
+  await page
+    .getByRole('button', { name: '确认订单信息', exact: true })
+    .click({ modifiers: ['Shift'] });
+  await expect(page.getByText('已选择 2 个元素', { exact: true })).toBeVisible();
+  const source = (await page.locator('[data-element-id="receive"]').first().boundingBox())!;
+  const lane = (await page.locator('[data-element-id="lane_ops"]').first().boundingBox())!;
+  const scale = lane.width / before.nodes.lane_ops.bounds.width;
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(source.x + source.width / 2, lane.y + 100 * scale, { steps: 16 });
+  await page.mouse.up();
+  const after = await readDocument(page);
+  expect(after.nodes.receive.parentId).toBe('lane_ops');
+  expect(after.nodes.confirm.parentId).toBe('lane_ops');
+  expect(after.revision).toBe(before.revision + 1);
+  await page.getByRole('button', { name: '撤销', exact: true }).click();
+  expect((await readDocument(page)).nodes).toEqual(before.nodes);
+});
 test('creates horizontal and vertical pools from the palette, each owning its own lanes', async ({
   page,
 }) => {

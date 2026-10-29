@@ -31,7 +31,15 @@ import {
   type CellStyle,
 } from '@maxgraph/core';
 import '@maxgraph/core/css/common.css';
-import { isManagedLane, isPoolType, nodeDepth, poolOf, POOL_HEADER } from '../../domain/pools';
+import {
+  absoluteBounds,
+  isManagedLane,
+  isPoolType,
+  nodeDepth,
+  poolOf,
+  POOL_HEADER,
+} from '../../domain/pools';
+import { nodeDropOperation } from '../../application/nodeDrop';
 import { nodePresentation } from '../../shapes/presentation';
 import {
   edgeLineAppearance,
@@ -360,7 +368,44 @@ export class DiagramCanvas {
       }
       if (operations.length) this.commit('调整图形', operations);
     };
-    graph.addListener(InternalEvent.CELLS_MOVED, geometryChanged);
+    graph.addListener(
+      InternalEvent.CELLS_MOVED,
+      (_sender: unknown, event: { getProperty: <T>(key: string) => T }) => {
+        if (this.rendering) return;
+        const doc = this.editor.snapshot,
+          cells = event.getProperty<Cell[]>('cells') ?? [];
+        const selected = new Set(cells.map((cell) => cell.id));
+        const operations: Operation[] = [];
+        for (const cell of cells) {
+          const node = doc.nodes[cell.id ?? ''],
+            geometry = cell.getGeometry();
+          if (!node || !geometry) continue;
+          let parent = doc.nodes[node.parentId ?? ''];
+          let carried = false;
+          while (parent) {
+            if (selected.has(parent.id)) {
+              carried = true;
+              break;
+            }
+            parent = doc.nodes[parent.parentId ?? ''];
+          }
+          if (carried) continue;
+          if (this.editor.registry.get(node.type).container) {
+            operations.push({ type: 'node.move', id: node.id, x: geometry.x, y: geometry.y });
+          } else {
+            const before = absoluteBounds(doc, node);
+            operations.push(
+              nodeDropOperation(doc, node.id, {
+                ...before,
+                x: before.x + geometry.x - node.bounds.x,
+                y: before.y + geometry.y - node.bounds.y,
+              }),
+            );
+          }
+        }
+        if (operations.length) this.commit('移动图形', operations);
+      },
+    );
     graph.addListener(InternalEvent.CELLS_RESIZED, geometryChanged);
     for (const event of [
       InternalEvent.SCALE,

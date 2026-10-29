@@ -125,12 +125,17 @@ function apply(doc: DiagramDocument, operation: Operation, registry: ShapeRegist
     }
     case 'node.move': {
       const node = getNode(operation.id);
+      const previousParent = node.parentId;
       if (isManagedLane(doc, node)) throw new Error('泳道位置由泳池布局控制，请使用移动泳道命令');
       node.bounds.x = operation.x;
       node.bounds.y = operation.y;
       if (operation.parentId !== undefined) {
         if (operation.parentId === null) delete node.parentId;
         else node.parentId = operation.parentId;
+      }
+      if (node.parentId !== previousParent && doc.nodes[node.parentId ?? '']?.type === 'swimlane') {
+        const pool = poolOf(doc, node);
+        if (pool) layoutPool(doc, pool.id);
       }
       break;
     }
