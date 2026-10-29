@@ -207,8 +207,11 @@ test('lane selection has its own toolbar, appearance and role controls', async (
 for (const orientation of ['horizontal', 'vertical'] as const)
   test(`drags a real ${orientation} lane corner and adapts the entire pool`, async ({ page }) => {
     await poolSelection(page);
-    if (orientation === 'vertical')
+    if (orientation === 'vertical') {
       await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+      // 方向切换保留缩放比例，先主动适应画布，再操作底部缩放手柄。
+      await page.getByRole('button', { name: '适应画布', exact: true }).click();
+    }
     await page.getByRole('button', { name: '销售团队', exact: true }).click();
     const before = await readDocument(page),
       lane = before.nodes.lane_sales,

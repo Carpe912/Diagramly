@@ -67,6 +67,7 @@ import { Editor } from '../application/editor';
 import { demoDocument } from '../application/demo';
 import { createShapeRegistry } from '../shapes/registry';
 import { DiagramCanvas } from '../adapters/maxgraph/canvas';
+import type { Viewport } from '../adapters/maxgraph/viewport';
 import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
 import {
@@ -436,7 +437,7 @@ function onSelection(ids: string[]) {
     setTool('select');
   }
 }
-function bindEditor() {
+function bindEditor(viewport?: Viewport) {
   if (!graphEl.value) return;
   doc.value = editor.value.snapshot;
   canvas = new DiagramCanvas(
@@ -466,9 +467,10 @@ function bindEditor() {
       ? `diagramly.remote.cache:${JSON.stringify(remoteSession.value.api.config)}`
       : undefined,
   );
-  canvas.fit();
+  if (viewport) canvas.restoreViewport(viewport);
 }
 function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
+  const viewport = canvas?.getViewport();
   stopAutosave?.();
   unsubscribe?.();
   canvas?.destroy();
@@ -480,7 +482,7 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   clearTimeout(refreshTimer);
   if (session) editor.value.attachTransport(session);
   panelTab.value = 'properties';
-  bindEditor();
+  bindEditor(viewport);
   setTool('select');
 }
 const linkedChooserOpen = ref(false);
@@ -583,7 +585,6 @@ async function addShape(
   const result = await run(`添加${definition.label}`, [operation]);
   if (result && operation.type === 'node.create') {
     select([operation.node.id]);
-    if (!point) canvas?.fit();
   }
 }
 async function createPool(
@@ -599,7 +600,6 @@ async function createPool(
     create.type === 'node.create'
   ) {
     select([create.node.id]);
-    canvas?.fit();
   }
 }
 async function addLane(poolId: string) {
@@ -616,7 +616,6 @@ async function addLane(poolId: string) {
     ])
   ) {
     select([poolId]);
-    canvas?.fit();
   }
 }
 const laneDeletion = ref<{ poolId: string; laneId: string }>();
@@ -637,15 +636,11 @@ async function removeLane() {
   if (await run('删除泳道', [{ type: 'pool.lane.remove', ...target }])) {
     laneDeletion.value = undefined;
     select([target.poolId]);
-    canvas?.fit();
   }
 }
 async function changePoolOrientation(orientation: 'horizontal' | 'vertical') {
   if (!contextPool.value || poolOrientation(contextPool.value) === orientation) return;
-  if (
-    await run('切换泳池方向', [{ type: 'pool.orientation', id: contextPool.value.id, orientation }])
-  )
-    canvas?.fit();
+  await run('切换泳池方向', [{ type: 'pool.orientation', id: contextPool.value.id, orientation }]);
 }
 function poolAppearance(patch: { fill?: string; headerFill?: string; fontColor?: string }) {
   if (contextPool.value)
@@ -663,9 +658,7 @@ function changeLanePool() {
   if (selectedNode.value?.type === 'swimlane' && form.parentId)
     void run('移动泳道到其他泳池', [
       { type: 'pool.lane.move', laneId: selectedNode.value.id, poolId: form.parentId },
-    ]).then((result) => {
-      if (result) canvas?.fit();
-    });
+    ]);
 }
 function geometryDisabled(key: 'x' | 'y' | 'width' | 'height') {
   const node = selectedNode.value;
@@ -1002,7 +995,7 @@ async function exportFile() {
     exporting.value = false;
   }
 }
-onMounted(() => {
+onMounted(async () => {
   bindEditor();
   window.addEventListener('keydown', keyboard);
   configureCoopwireAuth({ refresh: () => refreshCoopwireSession(remoteConfig.baseUrl) });
@@ -1010,11 +1003,12 @@ onMounted(() => {
     const context = flowchartContext(window.location.href);
     if (context) {
       Object.assign(remoteConfig, context.config);
-      void connectRemote();
+      await connectRemote();
     }
   } catch (cause) {
     showError(cause);
   }
+  canvas?.fit();
 });
 onBeforeUnmount(() => {
   clearTimeout(refreshTimer);

@@ -652,6 +652,12 @@ export class DiagramCanvas {
       y: translate.y - this.container.scrollTop / scale,
     };
   }
+  getViewport(): Viewport {
+    return this.camera();
+  }
+  restoreViewport(viewport: Viewport) {
+    this.updateScrollViewport(viewport);
+  }
   private contentBounds() {
     const { scale, translate } = this.graph.view,
       bounds = this.graph.getGraphBounds();

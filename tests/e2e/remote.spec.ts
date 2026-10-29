@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { FakeCoopwire, testConfig, embed } from '../support/coopwire';
-async function connect(page: Page, backend: FakeCoopwire) {
+async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = false) {
   // 所有 /rest 请求均由进程内的测试后端响应，不会访问真实服务。
   await page.route('**/rest/**', async (route) => {
     const source = route.request(),
@@ -20,6 +20,12 @@ async function connect(page: Page, backend: FakeCoopwire) {
     });
   });
   await page.goto('/');
+  if (zoomBeforeConnect) {
+    const graph = (await page.getByTestId('graph').boundingBox())!;
+    await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
+    await page.mouse.wheel(0, -3000);
+    await expect(page.locator('.zoom-control > span')).toHaveText('400%');
+  }
   await page.getByRole('button', { name: '连接 Coopwire', exact: true }).click();
   await page.getByRole('textbox', { name: '远程接口地址', exact: true }).fill('');
   await page.getByRole('textbox', { name: '远程项目 ID', exact: true }).fill(testConfig.projectId);
@@ -29,6 +35,22 @@ async function connect(page: Page, backend: FakeCoopwire) {
   await page.getByRole('button', { name: '连接并读取流程' }).click();
   await expect(page.getByRole('button', { name: 'Coopwire 已连接', exact: true })).toBeVisible();
 }
+test('手动连接重读与断开远程流程保留比例，仅首次进入远程页面适应画布', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend, true);
+  const zoom = page.locator('.zoom-control > span');
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: 'Coopwire 已连接', exact: true }).click();
+  await page.getByRole('button', { name: '重新读取远端', exact: true }).click();
+  await page.getByRole('button', { name: '重新读取远端', exact: true }).last().click();
+  await expect(page.getByRole('heading', { name: '读取远端并核对' })).toHaveCount(0);
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '断开并返回本机', exact: true }).click();
+  await expect(zoom).toHaveText('400%');
+  await page.goto('/?flowchart=1&projectId=project_test&flowchartId=flow_test&flowchartType=tobe');
+  await expect(page.getByRole('button', { name: 'Coopwire 已连接', exact: true })).toBeVisible();
+  await expect(zoom).not.toHaveText('400%');
+});
 async function receive(page: Page) {
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();

@@ -45,6 +45,72 @@ test('滚轮围绕鼠标位置缩放，缩放往返不漂移且不修改文档',
     .toBeLessThan(1);
   expect(await readDocument(page)).toEqual(doc);
 });
+
+test('泳池方向切换、增删移动泳道和新增图形均不触发适应画布', async ({ page }) => {
+  await page.goto('/');
+  const graph = (await page.getByTestId('graph').boundingBox())!;
+  await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
+  await page.mouse.wheel(0, -3000);
+  const zoom = page.locator('.zoom-control > span');
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '订单履约泳池', exact: true }).click();
+  await page.getByRole('button', { name: '垂直布局', exact: true }).click();
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '水平布局', exact: true }).click();
+  await expect(zoom).toHaveText('400%');
+  await page
+    .getByRole('toolbar', { name: '泳池工具栏', exact: true })
+    .getByRole('button', { name: '添加泳道', exact: true })
+    .click();
+  await expect(zoom).toHaveText('400%');
+  const document = await readDocument(page);
+  const added = Object.values(document.nodes).find(
+    (node: any) => document.entities[node.entityId].name === '泳道 3',
+  ) as any;
+  await page.getByLabel('操作泳道', { exact: true }).selectOption(added.id);
+  await page.getByRole('button', { name: '删除泳道', exact: true }).click();
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '图形库', exact: true }).click();
+  await page.getByTestId('shape-rectangle').click();
+  await expect(zoom).toHaveText('400%');
+  await page.getByTestId('shape-pool-vertical').click();
+  await expect(zoom).toHaveText('400%');
+  const updated = await readDocument(page);
+  const target = Object.values(updated.nodes).find(
+    (node: any) => node.type === 'pool-vertical',
+  ) as any;
+  await page.getByRole('button', { name: /^图层/ }).click();
+  await page.getByRole('button', { name: '销售团队', exact: true }).click();
+  await page.getByLabel('所属泳池', { exact: true }).selectOption(target.id);
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '适应画布', exact: true }).click();
+  await expect(zoom).not.toHaveText('400%');
+});
+
+test('新建、打开示例和导入文档保留缩放比例', async ({ page }) => {
+  await page.goto('/');
+  const document = await readDocument(page);
+  const graph = (await page.getByTestId('graph').boundingBox())!;
+  await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
+  await page.mouse.wheel(0, -3000);
+  const zoom = page.locator('.zoom-control > span');
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '新建画布', exact: true }).click();
+  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await expect(page.locator('[data-element-id="pool_order"]')).toHaveCount(0);
+  await expect(zoom).toHaveText('400%');
+  await page.getByRole('button', { name: '打开示例', exact: true }).click();
+  await page.getByRole('button', { name: '打开示例', exact: true }).last().click();
+  await expect(zoom).toHaveText('400%');
+  await page.getByLabel('导入文档', { exact: true }).setInputFiles({
+    name: 'restore.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(document)),
+  });
+  await expect(zoom).toHaveText('400%');
+  expect(await readDocument(page)).toMatchObject({ id: document.id });
+});
 test('内容未溢出时与可见区域同大，放大后通过横纵滚动条找回视野外图形', async ({ page }) => {
   await page.goto('/');
   const doc = await readDocument(page),
@@ -165,6 +231,7 @@ test('普通拖拽恢复框选，组合图形只选择业务节点，框选不�
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(fixture)),
   });
+  await page.getByRole('button', { name: '适应画布', exact: true }).click();
   const doc = await readDocument(page),
     graph = await page.getByTestId('graph').boundingBox();
   if (!graph) throw Error('缺少画布');
