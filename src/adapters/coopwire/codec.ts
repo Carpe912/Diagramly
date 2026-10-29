@@ -35,15 +35,17 @@ export const activityType = (node: DiagramNode, entity: DiagramDocument['entitie
     ? 'decide'
     : node.type === 'subprocess'
       ? 'subAct'
-      : {
-          manual: 'manualOnline',
-          offline: 'manualOffline',
-          system: 'systemOperate',
-          interface: 'interfaceDocking',
-          linked: 'linkAct',
-        }[entity.activityType];
+      : node.type === 'parallel'
+        ? 'parallel'
+        : {
+            manual: 'manualOnline',
+            offline: 'manualOffline',
+            system: 'systemOperate',
+            interface: 'interfaceDocking',
+            linked: 'linkAct',
+          }[entity.activityType];
 export const isBusinessNode = (node: DiagramNode) =>
-  ['activity', 'decision', 'subprocess'].includes(node.type);
+  ['activity', 'decision', 'subprocess', 'parallel'].includes(node.type);
 export function hydrateEntity(doc: DiagramDocument, node: DiagramNode, detail: ActivityDetail) {
   const entity = doc.entities[node.entityId],
     activity = detail.activity;
@@ -274,6 +276,26 @@ export function readFlow(
         .filter(Boolean) ?? [];
     doc.entities[node.entityId].roleIds = roleIds;
   }
+  // 旧版阶段由标题条与无端点虚线组成，转换为一个可编辑的组合节点。
+  for (const cell of cells.filter(
+    (candidate) =>
+      candidate.getAttribute('vertex') === '1' &&
+      /(?:barStep|shape=vstep)/.test(candidate.getAttribute('style') || ''),
+  )) {
+    const vertical = /shape=vstep/.test(cell.getAttribute('style') || '');
+    const node = insert(
+      cell,
+      vertical ? 'stage-vertical' : 'stage-horizontal',
+      attrs(cell, 'value') || attrs(cell, 'label') || '阶段',
+    );
+    Object.assign(node.bounds, absolute(cell));
+    node.bounds.width = vertical ? 50 : 300;
+    node.bounds.height = vertical ? 300 : 42;
+    const style = styleValues(cell);
+    node.appearance.headerFill = color(style.fillColor) ?? '#1ba1e2';
+    node.appearance.fontColor = color(style.fontColor) ?? '#ffffff';
+    node.appearance.accent = color(style.strokeColor) ?? '#006eaf';
+  }
   for (const pool of Object.values(doc.nodes).filter((n) => isPoolType(n.type))) {
     Object.values(doc.nodes)
       .filter((n) => n.parentId === pool.id)
@@ -295,13 +317,15 @@ export function readFlow(
         ? 'subprocess'
         : legacyType === 'decide'
           ? 'decision'
-          : legacyType
-            ? 'activity'
-            : /terminator/.test(cell.getAttribute('style') || '')
-              ? /结束|end/i.test(attrs(cell, 'value'))
-                ? 'end'
-                : 'start'
-              : 'rectangle';
+          : legacyType === 'parallel'
+            ? 'parallel'
+            : legacyType
+              ? 'activity'
+              : /terminator/.test(cell.getAttribute('style') || '')
+                ? /结束|end/i.test(attrs(cell, 'value'))
+                  ? 'end'
+                  : 'start'
+                : 'rectangle';
     if (
       legacyType &&
       ![
@@ -312,6 +336,7 @@ export function readFlow(
         'linkAct',
         'subAct',
         'decide',
+        'parallel',
       ].includes(legacyType)
     )
       throw new Error(`尚不能迁移旧业务图形类型：${legacyType}`);
@@ -414,6 +439,7 @@ export function readFlow(
     }
   };
   for (const cell of cells.filter((c) => c.getAttribute('edge') === '1')) {
+    if (/(?:barArrow|vbarArrow)/.test(cell.getAttribute('style') || '')) continue;
     if (
       (cell.getAttribute('style') || '').startsWith('#active-edge#') &&
       !cell.getAttribute('target')

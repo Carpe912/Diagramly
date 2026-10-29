@@ -77,5 +77,10 @@ export function nodePresentation(doc: DiagramDocument, node: DiagramNode, regist
         : {}),
     }));
   }
-  return { fill, stroke, fontColor, parts };
+  return {
+    fill: node.type.startsWith('stage-') ? 'none' : fill,
+    stroke: node.type.startsWith('stage-') ? 'none' : stroke,
+    fontColor,
+    parts,
+  };
 }
