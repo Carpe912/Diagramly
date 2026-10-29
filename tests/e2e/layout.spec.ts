@@ -15,6 +15,29 @@ for (const side of [
   { id: 'left', label: '图形库侧栏', min: 180, max: 420, shrink: -150, grow: 800 },
   { id: 'right', label: '属性侧栏', min: 260, max: 600, shrink: 180, grow: -800 },
 ]) {
+  test(`${side.label} 折叠后让出画布空间，刷新后可恢复原尺寸`, async ({ page }) => {
+    await page.goto('/');
+    const panel = page.locator(`[data-resizable-sidebar="${side.id}"]`);
+    const before = await panel.boundingBox();
+    const graph = (await page.getByTestId('graph').boundingBox())!;
+    await page.getByRole('button', { name: `折叠${side.label}`, exact: true }).click();
+    await expect(panel).toHaveCSS('width', '36px');
+    await expect
+      .poll(async () => (await page.getByTestId('graph').boundingBox())!.width)
+      .toBeGreaterThan(graph.width);
+    await page.reload();
+    await expect(
+      page.getByRole('button', { name: `展开${side.label}`, exact: true }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: `展开${side.label}`, exact: true }).click();
+    await expect(panel).toHaveCSS('width', `${before!.width}px`);
+    await expect(panel).toHaveCSS('height', `${before!.height}px`);
+    expect(
+      await page.evaluate(
+        () => JSON.parse(localStorage.getItem('diagramly.document.v1')!).revision,
+      ),
+    ).toBe(0);
+  });
   test(`${side.label} 可拖动宽高，限制范围并记住尺寸`, async ({ page }) => {
     const failures: string[] = [];
     page.on('pageerror', (e) => failures.push(e.message));

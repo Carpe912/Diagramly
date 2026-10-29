@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { ChevronLeft, ChevronRight } from '@lucide/vue';
 const props = defineProps<{
   side: 'left' | 'right';
   label: string;
@@ -15,9 +16,11 @@ const preferred = reactive<{ width: number | null; height: number | null }>({
   width: null,
   height: null,
 });
+const collapsed = ref(false);
 const storageKey = `diagramly.sidebar.${props.side}.v1`;
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null');
+  collapsed.value = saved?.collapsed === true;
   if (saved && typeof saved.width === 'number' && Number.isFinite(saved.width))
     preferred.width = saved.width;
   if (saved && typeof saved.height === 'number' && Number.isFinite(saved.height))
@@ -39,7 +42,10 @@ const width = computed(() =>
 const height = computed(() =>
   Math.max(minHeight.value, Math.min(parentHeight.value, preferred.height ?? parentHeight.value)),
 );
-const style = computed(() => ({ width: `${width.value}px`, height: `${height.value}px` }));
+const style = computed(() => ({
+  width: `${collapsed.value ? 36 : width.value}px`,
+  height: `${collapsed.value ? parentHeight.value : height.value}px`,
+}));
 type Axis = 'width' | 'height' | 'both';
 let drag:
   | {
@@ -55,7 +61,7 @@ let drag:
 const resizing = ref(false);
 function persist() {
   try {
-    localStorage.setItem(storageKey, JSON.stringify(preferred));
+    localStorage.setItem(storageKey, JSON.stringify({ ...preferred, collapsed: collapsed.value }));
   } catch {
     /* 布局偏好保存失败不影响业务文档。 */
   }
@@ -63,6 +69,11 @@ function persist() {
 async function resized() {
   await nextTick();
   emit('resized');
+}
+function toggle() {
+  collapsed.value = !collapsed.value;
+  persist();
+  void resized();
 }
 function setSize(axis: Axis, nextWidth: number, nextHeight: number) {
   if (axis !== 'height')
@@ -148,12 +159,25 @@ onBeforeUnmount(() => observer?.disconnect());
   <aside
     ref="element"
     :style="style"
-    :class="['resizable-sidebar', `sidebar-${side}`, { resizing }]"
+    :class="['resizable-sidebar', `sidebar-${side}`, { resizing, collapsed }]"
     :data-resizable-sidebar="side"
     :aria-label="label"
   >
-    <slot />
+    <button
+      class="sidebar-collapse"
+      :aria-label="`${collapsed ? '展开' : '折叠'}${label}`"
+      :title="`${collapsed ? '展开' : '折叠'}${label}`"
+      :aria-expanded="!collapsed"
+      @click="toggle"
+    >
+      <component :is="(side === 'left') !== collapsed ? ChevronLeft : ChevronRight" :size="14" />
+    </button>
+    <span v-if="collapsed" class="collapsed-label">{{
+      label === '图形库侧栏' ? '图形库' : '属性面板'
+    }}</span>
+    <div v-show="!collapsed" class="sidebar-content"><slot /></div>
     <div
+      v-if="!collapsed"
       class="sidebar-resize-width"
       role="separator"
       tabindex="0"
@@ -169,6 +193,7 @@ onBeforeUnmount(() => observer?.disconnect());
       @keydown="keyboard($event, 'width')"
     ></div>
     <div
+      v-if="!collapsed"
       class="sidebar-resize-height"
       role="separator"
       tabindex="0"
@@ -184,6 +209,7 @@ onBeforeUnmount(() => observer?.disconnect());
       @keydown="keyboard($event, 'height')"
     ></div>
     <div
+      v-if="!collapsed"
       class="sidebar-resize-corner"
       role="button"
       tabindex="0"
@@ -208,6 +234,43 @@ onBeforeUnmount(() => observer?.disconnect());
 .resizable-sidebar.resizing {
   user-select: none;
   z-index: 7;
+}
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.sidebar-collapse {
+  position: absolute;
+  right: 7px;
+  top: 13px;
+  width: 22px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: #8a99af;
+  z-index: 10;
+  background: white;
+}
+.sidebar-collapse:hover {
+  background: #edf1f8;
+}
+.collapsed .sidebar-collapse {
+  right: 6px;
+}
+.collapsed-label {
+  writing-mode: vertical-rl;
+  align-self: center;
+  margin-top: 58px;
+  color: #98a4b6;
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+.sidebar-content :deep(.panel-tabs) {
+  padding-right: 36px;
+  gap: 18px;
 }
 .sidebar-resize-width {
   position: absolute;
