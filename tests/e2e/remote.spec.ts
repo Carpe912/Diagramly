@@ -151,9 +151,15 @@ test('远程样式编辑保存真实 XML 和 PNG，撤销还原且不调用活�
   await page.getByLabel('线条宽度', { exact: true }).press('Tab');
   await expect.poll(() => backend.flow.version).toBe(9);
   expect(backend.flow.drawioXml).toContain('strokeWidth=4;');
-  expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
-    'saveFlowDiagramRelation',
-  ]);
+  expect(
+    backend.calls
+      .filter(
+        (c) =>
+          c.method === 'POST' &&
+          !['selectApp', 'queryDevice', 'qryFlowDiagram', 'qryOperateTypeEnums'].includes(c.action),
+      )
+      .map((c) => c.action),
+  ).toEqual(['saveFlowDiagramRelation']);
   await page.getByRole('button', { name: '撤销', exact: true }).click();
   await expect.poll(() => backend.flow.version).toBe(10);
   expect(backend.flow.drawioXml).not.toContain('strokeWidth=4;');
@@ -161,11 +167,15 @@ test('远程样式编辑保存真实 XML 和 PNG，撤销还原且不调用活�
   await page.getByLabel('线末端形状', { exact: true }).selectOption('diamond');
   await expect.poll(() => backend.flow.version).toBe(11);
   expect(backend.flow.drawioXml).toContain('endArrow=diamond;');
-  expect(backend.calls.filter((c) => c.method === 'POST').map((c) => c.action)).toEqual([
-    'saveFlowDiagramRelation',
-    'saveFlowDiagramRelation',
-    'saveFlowDiagramRelation',
-  ]);
+  expect(
+    backend.calls
+      .filter(
+        (c) =>
+          c.method === 'POST' &&
+          !['selectApp', 'queryDevice', 'qryFlowDiagram', 'qryOperateTypeEnums'].includes(c.action),
+      )
+      .map((c) => c.action),
+  ).toEqual(['saveFlowDiagramRelation', 'saveFlowDiagramRelation', 'saveFlowDiagramRelation']);
 });
 test('remote UI writes business edits, actual XML/PNG multipart and compensates undo', async ({
   page,
@@ -264,80 +274,140 @@ test('pool changes round-trip through remote XML and PNG without updating busine
   );
   await expect(page.getByLabel('泳池背景色', { exact: true })).toHaveValue('#eaf4ee');
 });
-test('原业务面板嵌入后按活动 ID 同步外部修改，不重复写业务接口', async ({ page }) => {
+test('自有业务面板按分组保存活动信息，不依赖宿主页面', async ({ page }) => {
   const backend = new FakeCoopwire();
-  await page.route('**/enterprise/diagramly/portrait/**', async (route) => {
-    await route.fulfill({
-      contentType: 'text/html',
-      body: `<!doctype html><button id="save">模拟原面板保存</button><script>
-        const query = new URLSearchParams(location.search);
-        const parentOrigin = query.get('parentOrigin');
-        const sessionId = query.get('sessionId');
-        let requestId = 0, actId = '';
-        const send = (type, data = {}) => parent.postMessage({channel:'diagramly.portrait',version:1,sessionId,type,...data},parentOrigin);
-        addEventListener('message', event => {
-          if(event.source !== parent || event.origin !== parentOrigin || event.data.sessionId !== sessionId) return;
-          const data = event.data;
-          if(data.type === 'select') { requestId = data.requestId; actId = data.selection.actId; send('loaded',{requestId,actId}); }
-          if(data.type === 'refresh') send('loaded',{requestId,actId});
-        });
-        document.getElementById('save').onclick = () => send('changed',{requestId,actId});
-        send('ready');
-      </script>`,
-    });
-  });
   await connect(page, backend);
   await receive(page);
   await page.getByRole('tab', { name: '业务详情', exact: true }).click();
-  await expect(page.getByTitle('Coopwire 业务详情')).toBeVisible();
-  const activity = backend.activities.get('remote_receive')!;
-  activity.activity.actName = '原面板已保存';
-  activity.activity.version++;
-  await page
-    .frameLocator('iframe[title="Coopwire 业务详情"]')
-    .getByRole('button', { name: '模拟原面板保存' })
-    .click();
-  await expect.poll(() => backend.flow.version).toBe(9);
-  await expect(page.getByRole('button', { name: '原面板已保存', exact: true })).toBeVisible();
-  expect(backend.calls.filter((call) => call.method === 'POST').map((call) => call.action)).toEqual(
-    ['saveFlowDiagramRelation'],
-  );
+  await expect(page.locator('iframe')).toHaveCount(0);
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('textbox', { name: '活动名称', exact: true }).fill('自有表单已保存');
+  await details.getByRole('textbox', { name: '活动名称', exact: true }).blur();
+  await expect
+    .poll(() => backend.activities.get('remote_receive')!.activity.actName)
+    .toBe('自有表单已保存');
+  await expect(page.getByRole('button', { name: '自有表单已保存', exact: true })).toBeVisible();
+  await details.getByRole('button', { name: '应用设备', exact: true }).click();
+  await details.getByLabel('活动使用的应用', { exact: true }).selectOption('app_erp');
+  await expect
+    .poll(() => backend.activities.get('remote_receive')!.activity.actSystemUsed)
+    .toBe('app_erp');
+  await details.getByRole('button', { name: '时间周期', exact: true }).click();
+  await details.getByLabel('单次活动用时', { exact: true }).fill('2.5');
+  await details.getByLabel('单次活动用时', { exact: true }).blur();
+  await expect
+    .poll(() => backend.activities.get('remote_receive')!.activity.hoursOnceAct)
+    .toBe('2.5');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await details.getByRole('button', { name: '基本信息', exact: true }).click();
 });
-test('引用活动先通过原选择器返回目标，再创建带关联信息的业务节点', async ({ page }) => {
+test('接口类型展示专属字段并保存接口设计关联', async ({ page }) => {
   const backend = new FakeCoopwire();
-  await page.route('**/enterprise/diagramly/portrait/**', async (route) => {
-    await route.fulfill({
-      contentType: 'text/html',
-      body: `<!doctype html><script>
-        const query = new URLSearchParams(location.search);
-        const parentOrigin = query.get('parentOrigin');
-        const sessionId = query.get('sessionId');
-        const send = (type, data = {}) => parent.postMessage({channel:'diagramly.portrait',version:1,sessionId,type,...data},parentOrigin);
-        addEventListener('message', event => {
-          if(event.source !== parent || event.origin !== parentOrigin || event.data.sessionId !== sessionId) return;
-          if(event.data.type === 'chooseLinked') send('linkedChosen',{
-            requestId:event.data.requestId,
-            form:{linkFlow:'flow_other',linkAct:'activity_other',showOrgName:true}
-          });
-        });
-        send('ready');
-      </script>`,
-    });
+  backend.activities.get('remote_receive')!.activity.actType = 'interfaceDocking';
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('button', { name: '应用设备', exact: true }).click();
+  await details.getByLabel('提供数据的应用', { exact: true }).selectOption('app_erp');
+  await expect
+    .poll(() => backend.activities.get('remote_receive')!.activity.inputSystemOrDeviceId)
+    .toBe('app_erp');
+  await details.getByLabel('接口设计', { exact: true }).selectOption('interface_order');
+  await expect
+    .poll(() => backend.activities.get('remote_receive')!.activity.interfaceDesigns)
+    .toEqual(['interface_order']);
+  await details.getByLabel('提供数据的应用', { exact: true }).selectOption('');
+  await expect
+    .poll(() =>
+      backend.calls.some((call) => call.query.get('clearInputSystemOrDeviceId') === 'true'),
+    )
+    .toBe(true);
+});
+test('自有输入输出弹窗保留附件信息，保存和删除后同步画布', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('button', { name: '输入输出', exact: true }).click();
+  await details
+    .getByRole('button', { name: /^编辑输入：/ })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog', { name: '编辑输入', exact: true });
+  await dialog.getByLabel('输入输出名称', { exact: true }).fill('客户订单');
+  await dialog.getByLabel('输入输出描述', { exact: true }).fill('完整客户订单数据');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  const saved = backend.activities
+    .get('remote_receive')!
+    .activity.ioputs!.find((item) => item.name === '客户订单')!;
+  expect(saved.attachments).toEqual(['preserved_attachment']);
+  expect(saved.id).toBeTruthy();
+  await expect(details).toContainText('完整客户订单数据');
+  await details.getByRole('button', { name: '删除输入：客户订单', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除业务记录' })
+    .getByRole('button', { name: '确认删除' })
+    .click();
+  await expect
+    .poll(() =>
+      backend.activities
+        .get('remote_receive')!
+        .activity.ioputs!.some((item) => item.id === saved.id),
+    )
+    .toBe(false);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+test('自有异常弹窗支持新增编辑和删除，使用独立记录版本', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('button', { name: '关联业务', exact: true }).click();
+  await details.getByRole('button', { name: '添加异常', exact: true }).click();
+  let dialog = page.getByRole('dialog', { name: '添加异常', exact: true });
+  await dialog.getByLabel('异常描述', { exact: true }).fill('订单信息不完整');
+  await dialog.getByLabel('异常解决方法', { exact: true }).fill('联系客户补齐');
+  await dialog.getByLabel('异常概率', { exact: true }).fill('15');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await details.locator('.related-records').filter({ hasText: '异常' }).locator('summary').click();
+  await details.getByRole('button', { name: '编辑异常', exact: true }).click();
+  dialog = page.getByRole('dialog', { name: '编辑异常', exact: true });
+  await dialog.getByLabel('异常解决方法', { exact: true }).fill('人工复核并补齐');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect((backend.activities.get('remote_receive')!.exceptions as any[])[0]).toMatchObject({
+    version: 2,
+    resolveMethod: '人工复核并补齐',
   });
+  await details.getByRole('button', { name: '删除异常', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除业务记录' })
+    .getByRole('button', { name: '确认删除' })
+    .click();
+  await expect.poll(() => backend.activities.get('remote_receive')!.exceptions).toEqual([]);
+});
+test('自有引用选择器先选流程和活动，再创建带关联信息的业务节点', async ({ page }) => {
+  const backend = new FakeCoopwire();
   await connect(page, backend);
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '销售团队', exact: true }).click();
   await page.getByRole('button', { name: '图形库', exact: true }).click();
   await page.getByTestId('shape-activity-linked').click();
+  const chooser = page.getByRole('dialog', { name: '选择引用活动', exact: true });
+  await chooser.getByLabel('关联流程', { exact: true }).selectOption('flow_delivery');
+  await chooser.getByLabel('引用活动', { exact: true }).selectOption('activity_other');
+  await chooser.getByLabel('在图上显示关联角色').check();
+  await chooser.getByRole('button', { name: '添加引用活动', exact: true }).click();
   await expect.poll(() => backend.flow.version).toBe(9);
   expect(backend.calls.find((call) => call.action === 'addActs')?.body).toMatchObject([
-    {
-      actType: 'linkAct',
-      linkFlow: 'flow_other',
-      linkAct: 'activity_other',
-      showOrgName: true,
-    },
+    { actType: 'linkAct', linkFlow: 'flow_delivery', linkAct: 'activity_other', showOrgName: true },
   ]);
+  await expect(page.locator('iframe')).toHaveCount(0);
 });
 test('泳道角色工具栏更新对应活动的角色，泳池工具栏保持关闭', async ({ page }) => {
   const backend = new FakeCoopwire();

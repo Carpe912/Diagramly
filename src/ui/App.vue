@@ -42,9 +42,9 @@ import {
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
 import StageToolbar from './StageToolbar.vue';
-import EmbeddedBusinessDetails from './EmbeddedBusinessDetails.vue';
-import EmbeddedLinkedChooser from './EmbeddedLinkedChooser.vue';
-import { flowchartContext, selectionFor, type LinkedChoice } from '../adapters/coopwire/portrait';
+import ActivityDetails from './ActivityDetails.vue';
+import LinkedActivityChooser from './LinkedActivityChooser.vue';
+import { flowchartContext, type LinkedChoice } from '../adapters/coopwire/portrait';
 import CanvasTopbar from './CanvasTopbar.vue';
 import ShapeToolbar from './ShapeToolbar.vue';
 import type { PaletteShape } from './palette';
@@ -73,10 +73,12 @@ import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
 import {
   CoopwireApi,
+  type ActivityOptions,
+  type BusinessMutation,
   configureCoopwireAuth,
   refreshCoopwireSession,
 } from '../adapters/coopwire/api';
-import { activityType, isBusinessNode } from '../adapters/coopwire/codec';
+import { isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
 import { exportDiagramPng } from '../adapters/maxgraph/export';
 import { createAgentTools } from '../agent/tools';
@@ -195,44 +197,34 @@ const hasBusinessDetails = computed(() => {
   const id = selectedEntity.value?.externalRef?.id;
   return !!id && remoteSession.value.activityDetails.has(id);
 });
-const embeddedSelection = computed(() => {
-  const session = remoteSession.value,
-    node = selectedNode.value,
-    entity = selectedEntity.value;
-  return session && node && entity?.externalRef && hasBusinessDetails.value
-    ? selectionFor(
-        session.api.config,
-        node.id,
-        entity.externalRef.id,
-        activityType(node, entity),
-        new URLSearchParams(window.location.search).get('senceId') ??
-          new URLSearchParams(window.location.search).get('sceneId') ??
-          '',
-      )
-    : undefined;
+const businessOptions = shallowRef<ActivityOptions>();
+const loadingBusinessOptions = ref(false);
+const businessDetail = computed(() => {
+  void doc.value.revision;
+  const id = selectedEntity.value?.externalRef?.id;
+  return id ? remoteSession.value?.activityDetails.get(id) : undefined;
 });
-const portraitOrigin = ref(import.meta.env.VITE_COOPWIRE_FRONTEND_ORIGIN || '');
-const externalChanges = new Set<string>();
-let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-function refreshFromPortrait(actId: string) {
-  externalChanges.add(actId);
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(() => void flushPortraitChanges(), 100);
-}
-async function flushPortraitChanges() {
+async function loadBusinessOptions() {
   const session = remoteSession.value;
-  if (!session || !externalChanges.size) return;
-  if (editor.value.busy) {
-    refreshTimer = setTimeout(() => void flushPortraitChanges(), 100);
-    return;
-  }
-  const ids = [...externalChanges];
-  externalChanges.clear();
+  if (!session || loadingBusinessOptions.value) return;
+  loadingBusinessOptions.value = true;
   try {
-    await editor.value.synchronizeExternal((before) => session.refreshActivities(before, ids));
-  } catch (error) {
-    showError(error);
+    const options = await session.api.activityOptions();
+    if (session === remoteSession.value) businessOptions.value = options;
+  } catch (e) {
+    showError(e);
+  } finally {
+    loadingBusinessOptions.value = false;
   }
+}
+watch([panelTab, remoteSession], () => {
+  if (panelTab.value === 'details' && !businessOptions.value) void loadBusinessOptions();
+});
+async function saveBusinessResource(mutation: BusinessMutation) {
+  const session = remoteSession.value,
+    actId = selectedEntity.value?.externalRef?.id;
+  if (!session || !actId) throw new Error('请先连接远程业务活动');
+  await editor.value.synchronizeExternal((before) => session.editBusiness(before, actId, mutation));
 }
 watch(panelTab, async () => {
   await nextTick();
@@ -484,8 +476,8 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   connectSource = undefined;
   editor.value = new Editor(document, registry);
   remoteSession.value = session;
-  externalChanges.clear();
-  clearTimeout(refreshTimer);
+  businessOptions.value = undefined;
+
   if (session) editor.value.attachTransport(session);
   panelTab.value = 'properties';
   bindEditor(viewport);
@@ -1017,7 +1009,6 @@ onMounted(async () => {
   canvas?.fit();
 });
 onBeforeUnmount(() => {
-  clearTimeout(refreshTimer);
   stopAutosave?.();
   unsubscribe?.();
   canvas?.destroy();
@@ -1305,16 +1296,19 @@ onBeforeUnmount(() => {
           role="tabpanel"
           aria-label="业务详情"
         >
-          <EmbeddedBusinessDetails
-            v-if="embeddedSelection"
-            :key="remoteSession!.api.config.projectId + ':' + remoteSession!.api.config.flowchartId"
-            :selection="embeddedSelection"
-            :origin="portraitOrigin"
+          <ActivityDetails
+            :key="selectedNode.id"
+            :entity="selectedEntity"
+            :node="selectedNode"
             :busy="editor.busy"
-            :revision="doc.revision"
-            @changed="refreshFromPortrait"
-            @close="panelTab = 'properties'"
-            @error="showError"
+            :remote="!!remoteSession"
+            :options="businessOptions"
+            :loading-options="loadingBusinessOptions"
+            :related="businessDetail"
+            :save-resource="saveBusinessResource"
+            :api="remoteSession!.api"
+            @patch="patchEntity"
+            @load-options="loadBusinessOptions"
           />
         </div>
         <div
@@ -1718,25 +1712,12 @@ onBeforeUnmount(() => {
       <span>{{ error }}</span
       ><button aria-label="关闭错误" @click="error = ''"><X :size="15" /></button>
     </div>
-    <div
+    <LinkedActivityChooser
       v-if="linkedChooserOpen && remoteSession"
-      class="modal-backdrop"
-      @click.self="linkedChooserOpen = false"
-    >
-      <EmbeddedLinkedChooser
-        :config="remoteSession.api.config"
-        :origin="portraitOrigin"
-        @chosen="onLinkedChosen"
-        @close="linkedChooserOpen = false"
-      />
-      <button
-        class="modal-close"
-        aria-label="关闭引用活动选择器"
-        @click="linkedChooserOpen = false"
-      >
-        <X :size="16" />
-      </button>
-    </div>
+      :api="remoteSession.api"
+      @chosen="onLinkedChosen"
+      @close="linkedChooserOpen = false"
+    />
     <div v-if="showData" class="modal-backdrop" @click.self="showData = false">
       <section class="data-modal">
         <header>
@@ -1854,12 +1835,6 @@ onBeforeUnmount(() => {
           </button>
         </header>
         <p>连接时只读取远端流程；后续编辑会提交到该流程。本机画布另行保留。</p>
-        <label
-          >业务详情前端地址<input
-            v-model="portraitOrigin"
-            aria-label="业务详情前端地址"
-            placeholder="留空使用本页域名"
-        /></label>
         <template v-if="!remoteSession"
           ><label
             >接口地址<input

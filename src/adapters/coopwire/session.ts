@@ -16,7 +16,13 @@ import {
   readFlow,
   writeFlow,
 } from './codec';
-import { CoopwireApi, CoopwireError, type ActivityDetail, type Organization } from './api';
+import {
+  CoopwireApi,
+  CoopwireError,
+  type ActivityDetail,
+  type Organization,
+  type BusinessMutation,
+} from './api';
 
 export interface JournalStore {
   getItem(key: string): string | null;
@@ -41,6 +47,12 @@ const emptyDetails: Required<ActivityDetails> = {
   showInFlow: false,
   markDiffWithCurrent: '',
   actSystemUsed: '',
+  inputSystemOrDeviceId: '',
+  outputSystemOrDeviceId: '',
+  inputSystemOrDeviceType: '',
+  outputSystemOrDeviceType: '',
+  providerApi: false,
+  interfaceDesigns: [],
   terminals: [],
   actDevicesUsed: [],
   operateTypes: [],
@@ -64,6 +76,8 @@ const emptyDetails: Required<ActivityDetails> = {
 export class CoopwireSession implements EditorTransport {
   readonly journalKey: string;
   private pending?: Journal;
+  private resourcePending = false;
+  private synchronizingResource = false;
   private version = 0;
   private status: RemoteStatus = { state: 'ready', message: '未连接' };
   private listener: (status: RemoteStatus) => void = () => {};
@@ -82,6 +96,7 @@ export class CoopwireSession implements EditorTransport {
     private storage: JournalStore = localStorage,
   ) {
     this.journalKey = `diagramly.coopwire.journal:${encodeURIComponent(JSON.stringify(api.config))}`;
+    this.resourcePending = !!storage.getItem(`${this.journalKey}:business`);
     const stored = storage.getItem(this.journalKey);
     if (stored) {
       this.pending = JSON.parse(stored) as Journal;
@@ -90,6 +105,11 @@ export class CoopwireSession implements EditorTransport {
         message: '存在上次未完成事务，请先重新读取远端核对；待处理文档已保留',
       };
     }
+    if (this.resourcePending)
+      this.status = {
+        state: 'uncertain',
+        message: '业务记录保存结果待核对，请先读取远端，避免重复新增',
+      };
   }
   onStatus(listener: (status: RemoteStatus) => void) {
     this.listener = listener;
@@ -122,7 +142,8 @@ export class CoopwireSession implements EditorTransport {
         this.knownEntities.set(entity.id, structuredClone(entity.externalRef));
       }
     }
-    if (!this.pending) this.report('ready', `已连接 Coopwire · v${this.version}`);
+    if (!this.pending && !this.resourcePending)
+      this.report('ready', `已连接 Coopwire · v${this.version}`);
     return validateDocument(document, this.registry);
   }
   /** 用户主动恢复时，先备份事务日志，再接受当前远程状态。 */
@@ -133,8 +154,51 @@ export class CoopwireSession implements EditorTransport {
       this.storage.removeItem(this.journalKey);
       this.pending = undefined;
     }
+    this.storage.removeItem(`${this.journalKey}:business`);
+    this.resourcePending = false;
     this.report('ready', `已重新加载远端 · v${this.version}`);
     return document;
+  }
+  async editBusiness(before: DiagramDocument, actId: string, mutation: BusinessMutation) {
+    if (this.pending || this.resourcePending) throw new Error('存在未确认的保存，请先读取远端核对');
+    if (
+      !Object.values(before.nodes).some(
+        (node) => isBusinessNode(node) && before.entities[node.entityId].externalRef?.id === actId,
+      )
+    )
+      throw new Error('业务活动不属于当前画布');
+    const latest = await this.api.activity(actId);
+    this.storage.setItem(
+      `${this.journalKey}:business`,
+      JSON.stringify({ actId, kind: mutation.kind, action: mutation.action }),
+    );
+    this.resourcePending = true;
+    this.report('saving', '正在保存业务记录…');
+    let saved = false;
+    try {
+      await this.api.mutateBusiness(actId, latest.activity.version, mutation);
+      saved = true;
+      this.synchronizingResource = true;
+      const document = await this.refreshActivities(before, [actId]);
+      this.storage.removeItem(`${this.journalKey}:business`);
+      this.resourcePending = false;
+      return document;
+    } catch (e) {
+      if (
+        !saved &&
+        e instanceof CoopwireError &&
+        ['auth', 'conflict', 'rejected'].includes(e.kind)
+      ) {
+        this.storage.removeItem(`${this.journalKey}:business`);
+        this.resourcePending = false;
+        this.report('ready', e.message);
+      } else {
+        this.report('uncertain', '业务记录或流程保存结果待核对，请读取远端；不会重复新增');
+      }
+      throw e;
+    } finally {
+      this.synchronizingResource = false;
+    }
   }
   /** 表单负责业务写入，这里只读取最新实体并保存派生的流程 XML／PNG。 */
   async refreshActivities(before: DiagramDocument, actIds: string[]) {
@@ -156,6 +220,7 @@ export class CoopwireSession implements EditorTransport {
         detail = await this.api.activity(id);
       if (detail.activity.id !== id) throw new Error('业务详情返回了不匹配的活动 ID');
       hydrateEntity(baseline, node, detail);
+      this.activityDetails.set(id, detail);
       node.type =
         detail.activity.actType === 'decide'
           ? 'decision'
@@ -183,7 +248,7 @@ export class CoopwireSession implements EditorTransport {
         commandId: newId('external'),
         expectedRevision: before.revision,
         origin: 'system',
-        label: '同步嵌入业务面板',
+        label: '同步业务详情',
         operations: [{ type: 'document.rename', title: document.title }],
       },
     });
@@ -219,6 +284,8 @@ export class CoopwireSession implements EditorTransport {
     return doc.entities[doc.nodes[node.parentId ?? node.id]?.entityId]?.roleIds ?? [];
   }
   async commit(request: RemoteCommit): Promise<DiagramDocument> {
+    if (this.resourcePending && !this.synchronizingResource)
+      throw new Error('业务保存结果待核对，请先读取远端');
     const fingerprint = JSON.stringify(request);
     if (this.pending) {
       if (

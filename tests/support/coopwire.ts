@@ -121,6 +121,10 @@ export class FakeCoopwire {
     if (action === 'selectApp') result = [{ id: 'app_erp', name: '订单应用' }];
     else if (action === 'queryDevice')
       result = { data: [{ id: 'device_scanner', name: '扫码枪' }] };
+    else if (action === 'list' && new URL(request.url).pathname.includes('/interfaceDesign/'))
+      result = { data: [{ id: 'interface_order', name: '订单同步接口' }] };
+    else if (action === 'getByFlow')
+      result = [{ id: 'activity_other', actName: '交付活动', actType: 'manualOnline' }];
     else if (action === 'qryFlowDiagram')
       result = { data: [{ id: 'flow_delivery', name: '交付流程' }] };
     else if (decodeURIComponent(action) === 'investigate|core|prHardwaresInvolved')
@@ -135,6 +139,31 @@ export class FakeCoopwire {
     else if (action === 'queryActDetail') {
       if (!detail) return Response.json({ code: 404, msg: '活动不存在' });
       result = structuredClone(detail);
+    } else if (['addException', 'editException', 'delException'].includes(action)) {
+      const owner =
+        action === 'addException'
+          ? this.activities.get(String(data.belongId))
+          : [...this.activities.values()].find((row) =>
+              (row.exceptions as Record<string, unknown>[] | undefined)?.some(
+                (item) => item.id === query.get('exceptionId'),
+              ),
+            );
+      if (!owner) return Response.json({ code: 404, msg: '异常所属活动不存在' });
+      const records = (owner.exceptions ??= []) as Record<string, unknown>[];
+      const index = records.findIndex((row) => row.id === query.get('exceptionId'));
+      if (action === 'addException')
+        records.push({ ...data, id: `exception_${++this.sequence}`, version: 1 });
+      else if (index < 0 || records[index].version !== Number(query.get('version')))
+        return Response.json({ code: 999, msg: '异常版本冲突' }, { status: 409 });
+      else if (action === 'delException') records.splice(index, 1);
+      else
+        records[index] = {
+          ...records[index],
+          ...data,
+          version: Number(records[index].version) + 1,
+        };
+      owner.activity.version++;
+      result = true;
     } else if (action === 'addActs') {
       for (const item of body as Record<string, unknown>[]) {
         const newId = String(item.id);

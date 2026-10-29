@@ -71,6 +71,11 @@ export interface BusinessOption {
   value: string;
   label: string;
 }
+export interface BusinessMutation {
+  kind: 'io' | 'exception';
+  action: 'save' | 'delete';
+  data: Record<string, unknown>;
+}
 export interface ActivityOptions {
   applications: BusinessOption[];
   devices: BusinessOption[];
@@ -277,6 +282,8 @@ export class CoopwireApi {
     if (Array.isArray(data.actDevicesUsed) && !data.actDevicesUsed.length)
       clear.clearDeviceUsed = true;
     if (data.linkFlow === '') clear.clearLinkFlow = true;
+    if (data.inputSystemOrDeviceId === '') clear.clearInputSystemOrDeviceId = true;
+    if (data.outputSystemOrDeviceId === '') clear.clearOutputSystemOrDeviceId = true;
     const result = await this.request(`${this.scope('portrait')}/updateAct`, {
       params: { actId: id, version, updateDrawio: true, ignoreNameCheck: true, ...clear },
       body: data,
@@ -351,6 +358,33 @@ export class CoopwireApi {
         .map((value) => ({ value, label: value })),
     };
   }
+  async interfaceOptions(): Promise<BusinessOption[]> {
+    const result = await this.request(
+      `/rest/quality/${this.config.projectId}/interfaceDesign/list`,
+      {
+        body: { additionalFilters: {}, pageNum: 1, limit: 100000 },
+      },
+    );
+    return z
+      .object({ data: z.array(z.object({ id: z.string(), name: z.string() }).passthrough()) })
+      .parse(result)
+      .data.map((item) => ({ value: item.id, label: item.name }));
+  }
+  async flowActivities(flowId: string): Promise<BusinessOption[]> {
+    const result = await this.request(
+      `/rest/quality/investigate/act/p/${this.config.projectId}/getByFlow`,
+      { params: { flowId } },
+    );
+    return z
+      .array(z.object({ id: z.string(), actName: z.string(), actType: z.string() }))
+      .parse(result)
+      .filter((item) =>
+        ['manualOnline', 'manualOffline', 'systemOperate', 'interfaceDocking'].includes(
+          item.actType,
+        ),
+      )
+      .map((item) => ({ value: item.id, label: item.actName }));
+  }
   async saveIo(id: string, version: number, data: Record<string, unknown>) {
     const body = new FormData();
     body.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
@@ -364,6 +398,37 @@ export class CoopwireApi {
       body: null,
       params: { actId: id, version, ioputId: ioId, updateDrawio: false },
     });
+  }
+  async mutateBusiness(actId: string, version: number, mutation: BusinessMutation) {
+    const { kind, action, data } = mutation;
+    if (kind === 'io') {
+      if (action === 'save') await this.saveIo(actId, version, data);
+      else await this.deleteIo(actId, version, String(data.id));
+      return;
+    }
+    const existing = typeof data.id === 'string' && !!data.id;
+    const params = existing
+      ? { exceptionId: String(data.id), version: Number(data.version) }
+      : undefined;
+    await this.request(
+      `${this.scope('portrait')}/${action === 'delete' ? 'delException' : existing ? 'editException' : 'addException'}`,
+      {
+        body:
+          action === 'delete'
+            ? null
+            : {
+                actLinked: data.actLinked ?? '',
+                exceptionDesc: data.exceptionDesc,
+                exceptionRate: data.exceptionRate ?? 0,
+                resolveMethod: data.resolveMethod,
+                systemOrDeviceId: data.systemOrDeviceId ?? '',
+                isSystemOrDeviceException: data.isSystemOrDeviceException ?? false,
+                belongType: 'activity',
+                belongId: actId,
+              },
+        params,
+      },
+    );
   }
   async saveFlow(version: number, drawioXml: string, data: unknown, png: Blob) {
     const body = new FormData();

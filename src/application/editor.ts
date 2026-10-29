@@ -338,7 +338,7 @@ export class Editor {
       this.receipts.clear();
       this.retryAction = undefined;
       this.activity.unshift({
-        label: '同步嵌入业务面板',
+        label: '同步业务详情',
         origin: 'system',
         revision: document.revision,
       });

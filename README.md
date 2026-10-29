@@ -81,7 +81,7 @@ maxGraph 的升级仅涉及依赖和适配器；升级仍需运行契约与浏�
 
 构建当前会提示 maxGraph 内部保留的 eval 函数和单个 JS 包超过 500kB；未屏蔽这些提示。适配器显式关闭 allowEval，生产 JS 约 800kB / gzip 222kB，后续可按加载场景拆包。
 
-有真实业务 ID 的远程活动在右侧「业务详情」标签页嵌入原版 Coopwire `UserPortrait`；判断、子流程与引用活动按原组件逻辑显示不同内容。四类活动在图形库有独立创建入口。无业务 ID 的本机示例不显示详情标签。参见 [业务图形详情](docs/activity-details.md)。
+有真实业务 ID 的远程活动在右侧「业务详情」标签页使用 Diagramly 自有表单；判断、子流程、接口与引用活动按业务类型显示不同字段，不依赖宿主弹窗。四类活动在图形库有独立创建入口。无业务 ID 的本机示例不显示详情标签。参见 [业务图形详情](docs/activity-details.md)。
 
 代码统一使用 Prettier 格式化：`npm run format`；提交前检查 `npm run format:check`。每项功能验证完成后分别提交，提交信息遵循 Conventional Commits，使用 `type(scope): 中文说明`，例如 `feat(core): 新增泳池布局命令`。类型与作用域使用英文，代码注释使用中文。
 

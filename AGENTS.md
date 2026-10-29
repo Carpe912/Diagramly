@@ -7,4 +7,4 @@
 - 生成或修改代码后执行 `npm run format`，提交前检查 `npm run format:check`。
 - 不提交凭证、本机会话文件和 `.env.local`。真实后端联调默认只读；写入具体业务对象需要用户明确授权。
 - 交付时说明验证结果和本次提交。
-- 业务迁移仅覆盖旧项目 `isFlowchartParams()`（`flowchart=1`）环境，不迁移草图模式及锁相关功能；业务详情必须嵌入 Coopwire 原有 `UserPortrait`／引用活动组件，不能另写简化表单替代。
+- 业务迁移仅覆盖旧项目 `isFlowchartParams()`（`flowchart=1`）环境，不迁移草图模式及锁相关功能；根据用户后续要求，业务详情和引用活动选择器在 Diagramly 内自行实现，沿用原有业务接口，不依赖宿主弹窗或 iframe。

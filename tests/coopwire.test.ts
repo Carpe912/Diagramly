@@ -661,6 +661,53 @@ describe('活动画像详情', () => {
       ),
     ).toThrow();
   });
+  it('独立业务记录保存后更新详情缓存，避免后续版本过期', async () => {
+    const { editor, backend, session, journal } = await setup();
+    await editor.synchronizeExternal((before) =>
+      session.editBusiness(before, 'remote_receive', {
+        kind: 'io',
+        action: 'save',
+        data: { type: 'input', name: '附加订单', desc: '新增订单', attachmentIds: [] },
+      }),
+    );
+    expect(session.activityDetails.get('remote_receive')!.activity.ioputs).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: '附加订单' })]),
+    );
+    expect(editor.snapshot.entities.entity_receive.inputs).toContain('新增订单');
+    expect(editor.canUndo).toBe(false);
+    expect(journal.getItem(`${session.journalKey}:business`)).toBeNull();
+    expect(backend.calls.filter((c) => c.action === 'saveIoput')).toHaveLength(1);
+  });
+  it('业务保存响应丢失后禁止重复新增，重启也必须先核对远端', async () => {
+    const { editor, backend, session, journal } = await setup();
+    backend.fail = { action: 'saveIoput', kind: 'lost', after: true };
+    const mutation = {
+      kind: 'io' as const,
+      action: 'save' as const,
+      data: { type: 'input', name: '只新增一次', desc: '待核对' },
+    };
+    await expect(
+      editor.synchronizeExternal((before) =>
+        session.editBusiness(before, 'remote_receive', mutation),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      editor.synchronizeExternal((before) =>
+        session.editBusiness(before, 'remote_receive', mutation),
+      ),
+    ).rejects.toThrow('核对');
+    expect(backend.calls.filter((c) => c.action === 'saveIoput')).toHaveLength(1);
+    const restored = new CoopwireSession(session.api, registry, png, journal);
+    const loaded = await restored.open();
+    await expect(restored.editBusiness(loaded, 'remote_receive', mutation)).rejects.toThrow('核对');
+    await restored.reloadAndReconcile();
+    expect(journal.getItem(`${session.journalKey}:business`)).toBeNull();
+    expect(
+      backend.activities
+        .get('remote_receive')!
+        .activity.ioputs!.filter((row) => row.name === '只新增一次'),
+    ).toHaveLength(1);
+  });
   it('加载真实业务选项协议并发送清空关联参数', async () => {
     const backend = new FakeCoopwire(),
       api = new CoopwireApi(testConfig, backend.fetch.bind(backend) as typeof fetch);
