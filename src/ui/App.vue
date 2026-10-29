@@ -1776,7 +1776,13 @@ onBeforeUnmount(() => {
       <section class="confirm-modal">
         <FolderOpen :size="26" />
         <h2>{{ showReset === 'sample' ? '打开订单履约示例' : '新建空白画布' }}</h2>
-        <p>这会替换当前本机画布。你可以先导出当前文档，保留一份备份。</p>
+        <p>
+          {{
+            remoteSession
+              ? '这会断开远程连接并新建本机空白画布，远程流程保持不变。你可以先导出当前文档，保留一份备份。'
+              : '这会清空并替换当前本机画布。你可以先导出当前文档，保留一份备份。'
+          }}
+        </p>
         <div>
           <button
             class="button secondary"
@@ -1788,6 +1794,7 @@ onBeforeUnmount(() => {
             导出当前文档</button
           ><button
             class="button primary"
+            :disabled="editor.busy"
             @click="
               replaceDocument(showReset === 'sample' ? demoDocument() : emptyDocument());
               showReset = null;

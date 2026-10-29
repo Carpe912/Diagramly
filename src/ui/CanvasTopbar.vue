@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
       <CanvasSettingsPanel :value="settings" :busy="busy" @change="emit('settings', $event)" />
       <button
         class="quiet-button"
-        :disabled="remote || busy"
+        :disabled="busy"
         @click="
           emit('reset', 'empty');
           menuOpen = false;

@@ -35,6 +35,21 @@ async function connect(page: Page, backend: FakeCoopwire, zoomBeforeConnect = fa
   await page.getByRole('button', { name: '连接并读取流程' }).click();
   await expect(page.getByRole('button', { name: 'Coopwire 已连接', exact: true })).toBeVisible();
 }
+test('远程连接时可以新建空白本机画布，不写入远程流程', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  const writes = backend.writeCount;
+  await page.getByRole('button', { name: '新建画布', exact: true }).click();
+  await expect(page.locator('.confirm-modal')).toContainText('远程流程保持不变');
+  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await expect(page.getByRole('button', { name: '连接 Coopwire', exact: true })).toBeVisible();
+  await expect(page.getByTestId('graph')).not.toContainText('接收客户订单');
+  await page.getByTestId('shape-activity').click();
+  await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue(
+    '人工线上',
+  );
+  expect(backend.writeCount).toBe(writes);
+});
 test('连接面板支持填写 /rest，发出的路径没有重复前缀', async ({ page }) => {
   const paths: string[] = [];
   page.on('request', (request) => paths.push(new URL(request.url()).pathname));
