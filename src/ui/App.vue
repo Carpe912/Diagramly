@@ -411,6 +411,7 @@ function onSelection(ids: string[]) {
             label: '',
             source: { nodeId: connectSource, portId: a.id },
             target: { nodeId: node.id, portId: b.id },
+            appearance: { endArrow: 'classic', routing: 'straight', corner: 'sharp' },
           },
         },
       ]);

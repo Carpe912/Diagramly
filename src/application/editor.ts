@@ -552,7 +552,12 @@ export class Editor {
       type,
       shapeVersion: shape.version,
       bounds: { x, y, width: shape.defaultSize[0], height: shape.defaultSize[1] },
-      appearance: { accent: '#5d72bd' },
+      appearance:
+        type === 'start'
+          ? { accent: '#2e75e6', fill: '#2e75e6', fontColor: '#ffffff', strokeEnabled: false }
+          : type === 'end'
+            ? { accent: '#5d6d86', fill: '#5d6d86', fontColor: '#ffffff', strokeEnabled: false }
+            : { accent: '#5d72bd' },
       ...(parentId ? { parentId } : {}),
     };
     return { type: 'node.create', node, entity: newEntity(entityId, shape.label) };
