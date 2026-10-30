@@ -186,8 +186,8 @@ test('double-click edits a composite title through its owner entity', async ({ p
 test('creates a blank document and adds a complete composite from the palette', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '新建画布', exact: true }).click();
-  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByRole('button', { name: '本机草稿', exact: true }).click();
   await page.getByTestId('shape-activity').click();
   await expect(page.getByRole('textbox', { name: '节点名称', exact: true })).toHaveValue(
     '人工线上',

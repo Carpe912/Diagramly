@@ -145,7 +145,7 @@ onBeforeUnmount(() => {
           menuOpen = false;
         "
       >
-        <Plus :size="14" />新建画布
+        <Plus :size="14" />新建文档
       </button>
       <button
         class="quiet-button"

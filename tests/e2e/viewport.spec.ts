@@ -99,8 +99,8 @@ test('新建、打开示例和导入文档保留缩放比例', async ({ page }) 
   await page.mouse.wheel(0, -3000);
   const zoom = page.locator('.zoom-control > span');
   await expect(zoom).toHaveText('400%');
-  await page.getByRole('button', { name: '新建画布', exact: true }).click();
-  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByRole('button', { name: '本机草稿', exact: true }).click();
   await expect(page.locator('[data-element-id="pool_order"]')).toHaveCount(0);
   await expect(zoom).toHaveText('400%');
   await page.getByRole('button', { name: '打开示例', exact: true }).click();

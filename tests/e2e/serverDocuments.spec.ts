@@ -25,12 +25,12 @@ test('独立文档库登录新建后自动保存JSON，不调用Coopwire', async
   );
   await page.goto('/');
   await expect(page.getByTestId('graph')).toBeVisible();
-  await page.getByRole('button', { name: '文档库', exact: true }).click();
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByRole('button', { name: '云端文档', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '文档库' });
   await dialog.getByLabel('用户名').fill('demo');
   await dialog.getByLabel('密码').fill('password');
-  await dialog.getByRole('button', { name: '登录独立服务' }).click();
-  await dialog.getByRole('button', { name: '新建服务端文档' }).click();
+  await dialog.getByRole('button', { name: '登录', exact: true }).click();
   await expect(dialog).toHaveCount(0);
   await page.getByRole('textbox', { name: '画布名称' }).fill('独立服务文档');
   await page.getByRole('textbox', { name: '画布名称' }).blur();
@@ -66,7 +66,7 @@ test('文档历史可比较并显式恢复为新版本', async ({ page }) => {
   await page.getByRole('button', { name: '文档库', exact: true }).click();
   await page.getByLabel('用户名').fill('demo');
   await page.getByLabel('密码').fill('password');
-  await page.getByRole('button', { name: '登录独立服务' }).click();
+  await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('button', { name: '版本', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '版本历史' });
   await dialog.getByRole('button', { name: /v1 · 历史内容/ }).click();

@@ -13,6 +13,7 @@ import {
   identifyServerSession,
 } from '../adapters/server/client';
 import { emptyDocument, newId, type DiagramDocument } from '../domain/model';
+const props = defineProps<{ createOnLogin?: boolean }>();
 const emit = defineEmits<{ close: []; open: [document: DiagramDocument, revision: number] }>();
 const username = ref(''),
   password = ref(''),
@@ -32,7 +33,8 @@ const filtered = computed(() =>
 onMounted(() => {
   if (authenticated.value)
     void perform(async () => {
-      rows.value = await listDocuments();
+      if (props.createOnLogin) await create();
+      else rows.value = await listDocuments();
     });
 });
 async function refresh() {
@@ -84,13 +86,14 @@ async function signIn() {
     login(username.value, password.value);
     try {
       await identifyServerSession();
-      rows.value = await listDocuments();
+      if (!props.createOnLogin) rows.value = await listDocuments();
     } catch (e) {
       clearServerSession();
       throw e;
     }
     password.value = '';
     authenticated.value = true;
+    if (props.createOnLogin) await create();
   });
 }
 async function open(id: string) {
@@ -117,14 +120,12 @@ async function recoverCopy() {
   });
 }
 async function create() {
-  await perform(async () => {
-    const document = emptyDocument();
-    const result = await request(`/documents/${document.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ document, expectedRevision: 0 }),
-    });
-    emit('open', document, result.revision);
+  const document = emptyDocument();
+  const result = await request(`/documents/${document.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ document, expectedRevision: 0 }),
   });
+  emit('open', document, result.revision);
 }
 </script>
 <template>
@@ -137,7 +138,7 @@ async function create() {
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
       <footer>
         <button class="button primary" :disabled="busy">
-          {{ busy ? '正在登录…' : '登录独立服务' }}
+          {{ busy ? '正在登录…' : '登录' }}
         </button>
       </footer>
     </form>
@@ -243,11 +244,9 @@ async function create() {
           确认删除
         </button>
       </section>
-      <p v-if="!rows.length" class="field-help">暂无文档，可以新建空白画布。</p>
+      <p v-if="!rows.length" class="field-help">暂无云端文档。</p>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
-      <footer>
-        <button v-if="!trash" class="button primary" :disabled="busy">新建服务端文档</button>
-      </footer>
+      <footer></footer>
     </form>
   </BusinessDialog>
   <DocumentHistory

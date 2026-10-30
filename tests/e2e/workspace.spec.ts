@@ -62,7 +62,7 @@ async function setup(page: any) {
   await page.getByRole('button', { name: '文档库', exact: true }).click();
   await page.getByLabel('用户名').fill('admin');
   await page.getByLabel('密码').fill('test-password-123');
-  await page.getByRole('button', { name: '登录独立服务' }).click();
+  await page.getByRole('button', { name: '登录', exact: true }).click();
   return { document, records, comments };
 }
 test('独立管理可以维护数据表字段，并在对象中选择关联表', async ({ page }) => {

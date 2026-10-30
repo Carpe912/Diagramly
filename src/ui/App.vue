@@ -102,6 +102,7 @@ import type { Command, Operation } from '../application/commands';
 const registry = createShapeRegistry();
 const ready = ref(false);
 const showServerDocuments = ref(false),
+  createCloudOnLogin = ref(false),
   showWorkspaceManager = ref(false);
 const businessApi = new StandaloneBusinessApi(() => editor.value.snapshot.id);
 const businessRoles = ref<{ orgId: string; orgName: string }[]>([]);
@@ -1014,7 +1015,11 @@ onBeforeUnmount(() => {
   />
   <ServerDocuments
     v-if="showServerDocuments"
-    @close="showServerDocuments = false"
+    :create-on-login="createCloudOnLogin"
+    @close="
+      showServerDocuments = false;
+      createCloudOnLogin = false;
+    "
     @open="openServerDocument"
   />
   <div
@@ -1794,7 +1799,7 @@ onBeforeUnmount(() => {
     <div v-if="showReset" class="modal-backdrop" @click.self="showReset = null">
       <section class="confirm-modal">
         <FolderOpen :size="26" />
-        <h2>{{ showReset === 'sample' ? '打开订单履约示例' : '新建空白画布' }}</h2>
+        <h2>{{ showReset === 'sample' ? '打开订单履约示例' : '新建文档' }}</h2>
         <p>
           {{ '这会切换到新画布。当前内容已自动保存，你也可以先导出备份。' }}
         </p>
@@ -1815,7 +1820,18 @@ onBeforeUnmount(() => {
               showReset = null;
             "
           >
-            {{ showReset === 'sample' ? '打开示例' : '新建画布' }}
+            {{ showReset === 'sample' ? '打开示例' : '本机草稿' }}
+          </button>
+          <button
+            v-if="showReset === 'empty'"
+            class="button secondary"
+            @click="
+              showReset = null;
+              createCloudOnLogin = true;
+              showServerDocuments = true;
+            "
+          >
+            云端文档
           </button>
         </div>
         <button class="modal-close" aria-label="取消替换画布" @click="showReset = null">

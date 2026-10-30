@@ -190,8 +190,8 @@ test('强制泳道归属的文档拖出泳池时明确提示并恢复原位', as
 test('creates horizontal and vertical pools from the palette, each owning its own lanes', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '新建画布', exact: true }).click();
-  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByRole('button', { name: '本机草稿', exact: true }).click();
   await page.getByTestId('shape-pool-horizontal').click();
   await expect(page.getByRole('toolbar', { name: '泳池工具栏' })).toBeVisible();
   await page.getByTestId('shape-pool-vertical').click();
@@ -311,8 +311,8 @@ test('moves an existing lane to another pool and displays its title at the top',
 test('drops a business activity into the content area of a nested vertical lane', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '新建画布', exact: true }).click();
-  await page.getByRole('button', { name: '新建画布', exact: true }).last().click();
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByRole('button', { name: '本机草稿', exact: true }).click();
   await page.getByTestId('shape-pool-vertical').click();
   const before = await readDocument(page),
     lane = Object.values(before.nodes).find((n) => n.type === 'swimlane' && n.laneOrder === 0)!;
