@@ -292,6 +292,14 @@ export class Editor {
   get remote() {
     return !!this.transport;
   }
+  private readOnly = false;
+  get isReadOnly() {
+    return this.readOnly;
+  }
+  setReadOnly(value: boolean) {
+    this.readOnly = value;
+    this.notify();
+  }
   attachTransport(transport?: EditorTransport) {
     if (this.working) throw new Error('远程操作进行中');
     this.transport = transport;
@@ -362,6 +370,7 @@ export class Editor {
     return { document, changes: diff(this.document, document) };
   }
   execute(input: unknown): Receipt {
+    if (this.readOnly) throw new Error('当前文档为只读');
     if (this.transport) throw new Error('远程模式请使用 submit，不能绕过业务接口');
     const command = commandSchema.parse(input),
       fingerprint = JSON.stringify(command);
@@ -390,6 +399,7 @@ export class Editor {
     return receipt;
   }
   submit(input: unknown): Receipt | Promise<Receipt> {
+    if (this.readOnly) throw new Error('当前文档为只读');
     if (!this.transport) return this.execute(input);
     const command = commandSchema.parse(input),
       fingerprint = JSON.stringify(command);

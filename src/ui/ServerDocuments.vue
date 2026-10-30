@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import BusinessDialog from './BusinessDialog.vue';
+import DocumentHistory from './DocumentHistory.vue';
+import { readDraft } from '../adapters/storage/database';
 import {
   login,
   request,
   listDocuments,
   getDocument,
   hasServerSession,
+  clearServerSession,
+  identifyServerSession,
 } from '../adapters/server/client';
 import { emptyDocument, newId, type DiagramDocument } from '../domain/model';
 const emit = defineEmits<{ close: []; open: [document: DiagramDocument, revision: number] }>();
@@ -15,6 +19,8 @@ const username = ref(''),
   authenticated = ref(hasServerSession()),
   busy = ref(false),
   error = ref('');
+const historyId = ref<string>();
+const recovery = ref<{ local: DiagramDocument; remote: DiagramDocument; revision: number }>();
 const search = ref(''),
   trash = ref(false);
 const deleting = ref<{ id: string; title: string; revision: number }>();
@@ -76,7 +82,13 @@ async function perform(action: () => Promise<void>) {
 async function signIn() {
   await perform(async () => {
     login(username.value, password.value);
-    rows.value = await listDocuments();
+    try {
+      await identifyServerSession();
+      rows.value = await listDocuments();
+    } catch (e) {
+      clearServerSession();
+      throw e;
+    }
     password.value = '';
     authenticated.value = true;
   });
@@ -84,7 +96,24 @@ async function signIn() {
 async function open(id: string) {
   await perform(async () => {
     const value = await getDocument(id);
-    emit('open', value.document, value.revision);
+    const cached = await readDraft(`diagramly.server.draft:${id}`);
+    if (cached && JSON.stringify(cached) !== JSON.stringify(value.document))
+      recovery.value = { local: cached, remote: value.document, revision: value.revision };
+    else emit('open', value.document, value.revision);
+  });
+}
+async function recoverCopy() {
+  if (!recovery.value) return;
+  await perform(async () => {
+    const document = structuredClone(recovery.value!.local);
+    document.id = newId('doc');
+    document.title += '（恢复草稿）';
+    document.revision = 0;
+    const result = await request(`/documents/${document.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ document, expectedRevision: 0 }),
+    });
+    emit('open', document, result.revision);
   });
 }
 async function create() {
@@ -112,11 +141,44 @@ async function create() {
         </button>
       </footer>
     </form>
+    <form v-else-if="recovery" @submit.prevent="recoverCopy">
+      <p class="field-help">发现与服务端不同的本机草稿。可以保留为新文档，避免覆盖服务端修改。</p>
+      <p>
+        本机：{{ recovery.local.title }}；服务端：{{ recovery.remote.title }}（v{{
+          recovery.revision
+        }}）
+      </p>
+      <p v-if="error" role="alert" class="form-error">{{ error }}</p>
+      <footer>
+        <button
+          type="button"
+          class="button secondary"
+          :disabled="busy"
+          @click="emit('open', recovery.remote, recovery.revision)"
+        >
+          使用服务端版本</button
+        ><button class="button primary" :disabled="busy">草稿另存为副本</button>
+      </footer>
+    </form>
     <form v-else @submit.prevent="create">
       <p class="field-help">
         打开后的文档自动保存到服务端，本机保留草稿副本。未保存的本机草稿不会自动上传。
       </p>
       <div class="library-actions">
+        <button
+          type="button"
+          class="button secondary"
+          :disabled="busy"
+          @click="
+            clearServerSession();
+            authenticated = false;
+            rows = [];
+            recovery = undefined;
+            historyId = undefined;
+          "
+        >
+          退出登录
+        </button>
         <button
           type="button"
           class="button secondary"
@@ -143,8 +205,11 @@ async function create() {
           {{ row.title }} · v{{ row.revision }}
         </button>
         <div class="library-actions">
-          <template v-if="!trash"
-            ><button type="button" class="quiet-button" :disabled="busy" @click="copy(row.id)">
+          <template v-if="!trash">
+            <button type="button" class="quiet-button" :disabled="busy" @click="historyId = row.id">
+              版本
+            </button>
+            <button type="button" class="quiet-button" :disabled="busy" @click="copy(row.id)">
               复制</button
             ><button type="button" class="quiet-button" :disabled="busy" @click="deleting = row">
               删除
@@ -185,6 +250,12 @@ async function create() {
       </footer>
     </form>
   </BusinessDialog>
+  <DocumentHistory
+    v-if="historyId"
+    :id="historyId"
+    @close="historyId = undefined"
+    @open="(document, revision) => emit('open', document, revision)"
+  />
 </template>
 
 <style scoped>

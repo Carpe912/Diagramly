@@ -1,6 +1,16 @@
 import { documentSchema, type DiagramDocument } from '../../domain/model';
 import { z } from 'zod';
 let authorization = '';
+let serverRole = 'viewer';
+export const getServerRole = () => serverRole;
+export async function identifyServerSession() {
+  const session = z
+    .object({ username: z.string(), role: z.enum(['admin', 'editor', 'viewer']) })
+    .parse(await request('/session'));
+  serverRole = session.role;
+  return session;
+}
+
 export function login(username: string, password: string) {
   authorization = `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
 }
@@ -9,7 +19,7 @@ export async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`${import.meta.env.VITE_API_BASE || '/api'}${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body != null ? { 'Content-Type': 'application/json' } : {}),
       Authorization: authorization,
       ...options.headers,
     },
@@ -64,4 +74,25 @@ export class DocumentSync {
     this.queue = next.catch(() => {});
     return next;
   }
+}
+export async function downloadAttachment(id: string, name: string) {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE || '/api'}/attachments/${encodeURIComponent(id)}`,
+    {
+      headers: { Authorization: authorization },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15000),
+    },
+  );
+  if (!response.ok) throw new Error('附件下载失败');
+  const url = URL.createObjectURL(await response.blob()),
+    link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+export function clearServerSession() {
+  authorization = '';
+  serverRole = 'viewer';
 }

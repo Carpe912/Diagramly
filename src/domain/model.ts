@@ -155,7 +155,15 @@ export type DiagramNode = z.infer<typeof nodeSchema>;
 export type DiagramEdge = z.infer<typeof edgeSchema>;
 export type DiagramDocument = z.infer<typeof documentSchema>;
 export type Endpoint = z.infer<typeof endpointSchema>;
-export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`;
+/** getRandomValues 在 HTTP IP 环境也可使用，避免依赖仅限安全上下文的 randomUUID。 */
+export function uuid() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+export const newId = (prefix: string) => `${prefix}_${uuid().replaceAll('-', '')}`;
 export function emptyDocument(): DiagramDocument {
   return {
     schemaVersion: 1,
