@@ -22,7 +22,7 @@ const props = defineProps<{
   options?: ActivityOptions;
   loadingOptions: boolean;
   related?: ActivityDetail;
-  api: CoopwireApi;
+  api?: CoopwireApi;
   saveResource: (mutation: BusinessMutation) => Promise<void>;
 }>();
 const emit = defineEmits<{ patch: [patch: Partial<BusinessEntity>]; loadOptions: [] }>();
@@ -31,6 +31,7 @@ const interfaces = ref<BusinessOption[]>([]);
 const interfaceError = ref('');
 async function loadInterfaces() {
   try {
+    if (!props.api) return;
     interfaces.value = await props.api.interfaceOptions();
     interfaceError.value = '';
   } catch (e) {
@@ -161,7 +162,9 @@ function relationName(item: Record<string, unknown>, index: number) {
         {{ label }}
       </button>
     </nav>
-    <p class="business-save-hint">修改后自动保存 · {{ busy ? '正在保存…' : '已连接业务流程' }}</p>
+    <p class="business-save-hint">
+      修改后自动保存 · {{ busy ? '正在保存…' : remote ? '已连接业务流程' : '保存在本机画布' }}
+    </p>
     <fieldset :disabled="busy">
       <div v-show="section === 'basic'">
         <section class="property-section">
@@ -471,7 +474,21 @@ function relationName(item: Record<string, unknown>, index: number) {
         </section>
       </div>
       <div v-show="section === 'io'">
-        <section class="property-section">
+        <section v-if="!remote" class="property-section">
+          <h3>输入与输出</h3>
+          <label
+            >输入<textarea
+              :value="entity.inputs.join('\n')"
+              @change="emit('patch', { inputs: text($event).split('\n').filter(Boolean) })"
+            /></label
+          ><label
+            >输出<textarea
+              :value="entity.outputs.join('\n')"
+              @change="emit('patch', { outputs: text($event).split('\n').filter(Boolean) })"
+            />
+          </label>
+        </section>
+        <section v-if="remote" class="property-section">
           <div
             v-for="[type, label] in [
               ['input', '输入'],
@@ -597,7 +614,7 @@ function relationName(item: Record<string, unknown>, index: number) {
       </div>
     </fieldset>
     <LinkedActivityChooser
-      v-if="changingLink && detail.linkFlow && detail.linkAct"
+      v-if="api && changingLink && detail.linkFlow && detail.linkAct"
       :api="api"
       :initial="{
         linkFlow: detail.linkFlow,
@@ -611,7 +628,7 @@ function relationName(item: Record<string, unknown>, index: number) {
       @close="changingLink = false"
     />
     <BusinessResourceEditor
-      v-if="editing"
+      v-if="editing && api"
       :key="String(editing.item.id ?? editing.item.type ?? editing.kind)"
       :kind="editing.kind"
       :api="api"

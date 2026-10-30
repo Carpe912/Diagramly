@@ -219,7 +219,7 @@ async function refreshBrowserLogin() {
 const hasBusinessDetails = computed(() => {
   const node = selectedNode.value;
   if (!node || !isBusinessNode(node)) return false;
-  if (!remoteSession.value) return false;
+  if (!remoteSession.value) return true;
   const id = selectedEntity.value?.externalRef?.id;
   return !!id && remoteSession.value.activityDetails.has(id);
 });
@@ -1346,7 +1346,7 @@ onBeforeUnmount(() => {
             :loading-options="loadingBusinessOptions"
             :related="businessDetail"
             :save-resource="saveBusinessResource"
-            :api="remoteSession!.api"
+            :api="remoteSession?.api"
             @patch="patchEntity"
             @load-options="loadBusinessOptions"
           />
