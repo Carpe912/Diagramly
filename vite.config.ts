@@ -46,7 +46,24 @@ export default defineConfig(({ mode }) => {
   readCookie();
   const target = process.env.COOPWIRE_TARGET || env.COOPWIRE_TARGET;
   return {
-    plugins: [vue()],
+    plugins: [
+      vue(),
+      {
+        name: 'diagramly-local-session',
+        configureServer(server) {
+          // 只返回登录态是否存在，不向前端暴露 HttpOnly 凭证。
+          server.middlewares.use('/__diagramly/session', (request, response) => {
+            response.setHeader('Content-Type', 'application/json');
+            response.setHeader('Cache-Control', 'no-store');
+            response.end(
+              JSON.stringify({
+                authenticated: /(?:^|;)\s*access_token=[^;]+/.test(request.headers.cookie ?? ''),
+              }),
+            );
+          });
+        },
+      },
+    ],
     test: { include: ['tests/**/*.test.ts'] },
     server: {
       proxy: target

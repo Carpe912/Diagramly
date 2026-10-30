@@ -191,8 +191,29 @@ function alignSelection(mode: Alignment) {
 }
 const remoteSession = shallowRef<CoopwireSession>();
 const browserLoggedIn = ref(false);
-function detectBrowserLogin() {
-  browserLoggedIn.value = /(?:^|;)\s*access_token=[^;]+/.test(document.cookie);
+async function detectBrowserLogin() {
+  let present = /(?:^|;)\s*access_token=[^;]+/.test(document.cookie);
+  if (!present && import.meta.env.DEV) {
+    try {
+      const response = await fetch('/__diagramly/session', {
+        credentials: 'same-origin',
+        cache: 'no-store',
+      });
+      if (response.ok) present = (await response.json()).authenticated === true;
+    } catch {
+      /* 检测失败时保留手动连接入口。 */
+    }
+  }
+  browserLoggedIn.value = present;
+}
+let loginTimer: ReturnType<typeof setInterval> | undefined;
+async function refreshBrowserLogin() {
+  const previous = browserLoggedIn.value;
+  await detectBrowserLogin();
+  if (!previous && browserLoggedIn.value && !remoteSession.value && !connecting.value) {
+    if (remoteConfig.projectId && remoteConfig.flowchartId) await connectRemote();
+    else connectionOpen.value = true;
+  }
 }
 
 const hasBusinessDetails = computed(() => {
@@ -1000,8 +1021,9 @@ async function exportFile() {
 }
 onMounted(async () => {
   bindEditor();
-  detectBrowserLogin();
-  window.addEventListener('focus', detectBrowserLogin);
+  await detectBrowserLogin();
+  loginTimer = setInterval(() => void refreshBrowserLogin(), 3000);
+  window.addEventListener('focus', refreshBrowserLogin);
   window.addEventListener('keydown', keyboard);
   configureCoopwireAuth({ refresh: () => refreshCoopwireSession(remoteConfig.baseUrl) });
   try {
@@ -1023,7 +1045,8 @@ onBeforeUnmount(() => {
   unsubscribe?.();
   canvas?.destroy();
   window.removeEventListener('keydown', keyboard);
-  window.removeEventListener('focus', detectBrowserLogin);
+  clearInterval(loginTimer);
+  window.removeEventListener('focus', refreshBrowserLogin);
 });
 </script>
 
