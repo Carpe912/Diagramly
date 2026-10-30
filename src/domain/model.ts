@@ -26,6 +26,7 @@ export const entitySchema = z
     role: z.string().max(160),
     roleIds: z.array(z.string().min(1).max(160)).max(100).default([]),
     details: activityDetailsSchema.optional(),
+    resources: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))).optional(),
     // 远程业务标识显式保存，独立于图形节点和本地实体 ID。
     externalRef: z
       .object({

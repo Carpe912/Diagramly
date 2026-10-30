@@ -5,7 +5,7 @@ import IoDataFields from './IoDataFields.vue';
 import type { ActivityOptions, BusinessMutation, CoopwireApi } from '../adapters/coopwire/api';
 const props = defineProps<{
   kind: 'io' | 'exception' | 'difficult';
-  api: CoopwireApi;
+  api?: CoopwireApi;
   item: Record<string, unknown>;
   options?: ActivityOptions;
   save: (mutation: BusinessMutation) => Promise<void>;
@@ -121,7 +121,12 @@ async function submit() {
               </select></label
             >
           </div>
-          <IoDataFields :api="api" :value="draft" @patch="Object.assign(draft, $event)" />
+          <IoDataFields
+            v-if="api"
+            :api="api"
+            :value="draft"
+            @patch="Object.assign(draft, $event)"
+          />
           <details v-if="metadata.length" class="resource-metadata">
             <summary>已关联业务资料</summary>
             <div v-for="group in metadata" :key="group.key">

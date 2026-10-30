@@ -474,21 +474,7 @@ function relationName(item: Record<string, unknown>, index: number) {
         </section>
       </div>
       <div v-show="section === 'io'">
-        <section v-if="!remote" class="property-section">
-          <h3>输入与输出</h3>
-          <label
-            >输入<textarea
-              :value="entity.inputs.join('\n')"
-              @change="emit('patch', { inputs: text($event).split('\n').filter(Boolean) })"
-            /></label
-          ><label
-            >输出<textarea
-              :value="entity.outputs.join('\n')"
-              @change="emit('patch', { outputs: text($event).split('\n').filter(Boolean) })"
-            />
-          </label>
-        </section>
-        <section v-if="remote" class="property-section">
+        <section class="property-section">
           <div
             v-for="[type, label] in [
               ['input', '输入'],
@@ -628,7 +614,7 @@ function relationName(item: Record<string, unknown>, index: number) {
       @close="changingLink = false"
     />
     <BusinessResourceEditor
-      v-if="editing && api"
+      v-if="editing"
       :key="String(editing.item.id ?? editing.item.type ?? editing.kind)"
       :kind="editing.kind"
       :api="api"
@@ -644,7 +630,7 @@ function relationName(item: Record<string, unknown>, index: number) {
       @close="deleting = undefined"
     >
       <form @submit.prevent="removeResource">
-        <p class="field-help">确定删除这条业务记录？此操作会同步到 Coopwire。</p>
+        <p class="field-help">确定删除这条业务记录？此操作会保存到本机草稿。</p>
         <p v-if="resourceError" role="alert" class="form-error">{{ resourceError }}</p>
         <footer>
           <button

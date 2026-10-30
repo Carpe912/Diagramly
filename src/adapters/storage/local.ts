@@ -1,3 +1,4 @@
+import { writeDraft } from './database';
 import type { Editor } from '../../application/editor';
 import type { ShapeRegistry } from '../../shapes/registry';
 import { documentSchema } from '../../domain/model';
@@ -23,8 +24,11 @@ export function attachAutosave(
   const save = () => {
     clearTimeout(timer);
     try {
-      localStorage.setItem(storageKey, JSON.stringify(editor.snapshot));
-      onState('已保存到本机');
+      const snapshot = structuredClone(editor.snapshot);
+      void writeDraft(storageKey, snapshot).then(
+        () => onState('已保存到本机草稿'),
+        () => onState('草稿保存失败，请导出备份', true),
+      );
     } catch {
       onState('本机保存失败，请导出备份', true);
     }
@@ -32,7 +36,7 @@ export function attachAutosave(
   const unsubscribe = editor.subscribe(() => {
     onState('保存中…');
     clearTimeout(timer);
-    timer = setTimeout(save, 400);
+    save();
   });
   window.addEventListener('pagehide', save);
   // 新建或导入的文档在首次编辑前也需要持久化。

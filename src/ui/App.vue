@@ -69,11 +69,13 @@ import { demoDocument } from '../application/demo';
 import { createShapeRegistry } from '../shapes/registry';
 import { DiagramCanvas } from '../adapters/maxgraph/canvas';
 import type { Viewport } from '../adapters/maxgraph/viewport';
+import { readDraft } from '../adapters/storage/database';
 import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
 import {
   CoopwireApi,
   type ActivityOptions,
+  type ActivityDetail,
   type BusinessMutation,
   configureCoopwireAuth,
   refreshCoopwireSession,
@@ -219,16 +221,30 @@ async function refreshBrowserLogin() {
 const hasBusinessDetails = computed(() => {
   const node = selectedNode.value;
   if (!node || !isBusinessNode(node)) return false;
-  if (!remoteSession.value) return true;
-  const id = selectedEntity.value?.externalRef?.id;
-  return !!id && remoteSession.value.activityDetails.has(id);
+  return true;
 });
 const businessOptions = shallowRef<ActivityOptions>();
 const loadingBusinessOptions = ref(false);
-const businessDetail = computed(() => {
-  void doc.value.revision;
-  const id = selectedEntity.value?.externalRef?.id;
-  return id ? remoteSession.value?.activityDetails.get(id) : undefined;
+const businessDetail = computed<ActivityDetail | undefined>(() => {
+  const entity = selectedEntity.value;
+  if (!entity) return undefined;
+  const remote = entity.externalRef
+    ? remoteSession.value?.activityDetails.get(entity.externalRef.id)
+    : undefined;
+  return {
+    ...remote,
+    ...entity.resources,
+    activity: {
+      ...remote?.activity,
+      id: entity.id,
+      version: 0,
+      ioputs: entity.resources?.io ??
+        remote?.activity.ioputs ?? [
+          ...entity.inputs.map((desc, index) => ({ id: `input_${index}`, type: 'input', desc })),
+          ...entity.outputs.map((desc, index) => ({ id: `output_${index}`, type: 'output', desc })),
+        ],
+    },
+  };
 });
 async function loadBusinessOptions() {
   const session = remoteSession.value;
@@ -247,10 +263,32 @@ watch([panelTab, remoteSession], () => {
   if (panelTab.value === 'details' && !businessOptions.value) void loadBusinessOptions();
 });
 async function saveBusinessResource(mutation: BusinessMutation) {
-  const session = remoteSession.value,
-    actId = selectedEntity.value?.externalRef?.id;
-  if (!session || !actId) throw new Error('请先连接远程业务活动');
-  await editor.value.synchronizeExternal((before) => session.editBusiness(before, actId, mutation));
+  const entity = selectedEntity.value;
+  if (!entity) throw new Error('请选择业务图形');
+  const key =
+    mutation.kind === 'io' ? 'io' : mutation.kind === 'exception' ? 'exceptions' : 'difficulties';
+  const resources = structuredClone(entity.resources ?? {});
+  const rows =
+    resources[key] ??
+    (key === 'io'
+      ? (businessDetail.value?.activity.ioputs ?? [])
+      : ((businessDetail.value?.[key] as Record<string, unknown>[]) ?? []));
+  const id = mutation.data.id ?? newId('record');
+  resources[key] = rows.filter((row) => row.id !== id);
+  if (mutation.action === 'save') resources[key].push({ ...mutation.data, id });
+  const patch: Partial<BusinessEntity> = { resources };
+  if (key === 'io') {
+    patch.inputs = resources[key]
+      .filter((row) => row.type === 'input')
+      .map((row) => String(row.desc ?? ''));
+    patch.outputs = resources[key]
+      .filter((row) => row.type === 'output')
+      .map((row) => String(row.desc ?? ''));
+  }
+  const result = await run('保存业务草稿', [
+    { type: 'node.update', id: selectedNode.value!.id, patch },
+  ]);
+  if (!result) throw new Error('业务草稿保存失败');
 }
 watch(panelTab, async () => {
   await nextTick();
@@ -504,7 +542,7 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   remoteSession.value = session;
   businessOptions.value = undefined;
 
-  if (session) editor.value.attachTransport(session);
+  // 当前阶段所有修改只进入本机草稿，不挂接后端写入适配器。
   panelTab.value = 'properties';
   bindEditor(viewport);
   setTool('select');
@@ -949,7 +987,9 @@ async function connectRemote() {
       (document) => exportDiagramPng(document, registry),
     );
     session.onStatus((status) => (remoteStatus.value = status));
-    const document = await session.open();
+    const key = `diagramly.remote.cache:${JSON.stringify(session.api.config)}`;
+    const cached = await readDraft(key);
+    const document = cached ?? (await session.open());
     replaceDocument(document, session);
     connectionOpen.value = false;
     error.value = '';
@@ -984,11 +1024,11 @@ function downloadLegacyXml() {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function disconnectRemote() {
+async function disconnectRemote() {
   if (editor.value.busy) return;
   let local = demoDocument();
   try {
-    local = loadLocal(registry) ?? local;
+    local = (await readDraft()) ?? loadLocal(registry) ?? local;
   } catch {
     /* 读取失败时保留原有缓存。 */
   }
@@ -1020,6 +1060,15 @@ async function exportFile() {
   }
 }
 onMounted(async () => {
+  try {
+    const saved = await readDraft();
+    if (saved) {
+      editor.value = new Editor(saved, registry);
+      doc.value = editor.value.snapshot;
+    }
+  } catch (e) {
+    showError(e);
+  }
   bindEditor();
   await detectBrowserLogin();
   loginTimer = setInterval(() => void refreshBrowserLogin(), 3000);
@@ -1063,9 +1112,7 @@ onBeforeUnmount(() => {
         <span class="breadcrumb">工作空间 <ChevronRight :size="12" /> 流程设计</span
         ><input v-model.lazy="title" aria-label="画布名称" /><ChevronDown :size="13" />
       </div>
-      <span class="local-status"
-        ><span></span>{{ remoteSession ? remoteStatus.message : saveState }}</span
-      >
+      <span class="local-status"><span></span>{{ saveState }}</span>
       <div class="header-actions">
         <button class="button secondary" @click="connectionOpen = true">
           <GitBranch :size="14" />{{
