@@ -1,0 +1,8 @@
+[Unit]
+Description=Diagramly database backup
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/diagramly/backup.py
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
