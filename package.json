@@ -14,17 +14,22 @@
     "test:e2e": "playwright test",
     "audit:legacy": "python3 scripts/audit_legacy.py",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "server": "tsx server/index.ts"
   },
   "dependencies": {
     "@lucide/vue": "^1.62.0",
     "@maxgraph/core": "0.25.1",
+    "fastify": "^5.12.7",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15",
     "vue": "^3.5.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
     "@types/node": "^24.0.0",
+    "@types/pg": "^8.23.1",
     "@vitejs/plugin-vue": "^6.0.0",
     "happy-dom": "^21.0.4",
     "prettier": "3.9.10",
