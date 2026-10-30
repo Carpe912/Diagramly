@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { UsersRound } from '@lucide/vue';
 import type { BusinessEntity, DiagramDocument, DiagramNode } from '../domain/model';
-import type { Organization } from '../adapters/coopwire/api';
+import type { Organization } from '../domain/business';
 import { poolOf } from '../domain/pools';
 const props = defineProps<{
   document: DiagramDocument;

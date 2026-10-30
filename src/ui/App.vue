@@ -39,14 +39,19 @@ import {
   Square,
   X,
 } from '@lucide/vue';
+import Discussions from './Discussions.vue';
+import { inspectDocument } from '../domain/inspection';
+import { hasServerSession } from '../adapters/server/client';
+import WorkspaceManager from './WorkspaceManager.vue';
+import { StandaloneBusinessApi } from '../adapters/server/business';
 import ServerDocuments from './ServerDocuments.vue';
-import { DocumentSync } from '../adapters/server/client';
+import { getServerRole, DocumentSync } from '../adapters/server/client';
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
 import StageToolbar from './StageToolbar.vue';
 import ActivityDetails from './ActivityDetails.vue';
 import LinkedActivityChooser from './LinkedActivityChooser.vue';
-import { flowchartContext, type LinkedChoice } from '../adapters/coopwire/portrait';
+import type { LinkedChoice } from '../domain/business';
 import CanvasTopbar from './CanvasTopbar.vue';
 import ShapeToolbar from './ShapeToolbar.vue';
 import type { PaletteShape } from './palette';
@@ -75,14 +80,11 @@ import { readDraft } from '../adapters/storage/database';
 import { attachAutosave, loadLocal } from '../adapters/storage/local';
 import { downloadGraphFile, importGraphFile, type ExportFormat } from '../adapters/storage/files';
 import {
-  CoopwireApi,
   type ActivityOptions,
   type ActivityDetail,
   type BusinessMutation,
-} from '../adapters/coopwire/api';
-import { isBusinessNode } from '../adapters/coopwire/codec';
-import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
-import { exportDiagramPng } from '../adapters/maxgraph/export';
+} from '../domain/business';
+import { isBusinessNode } from '../adapters/formats/xml';
 import { createAgentTools } from '../agent/tools';
 import {
   defaultCanvasSettings,
@@ -98,14 +100,20 @@ import {
 import type { Command, Operation } from '../application/commands';
 
 const registry = createShapeRegistry();
-const showServerDocuments = ref(false);
+const ready = ref(false);
+const showServerDocuments = ref(false),
+  showWorkspaceManager = ref(false);
+const businessApi = new StandaloneBusinessApi(() => editor.value.snapshot.id);
+const businessRoles = ref<{ orgId: string; orgName: string }[]>([]);
 let serverSync: DocumentSync | undefined;
 function openServerDocument(document: DiagramDocument, revision: number) {
   stopAutosave?.();
   stopAutosave = undefined;
   serverSync = new DocumentSync(revision, document);
   replaceDocument(document);
+  editor.value.setReadOnly(getServerRole() === 'viewer');
   showServerDocuments.value = false;
+  void loadBusinessOptions();
 }
 const error = ref(''),
   saveState = ref('已保存到本机');
@@ -129,7 +137,9 @@ const selection = ref<string[]>([]),
   zoom = ref(1),
   search = ref(''),
   libraryTab = ref<'shapes' | 'layers'>('shapes');
-const panelTab = ref<'properties' | 'details' | 'agent'>('properties'),
+const panelTab = ref<'properties' | 'details' | 'agent' | 'discussions' | 'inspection'>(
+    'properties',
+  ),
   activeTool = ref<'select' | 'hand' | 'connect'>('select');
 const presentationMode = ref(
   new URLSearchParams(window.location.search).get('presentation') === '1',
@@ -207,33 +217,6 @@ function alignSelection(mode: Alignment) {
     { type: 'nodes.align', ids: styleNodes.value.map((n) => n.id), mode },
   ]);
 }
-const remoteSession = shallowRef<CoopwireSession>();
-const browserLoggedIn = ref(false);
-async function detectBrowserLogin() {
-  let present = /(?:^|;)\s*access_token=[^;]+/.test(document.cookie);
-  if (!present && import.meta.env.DEV) {
-    try {
-      const response = await fetch('/__diagramly/session', {
-        credentials: 'same-origin',
-        cache: 'no-store',
-      });
-      if (response.ok) present = (await response.json()).authenticated === true;
-    } catch {
-      /* 检测失败时保留手动连接入口。 */
-    }
-  }
-  browserLoggedIn.value = present;
-}
-let loginTimer: ReturnType<typeof setInterval> | undefined;
-async function refreshBrowserLogin() {
-  const previous = browserLoggedIn.value;
-  await detectBrowserLogin();
-  if (!previous && browserLoggedIn.value && !remoteSession.value && !connecting.value) {
-    if (remoteConfig.projectId && remoteConfig.flowchartId) await connectRemote();
-    else connectionOpen.value = true;
-  }
-}
-
 const hasBusinessDetails = computed(() => {
   const node = selectedNode.value;
   if (!node || !isBusinessNode(node)) return false;
@@ -244,38 +227,36 @@ const loadingBusinessOptions = ref(false);
 const businessDetail = computed<ActivityDetail | undefined>(() => {
   const entity = selectedEntity.value;
   if (!entity) return undefined;
-  const remote = entity.externalRef
-    ? remoteSession.value?.activityDetails.get(entity.externalRef.id)
-    : undefined;
+
   return {
-    ...remote,
     ...entity.resources,
     activity: {
-      ...remote?.activity,
       id: entity.id,
       version: 0,
-      ioputs: entity.resources?.io ??
-        remote?.activity.ioputs ?? [
-          ...entity.inputs.map((desc, index) => ({ id: `input_${index}`, type: 'input', desc })),
-          ...entity.outputs.map((desc, index) => ({ id: `output_${index}`, type: 'output', desc })),
-        ],
+      ioputs: entity.resources?.io ?? [
+        ...entity.inputs.map((desc, index) => ({ id: `input_${index}`, type: 'input', desc })),
+        ...entity.outputs.map((desc, index) => ({ id: `output_${index}`, type: 'output', desc })),
+      ],
     },
   };
 });
 async function loadBusinessOptions() {
-  const session = remoteSession.value;
-  if (!session || loadingBusinessOptions.value) return;
+  if (loadingBusinessOptions.value) return;
   loadingBusinessOptions.value = true;
   try {
-    const options = await session.api.activityOptions();
-    if (session === remoteSession.value) businessOptions.value = options;
+    const [options, roles] = await Promise.all([
+      businessApi.activityOptions(),
+      businessApi.roles(),
+    ]);
+    businessOptions.value = options;
+    businessRoles.value = roles;
   } catch (e) {
     showError(e);
   } finally {
     loadingBusinessOptions.value = false;
   }
 }
-watch([panelTab, remoteSession], () => {
+watch(panelTab, () => {
   if (panelTab.value === 'details' && !businessOptions.value) void loadBusinessOptions();
 });
 async function saveBusinessResource(mutation: BusinessMutation) {
@@ -443,6 +424,7 @@ const layerRows = computed(() => {
   roots.value.forEach((node) => visit(node.id, 0));
   return rows;
 });
+const inspectionIssues = computed(() => inspectDocument(doc.value));
 const nodeCount = computed(() => Object.keys(doc.value.nodes).length);
 const title = computed({
   get: () => doc.value.title,
@@ -479,7 +461,7 @@ function onSelection(ids: string[]) {
   if (
     activeTool.value === 'select' &&
     selected &&
-    remoteSession.value &&
+    hasServerSession() &&
     isBusinessNode(selected) &&
     doc.value.entities[selected.entityId]?.externalRef
   )
@@ -541,16 +523,12 @@ function bindEditor(viewport?: Viewport) {
       saveState.value = message;
       if (failed) error.value = message;
     },
-    serverSync
-      ? `diagramly.server.draft:${editor.value.snapshot.id}`
-      : remoteSession.value
-        ? `diagramly.remote.cache:${JSON.stringify(remoteSession.value.api.config)}`
-        : undefined,
+    serverSync ? `diagramly.server.draft:${editor.value.snapshot.id}` : undefined,
     serverSync ? serverSync.save.bind(serverSync) : undefined,
   );
   if (viewport) canvas.restoreViewport(viewport);
 }
-function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
+function replaceDocument(document: DiagramDocument) {
   const viewport = canvas?.getViewport();
   if (document.id !== editor.value.snapshot.id && !showServerDocuments.value)
     serverSync = undefined;
@@ -560,7 +538,6 @@ function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   selection.value = [];
   connectSource = undefined;
   editor.value = new Editor(document, registry);
-  remoteSession.value = session;
   businessOptions.value = undefined;
 
   // 当前阶段所有修改只进入本机草稿，不挂接后端写入适配器。
@@ -582,8 +559,8 @@ async function addShape(
   linkedChoice?: LinkedChoice,
 ) {
   if (type === 'activity' && preset === 'linked' && !linkedChoice) {
-    if (!remoteSession.value) {
-      error.value = '请先连接 Coopwire，再选择引用活动';
+    if (!hasServerSession()) {
+      error.value = '请先在文档库登录独立服务，再选择引用活动';
       return;
     }
     linkedPoint = point;
@@ -769,7 +746,7 @@ function assignLaneRoles(roleIds: string[]) {
   if (lane?.type !== 'swimlane') return;
   const roles: { id: string; name: string }[] = [];
   for (const id of roleIds) {
-    const role = remoteSession.value?.organizations.find((item) => item.orgId === id);
+    const role = businessRoles.value.find((item) => item.orgId === id);
     if (!role) {
       showError(new Error('所选角色不存在，请重新读取项目角色'));
       return;
@@ -895,7 +872,6 @@ async function importFile(event: Event) {
     file = input.files?.[0];
   if (!file) return;
   try {
-    if (remoteSession.value) throw new Error('请先断开远程连接，再导入其他文档');
     if (file.size > 8 * 1024 * 1024) throw new Error('文件超过 8MB 上限');
     const parsed = await importGraphFile(await file.text(), file.name, registry);
     replaceDocument(parsed);
@@ -989,82 +965,6 @@ async function history(action: 'undo' | 'redo') {
     showError(e);
   }
 }
-const remoteStatus = shallowRef<RemoteStatus>({ state: 'ready', message: '' });
-const connectionOpen = ref(false),
-  connecting = ref(false),
-  recoveryConfirm = ref(false);
-const remoteConfig = reactive({
-  baseUrl: import.meta.env.VITE_COOPWIRE_BASE_URL ?? '',
-  projectId: import.meta.env.VITE_COOPWIRE_PROJECT_ID ?? '',
-  flowchartId: import.meta.env.VITE_COOPWIRE_FLOWCHART_ID ?? '',
-  flowchartType: import.meta.env.VITE_COOPWIRE_FLOWCHART_TYPE ?? 'tobe',
-});
-async function connectRemote() {
-  connecting.value = true;
-  try {
-    const session = new CoopwireSession(
-      new CoopwireApi({ ...remoteConfig }),
-      registry,
-      (document) => exportDiagramPng(document, registry),
-    );
-    session.onStatus((status) => (remoteStatus.value = status));
-    const key = `diagramly.remote.cache:${JSON.stringify(session.api.config)}`;
-    const cached = await readDraft(key);
-    const document = cached ?? (await session.open());
-    replaceDocument(document, session);
-    connectionOpen.value = false;
-    error.value = '';
-  } catch (e) {
-    showError(e);
-  } finally {
-    connecting.value = false;
-  }
-}
-async function reloadRemote() {
-  const session = remoteSession.value;
-  if (!session || editor.value.busy) return;
-  connecting.value = true;
-  try {
-    const document = await session.reloadAndReconcile();
-    replaceDocument(document, session);
-    error.value = '';
-    recoveryConfirm.value = false;
-  } catch (e) {
-    showError(e);
-  } finally {
-    connecting.value = false;
-  }
-}
-function downloadLegacyXml() {
-  const xml = remoteSession.value?.legacySource;
-  if (!xml) return;
-  const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'coopwire-original.xml';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-async function disconnectRemote() {
-  if (editor.value.busy) return;
-  let local = demoDocument();
-  try {
-    local = (await readDraft()) ?? loadLocal(registry) ?? local;
-  } catch {
-    /* 读取失败时保留原有缓存。 */
-  }
-  replaceDocument(local);
-  remoteStatus.value = { state: 'ready', message: '' };
-  connectionOpen.value = false;
-}
-async function retryRemote() {
-  try {
-    await editor.value.retryRemote();
-    error.value = '';
-  } catch (e) {
-    showError(e);
-  }
-}
 const showData = ref(false),
   showReset = ref<'sample' | 'empty' | null>(null);
 const exportFormat = ref<ExportFormat>('json'),
@@ -1091,27 +991,37 @@ onMounted(async () => {
     showError(e);
   }
   bindEditor();
-  void refreshBrowserLogin;
-  void flowchartContext;
+  window.addEventListener('keydown', keyboard);
   canvas?.fit();
+  ready.value = true;
 });
 onBeforeUnmount(() => {
   stopAutosave?.();
   unsubscribe?.();
   canvas?.destroy();
   window.removeEventListener('keydown', keyboard);
-  clearInterval(loginTimer);
-  window.removeEventListener('focus', refreshBrowserLogin);
 });
 </script>
 
 <template>
+  <WorkspaceManager
+    v-if="showWorkspaceManager"
+    @close="
+      showWorkspaceManager = false;
+      businessOptions = undefined;
+      loadBusinessOptions();
+    "
+  />
   <ServerDocuments
     v-if="showServerDocuments"
     @close="showServerDocuments = false"
     @open="openServerDocument"
   />
-  <div class="workbench" :class="{ 'presentation-mode': presentationMode }">
+  <div
+    class="workbench"
+    :style="{ visibility: ready ? 'visible' : 'hidden' }"
+    :class="{ 'presentation-mode': presentationMode }"
+  >
     <header class="app-header">
       <a class="brand" href="#" aria-label="Diagramly 首页"
         ><span class="brand-mark"><GitBranch :size="20" /></span>diagramly<span class="brand-dot"
@@ -1125,16 +1035,8 @@ onBeforeUnmount(() => {
       </div>
       <span class="local-status"><span></span>{{ saveState }}</span>
       <div class="header-actions">
-        <button class="button secondary" @click="showServerDocuments = true">文档库</button>
-        <button v-if="false" class="button secondary" @click="connectionOpen = true">
-          <GitBranch :size="14" />{{
-            remoteSession
-              ? 'Coopwire 已连接'
-              : browserLoggedIn
-                ? 'Coopwire 已登录'
-                : '连接 Coopwire'
-          }}
-        </button>
+        <button class="button secondary" @click="showServerDocuments = true">文档库</button
+        ><button class="text-button" @click="showWorkspaceManager = true">工作空间管理</button>
         <button class="text-button" @click="showData = true"><Code2 :size="15" /> 文档数据</button>
         <span class="avatar">D</span>
       </div>
@@ -1279,7 +1181,7 @@ onBeforeUnmount(() => {
           :node-count="nodeCount"
           :edge-count="Object.keys(doc.edges).length"
           :busy="editor.busy"
-          :remote="!!remoteSession"
+          :remote="false"
           :can-undo="editor.canUndo"
           :can-redo="editor.canRedo"
           :selected="!!selection.length"
@@ -1310,7 +1212,7 @@ onBeforeUnmount(() => {
           v-else-if="contextLane"
           :document="doc"
           :lane="contextLane"
-          :organizations="remoteSession?.organizations ?? []"
+          :organizations="businessRoles"
           :busy="editor.busy"
           :position="poolToolbarPosition"
           @appearance="laneAppearance"
@@ -1392,6 +1294,21 @@ onBeforeUnmount(() => {
           </button>
           <button
             role="tab"
+            :aria-selected="panelTab === 'discussions'"
+            :class="{ active: panelTab === 'discussions' }"
+            @click="panelTab = 'discussions'"
+          >
+            讨论</button
+          ><button
+            role="tab"
+            :aria-selected="panelTab === 'inspection'"
+            :class="{ active: panelTab === 'inspection' }"
+            @click="panelTab = 'inspection'"
+          >
+            体检
+          </button>
+          <button
+            role="tab"
             :aria-selected="panelTab === 'agent'"
             :class="{ active: panelTab === 'agent' }"
             @click="panelTab = 'agent'"
@@ -1400,7 +1317,41 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div
-          v-if="panelTab === 'details' && hasBusinessDetails && selectedNode && selectedEntity"
+          v-if="panelTab === 'discussions'"
+          class="inspector-scroll"
+          role="tabpanel"
+          aria-label="讨论"
+        >
+          <Discussions
+            :document="doc"
+            :anchor="selectedNode?.id"
+            :connected="!!serverSync"
+            @select="select([$event])"
+          />
+        </div>
+        <div
+          v-else-if="panelTab === 'inspection'"
+          class="inspector-scroll"
+          role="tabpanel"
+          aria-label="流程体检"
+        >
+          <section class="property-section">
+            <h3>流程体检 · {{ inspectionIssues.length }}</h3>
+            <p v-if="!inspectionIssues.length" class="field-help">
+              未发现当前规则覆盖的问题，这不代表业务逻辑已完整验证。
+            </p>
+            <button
+              v-for="(issue, index) in inspectionIssues"
+              :key="index"
+              class="quiet-button"
+              @click="select([issue.id])"
+            >
+              {{ issue.message }}
+            </button>
+          </section>
+        </div>
+        <div
+          v-else-if="panelTab === 'details' && hasBusinessDetails && selectedNode && selectedEntity"
           class="inspector-scroll"
           role="tabpanel"
           aria-label="业务详情"
@@ -1410,12 +1361,12 @@ onBeforeUnmount(() => {
             :entity="selectedEntity"
             :node="selectedNode"
             :busy="editor.busy"
-            :remote="!!remoteSession"
+            :remote="true"
             :options="businessOptions"
             :loading-options="loadingBusinessOptions"
             :related="businessDetail"
             :save-resource="saveBusinessResource"
-            :api="remoteSession?.api"
+            :api="businessApi"
             @patch="patchEntity"
             @load-options="loadBusinessOptions"
           />
@@ -1556,18 +1507,14 @@ onBeforeUnmount(() => {
             </section>
             <section v-if="selectedNode.type === 'swimlane'" class="property-section">
               <h3>角色信息</h3>
-              <label v-if="remoteSession"
+              <label v-if="businessRoles.length"
                 >组织角色<select
                   v-model="form.roleIds"
                   multiple
                   aria-label="组织角色"
                   @change="assignLaneRoles([...form.roleIds])"
                 >
-                  <option
-                    v-for="org in remoteSession.organizations"
-                    :key="org.orgId"
-                    :value="org.orgId"
-                  >
+                  <option v-for="org in businessRoles" :key="org.orgId" :value="org.orgId">
                     {{ org.orgName }}
                   </option>
                 </select></label
@@ -1732,9 +1679,7 @@ onBeforeUnmount(() => {
             <span><Sparkles :size="20" /></span>
             <h3>让 Agent 读懂你的图</h3>
             <p>通过结构化命令编辑业务节点。<br />先查看变更，再应用到画布。</p>
-            <span class="local-badge">{{
-              remoteSession ? 'Coopwire 远程接口 · 未连接模型' : '本地接口实验台 · 未连接模型'
-            }}</span>
+            <span class="local-badge">{{ '结构化命令实验台 · 未连接模型' }}</span>
           </div>
           <div class="agent-steps">
             <span>1. 读取文档</span><ChevronRight :size="11" /><span>2. 预览</span
@@ -1789,10 +1734,8 @@ onBeforeUnmount(() => {
       </ResizableSidebar>
     </div>
     <footer class="status-bar">
-      <span
-        ><span class="online-dot"></span
-        >{{ remoteSession ? 'Coopwire 远程流程' : '本地工作空间' }}</span
-      ><span>{{ remoteSession ? remoteStatus.message : '所有更改保存在当前浏览器' }}</span>
+      <span><span class="online-dot"></span>{{ serverSync ? '服务端文档' : '本地工作空间' }}</span
+      ><span>{{ saveState }}</span>
       <div class="status-hints">
         <span v-if="activeTool === 'connect'" class="canvas-tip"
           >{{ connectSource ? '选择终点节点' : '选择起点节点' }} · Esc 退出</span
@@ -1803,27 +1746,13 @@ onBeforeUnmount(() => {
         >
       </div>
     </footer>
-    <div
-      v-if="
-        remoteSession && (remoteStatus.state === 'failed' || remoteStatus.state === 'uncertain')
-      "
-      class="remote-recovery"
-    >
-      <span>{{ remoteStatus.message }}</span
-      ><button
-        v-if="editor.canRetryRemote && remoteStatus.state !== 'uncertain'"
-        @click="retryRemote"
-      >
-        重试上次操作</button
-      ><button @click="recoveryConfirm = true">读取远端核对</button>
-    </div>
     <div v-if="error" class="error-toast" role="alert">
       <span>{{ error }}</span
       ><button aria-label="关闭错误" @click="error = ''"><X :size="15" /></button>
     </div>
     <LinkedActivityChooser
-      v-if="linkedChooserOpen && remoteSession"
-      :api="remoteSession.api"
+      v-if="linkedChooserOpen"
+      :api="businessApi"
       @chosen="onLinkedChosen"
       @close="linkedChooserOpen = false"
     />
@@ -1842,8 +1771,8 @@ onBeforeUnmount(() => {
           <div class="document-file-actions">
             <button
               class="button secondary"
-              :disabled="!!remoteSession || editor.busy || exporting"
-              :title="remoteSession ? '请先断开远程连接，再导入其他文档' : '导入 JSON 或 XML'"
+              :disabled="editor.busy || exporting"
+              title="导入 JSON 或 XML"
               @click="fileInput?.click()"
             >
               <ArrowUpFromLine :size="14" />导入
@@ -1867,11 +1796,7 @@ onBeforeUnmount(() => {
         <FolderOpen :size="26" />
         <h2>{{ showReset === 'sample' ? '打开订单履约示例' : '新建空白画布' }}</h2>
         <p>
-          {{
-            remoteSession
-              ? '这会断开远程连接并新建本机空白画布，远程流程保持不变。你可以先导出当前文档，保留一份备份。'
-              : '这会清空并替换当前本机画布。你可以先导出当前文档，保留一份备份。'
-          }}
+          {{ '这会切换到新画布。当前内容已自动保存，你也可以先导出备份。' }}
         </p>
         <div>
           <button
@@ -1922,93 +1847,6 @@ onBeforeUnmount(() => {
           aria-label="取消删除泳道"
           :disabled="editor.busy"
           @click="laneDeletion = undefined"
-        >
-          <X :size="16" />
-        </button>
-      </section>
-    </div>
-    <div
-      v-if="connectionOpen"
-      class="modal-backdrop"
-      @click.self="!connecting && (connectionOpen = false)"
-    >
-      <section class="connection-modal">
-        <header>
-          <h2>连接 Coopwire 后端</h2>
-          <button
-            :disabled="connecting || editor.busy"
-            aria-label="关闭远程配置"
-            @click="connectionOpen = false"
-          >
-            <X :size="17" />
-          </button>
-        </header>
-        <p>连接时只读取远端流程；后续编辑会提交到该流程。本机画布另行保留。</p>
-        <template v-if="!remoteSession"
-          ><label
-            >接口地址<input
-              v-model="remoteConfig.baseUrl"
-              aria-label="远程接口地址"
-              placeholder="留空或填 /rest 使用代理，也可填后端 HTTP(S) 地址" /></label
-          ><label
-            >Project ID<input v-model="remoteConfig.projectId" aria-label="远程项目 ID" /></label
-          ><label
-            >Flowchart ID<input
-              v-model="remoteConfig.flowchartId"
-              aria-label="远程流程 ID" /></label
-          ><label
-            >Flowchart Type<input v-model="remoteConfig.flowchartType" aria-label="远程流程类型"
-          /></label>
-          <p class="field-help">
-            留空或填写 /rest 使用同域代理；完整地址可带 /rest，系统会统一处理路径。同域使用
-            Cookie，跨域开发请使用本机代理。
-          </p>
-          <button class="button primary full-width" :disabled="connecting" @click="connectRemote">
-            {{ connecting ? '正在读取…' : '连接并读取流程' }}
-          </button></template
-        >
-        <template v-else
-          ><div class="remote-details">
-            <strong>{{ remoteStatus.message }}</strong>
-            <p v-for="warning in remoteSession.warnings" :key="warning">{{ warning }}</p>
-          </div>
-          <div class="connection-actions">
-            <button
-              v-if="remoteSession.legacySource"
-              class="button secondary"
-              @click="downloadLegacyXml"
-            >
-              下载原始 XML</button
-            ><button
-              class="button secondary"
-              :disabled="editor.busy || connecting"
-              @click="recoveryConfirm = true"
-            >
-              重新读取远端</button
-            ><button class="button secondary" :disabled="editor.busy" @click="disconnectRemote">
-              断开并返回本机
-            </button>
-          </div></template
-        >
-      </section>
-    </div>
-    <div
-      v-if="recoveryConfirm"
-      class="modal-backdrop"
-      @click.self="!connecting && (recoveryConfirm = false)"
-    >
-      <section class="confirm-modal">
-        <h2>读取远端并核对</h2>
-        <p>
-          将以服务器当前状态重新打开流程，结束本次未完成事务。已确认的业务写入仍保留在服务器；待处理记录会在本机保留恢复备份。
-        </p>
-        <button class="button primary full-width" :disabled="connecting" @click="reloadRemote">
-          {{ connecting ? '正在读取…' : '重新读取远端' }}</button
-        ><button
-          class="modal-close"
-          aria-label="取消远端核对"
-          :disabled="connecting"
-          @click="recoveryConfirm = false"
         >
           <X :size="16" />
         </button>

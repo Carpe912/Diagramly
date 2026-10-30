@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { BusinessDataApi } from '../adapters/server/business';
 import { computed, ref } from 'vue';
-import type { CoopwireApi, IoOptions } from '../adapters/coopwire/api';
+import type { IoOptions } from '../domain/business';
 import BusinessSelect from './BusinessSelect.vue';
-const props = defineProps<{ api: CoopwireApi; value: Record<string, unknown> }>();
+const props = defineProps<{ api: BusinessDataApi; value: Record<string, unknown> }>();
 const emit = defineEmits<{ patch: [value: Record<string, unknown>] }>();
 const options = ref<IoOptions>(),
   loading = ref(false),

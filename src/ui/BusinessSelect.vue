@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { BusinessOption } from '../adapters/coopwire/api';
+import type { BusinessOption } from '../domain/business';
 const props = defineProps<{
   label: string;
   value: string | string[];

@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type { BusinessDataApi } from '../adapters/server/business';
 import { computed, reactive, ref } from 'vue';
 import BusinessDialog from './BusinessDialog.vue';
 import IoDataFields from './IoDataFields.vue';
-import type { ActivityOptions, BusinessMutation, CoopwireApi } from '../adapters/coopwire/api';
+import type { ActivityOptions, BusinessMutation } from '../domain/business';
 const props = defineProps<{
   kind: 'io' | 'exception' | 'difficult';
-  api?: CoopwireApi;
+  api?: BusinessDataApi;
   item: Record<string, unknown>;
   options?: ActivityOptions;
   save: (mutation: BusinessMutation) => Promise<void>;

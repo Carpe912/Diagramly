@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { BusinessDataApi } from '../adapters/server/business';
 import { onMounted, ref, watch } from 'vue';
-import type { CoopwireApi, BusinessOption } from '../adapters/coopwire/api';
-import type { LinkedChoice } from '../adapters/coopwire/portrait';
+import type { BusinessOption } from '../domain/business';
+import type { LinkedChoice } from '../domain/business';
 import BusinessDialog from './BusinessDialog.vue';
-const props = defineProps<{ api: CoopwireApi; initial?: LinkedChoice }>();
+const props = defineProps<{ api: BusinessDataApi; initial?: LinkedChoice }>();
 const emit = defineEmits<{ chosen: [choice: LinkedChoice]; close: [] }>();
 const flows = ref<BusinessOption[]>([]),
   activities = ref<BusinessOption[]>([]);

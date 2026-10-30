@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { BusinessDataApi } from '../adapters/server/business';
 import { computed, ref } from 'vue';
 import { Settings2, RefreshCw } from '@lucide/vue';
 import BusinessSelect from './BusinessSelect.vue';
@@ -11,9 +12,8 @@ import type {
   ActivityDetail,
   ActivityOptions,
   BusinessMutation,
-  CoopwireApi,
   BusinessOption,
-} from '../adapters/coopwire/api';
+} from '../domain/business';
 const props = defineProps<{
   entity: BusinessEntity;
   node: DiagramNode;
@@ -22,7 +22,7 @@ const props = defineProps<{
   options?: ActivityOptions;
   loadingOptions: boolean;
   related?: ActivityDetail;
-  api?: CoopwireApi;
+  api?: BusinessDataApi;
   saveResource: (mutation: BusinessMutation) => Promise<void>;
 }>();
 const emit = defineEmits<{ patch: [patch: Partial<BusinessEntity>]; loadOptions: [] }>();
@@ -73,6 +73,9 @@ const settings = [
   ['timeVisible', '活动时间要求'],
   ['cycleVisible', '活动周期要求'],
 ] as const;
+function associations(kind: 'requirements' | 'todos', ids: string[]) {
+  emit('patch', { resources: { ...props.entity.resources, [kind]: ids.map((id) => ({ id })) } });
+}
 function patch(value: ActivityDetails) {
   emit('patch', { details: value });
 }
@@ -555,6 +558,22 @@ function relationName(item: Record<string, unknown>, index: number) {
               添加异常
             </button>
           </h3>
+          <BusinessSelect
+            label="关联需求"
+            :value="entity.resources?.requirements?.map((row) => String(row.id)) ?? []"
+            :options="options?.requirements ?? []"
+            remote
+            multiple
+            @change="associations('requirements', $event as string[])"
+          />
+          <BusinessSelect
+            label="关联待办"
+            :value="entity.resources?.todos?.map((row) => String(row.id)) ?? []"
+            :options="options?.todos ?? []"
+            remote
+            multiple
+            @change="associations('todos', $event as string[])"
+          />
           <button class="quiet-button" @click="editing = { kind: 'difficult', item: {} }">
             添加痛点
           </button>
