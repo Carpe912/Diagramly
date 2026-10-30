@@ -1329,7 +1329,8 @@ onBeforeUnmount(() => {
         ></div>
         <CanvasScrollbars v-if="graphEl" :container="graphEl" :tick="viewportTick" />
         <ShapeToolbar
-          v-if="libraryMode === 'toolbar'"
+          v-if="presentationMode || libraryMode === 'toolbar'"
+          :allow-sidebar="!presentationMode"
           :shapes="paletteShapes"
           :icons="icons"
           :busy="editor.busy"

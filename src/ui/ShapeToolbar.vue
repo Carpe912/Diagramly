@@ -7,6 +7,7 @@ const props = defineProps<{
   shapes: PaletteShape[];
   icons: Record<string, Component>;
   busy: boolean;
+  allowSidebar?: boolean;
 }>();
 const emit = defineEmits<{
   add: [shape: PaletteShape];
@@ -112,8 +113,9 @@ onBeforeUnmount(() => {
         ><ChevronUp :size="12" />
       </button>
     </template>
-    <i></i>
+    <i v-if="allowSidebar !== false"></i>
     <button
+      v-if="allowSidebar !== false"
       class="sidebar-mode"
       aria-label="切换到图形库侧栏模式"
       title="侧栏模式"

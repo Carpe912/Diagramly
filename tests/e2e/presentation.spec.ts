@@ -8,6 +8,8 @@ test('演示模式只保留画布和右侧面板，可退出且缩放不变', as
   await expect(page.locator('.canvas-topbar')).toBeHidden();
   await expect(page.locator('.status-bar')).toBeHidden();
   await expect(page.getByTestId('graph')).toBeVisible();
+  await expect(page.getByRole('toolbar', { name: '图形库工具栏' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '切换到图形库侧栏模式' })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: '属性', exact: true })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: /Agent/ })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: '业务详情', exact: true })).toBeVisible();

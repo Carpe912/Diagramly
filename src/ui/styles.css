@@ -2062,8 +2062,7 @@ div.mxCellEditor {
 
 .presentation-mode > .app-header,
 .presentation-mode > .status-bar,
-.presentation-mode .canvas-topbar,
-.presentation-mode .shape-toolbar {
+.presentation-mode .canvas-topbar {
   display: none;
 }
 .presentation-mode .graph-container {
