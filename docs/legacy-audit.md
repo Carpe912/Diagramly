@@ -1,3 +1,5 @@
+> 历史研究资料：当前独立产品已移除旧 Coopwire 运行时，以下内容不作为现行接入或部署说明。
+
 # coopwire-drawio 改造分析与迁移清单
 
 本报告保留第一版审计时的迁移判断；随后已实现既有 Coopwire 远程接口与本次流程的受限 XML 转换，当前状态以 [远程接入文档](coopwire-integration.md) 为准。
