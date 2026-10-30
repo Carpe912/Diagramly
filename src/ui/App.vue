@@ -1347,8 +1347,8 @@ onBeforeUnmount(() => {
           </button>
           <i></i
           ><button
-            :aria-label="presentationMode ? '退出演示模式' : '演示模式'"
-            :title="presentationMode ? '退出演示模式' : '演示模式'"
+            :aria-label="presentationMode ? '退出沉浸绘图' : '沉浸绘图'"
+            :title="presentationMode ? '退出沉浸绘图' : '沉浸绘图'"
             :aria-pressed="presentationMode"
             @click="presentationMode = !presentationMode"
           >

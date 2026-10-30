@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .shape-toolbar {
   position: absolute;
-  bottom: 28px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
