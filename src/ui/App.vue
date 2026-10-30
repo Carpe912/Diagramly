@@ -146,6 +146,7 @@ const presentationMode = ref(
   new URLSearchParams(window.location.search).get('presentation') === '1',
 );
 const workbenchEl = ref<HTMLElement>();
+const fullscreenActive = ref(false);
 async function togglePresentation() {
   if (presentationMode.value) {
     presentationMode.value = false;
@@ -158,6 +159,7 @@ async function togglePresentation() {
     await workbenchEl.value.requestFullscreen().catch(() => {});
 }
 function syncFullscreen() {
+  fullscreenActive.value = document.fullscreenElement === workbenchEl.value;
   if (!document.fullscreenElement && presentationMode.value) presentationMode.value = false;
 }
 watch(presentationMode, async () => {
@@ -398,7 +400,7 @@ const canvasStyle = computed(() => {
     hex = grid.color.slice(1);
   const line = `rgba(${parseInt(hex.slice(0, 2), 16)}, ${parseInt(hex.slice(2, 4), 16)}, ${parseInt(hex.slice(4, 6), 16)}, ${grid.opacity})`;
   return {
-    backgroundColor: settings.background ?? 'transparent',
+    backgroundColor: settings.background ?? (fullscreenActive.value ? '#fff' : 'transparent'),
     backgroundImage: settings.grid
       ? `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`
       : 'none',

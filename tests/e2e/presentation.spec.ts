@@ -6,6 +6,7 @@ test('沉浸绘图只保留画布和右侧面板，可退出且缩放不变', as
   const zoom = await page.locator('.zoom-control > span').innerText();
   await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();
   await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+  await expect(page.getByTestId('canvas-area')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(page.locator('.app-header')).toBeHidden();
   await expect(page.locator('.library-panel')).toBeHidden();
   await expect(page.locator('.canvas-topbar')).toBeHidden();
@@ -20,9 +21,23 @@ test('沉浸绘图只保留画布和右侧面板，可退出且缩放不变', as
   await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
   await page.getByRole('button', { name: '退出沉浸绘图' }).click();
   await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+  await expect(page.getByTestId('canvas-area')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();
   await page.evaluate(() => document.exitFullscreen());
   await expect(page.getByRole('button', { name: '沉浸绘图', exact: true })).toBeVisible();
   await expect(page.locator('.app-header')).toBeVisible();
   await expect(page.locator('.canvas-topbar')).toBeVisible();
+});
+test('已有画布背景在浏览器全屏中保持原颜色', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
+  await page.getByLabel('画布设置', { exact: true }).click();
+  await page.getByLabel('透明背景', { exact: true }).uncheck();
+  await page.getByLabel('画布背景颜色').evaluate((element) => {
+    (element as HTMLInputElement).value = '#eaf4ee';
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+  await expect(page.getByTestId('canvas-area')).toHaveCSS('background-color', 'rgb(234, 244, 238)');
 });
