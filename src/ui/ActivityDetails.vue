@@ -37,8 +37,8 @@ async function loadInterfaces() {
     interfaceError.value = e instanceof Error ? e.message : '接口设计加载失败';
   }
 }
-const editing = ref<{ kind: 'io' | 'exception'; item: Record<string, unknown> }>();
-const deleting = ref<{ kind: 'io' | 'exception'; item: Record<string, unknown> }>();
+const editing = ref<{ kind: 'io' | 'exception' | 'difficult'; item: Record<string, unknown> }>();
+const deleting = ref<{ kind: 'io' | 'exception' | 'difficult'; item: Record<string, unknown> }>();
 const resourceError = ref('');
 const resourceBusy = ref(false);
 const ioRows = computed(() => props.related?.activity.ioputs ?? []);
@@ -104,7 +104,7 @@ const relations = computed(() =>
     ['solveDifficulties', '解决的痛点'],
     ['solveFunctionItems', '关联功能'],
     ['workItemRes', '关联待办'],
-    ['helps', '调研记录'],
+    ['helps', '活动帮助'],
     ['actLinkedMappings', '关联活动'],
   ].map(([key, label]) => ({
     key,
@@ -552,6 +552,9 @@ function relationName(item: Record<string, unknown>, index: number) {
               添加异常
             </button>
           </h3>
+          <button class="quiet-button" @click="editing = { kind: 'difficult', item: {} }">
+            添加痛点
+          </button>
           <details v-for="relation in relations" :key="relation.key" class="related-records">
             <summary>
               {{ relation.label }}<span>{{ relation.items.length }}</span>
@@ -573,6 +576,20 @@ function relationName(item: Record<string, unknown>, index: number) {
                     删除异常
                   </button></span
                 >
+                <span v-if="relation.key === 'difficulties'" class="record-actions">
+                  <button class="quiet-button" @click="editing = { kind: 'difficult', item }">
+                    编辑痛点
+                  </button>
+                  <button
+                    class="quiet-button"
+                    @click="
+                      deleting = { kind: 'difficult', item };
+                      resourceError = '';
+                    "
+                  >
+                    删除痛点
+                  </button>
+                </span>
               </li>
             </ul>
           </details>
@@ -597,6 +614,7 @@ function relationName(item: Record<string, unknown>, index: number) {
       v-if="editing"
       :key="String(editing.item.id ?? editing.item.type ?? editing.kind)"
       :kind="editing.kind"
+      :api="api"
       :item="editing.item"
       :options="options"
       :save="saveResource"

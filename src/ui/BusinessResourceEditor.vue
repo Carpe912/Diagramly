@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import BusinessDialog from './BusinessDialog.vue';
-import type { ActivityOptions, BusinessMutation } from '../adapters/coopwire/api';
+import IoDataFields from './IoDataFields.vue';
+import type { ActivityOptions, BusinessMutation, CoopwireApi } from '../adapters/coopwire/api';
 const props = defineProps<{
-  kind: 'io' | 'exception';
+  kind: 'io' | 'exception' | 'difficult';
+  api: CoopwireApi;
   item: Record<string, unknown>;
   options?: ActivityOptions;
   save: (mutation: BusinessMutation) => Promise<void>;
@@ -13,6 +15,9 @@ const emit = defineEmits<{ close: [] }>();
 const draft = reactive({
   ...JSON.parse(JSON.stringify(props.item)),
   name: String(props.item.name ?? ''),
+  difficultDesc: String(props.item.difficultDesc ?? ''),
+  target: String(props.item.target ?? ''),
+  solveMethod: String(props.item.solveMethod ?? ''),
   desc: String(props.item.desc ?? ''),
   exceptionDesc: String(props.item.exceptionDesc ?? ''),
   resolveMethod: String(props.item.resolveMethod ?? ''),
@@ -22,11 +27,23 @@ const draft = reactive({
   depDevice: String(props.item.depDevice ?? ''),
   objectOperateType: String(props.item.objectOperateType ?? ''),
 });
+if (!Array.isArray(draft.attachmentIds) && Array.isArray(props.item.attachments)) {
+  const ids = props.item.attachments
+    .map((item) =>
+      typeof item === 'string'
+        ? item
+        : item && typeof item === 'object'
+          ? (item as Record<string, unknown>).id
+          : undefined,
+    )
+    .filter((id): id is string => typeof id === 'string');
+  if (ids.length) draft.attachmentIds = ids;
+}
 const busy = ref(false),
   error = ref('');
 const title = computed(
   () =>
-    `${props.item.id ? '编辑' : '添加'}${props.kind === 'exception' ? '异常' : props.item.type === 'input' ? '输入' : '输出'}`,
+    `${props.item.id ? '编辑' : '添加'}${props.kind === 'exception' ? '异常' : props.kind === 'difficult' ? '痛点' : props.item.type === 'input' ? '输入' : '输出'}`,
 );
 const metadata = computed(() =>
   [
@@ -104,6 +121,7 @@ async function submit() {
               </select></label
             >
           </div>
+          <IoDataFields :api="api" :value="draft" @patch="Object.assign(draft, $event)" />
           <details v-if="metadata.length" class="resource-metadata">
             <summary>已关联业务资料</summary>
             <div v-for="group in metadata" :key="group.key">
@@ -115,6 +133,25 @@ async function submit() {
               </ul>
             </div>
           </details>
+        </template>
+        <template v-else-if="kind === 'difficult'">
+          <label
+            >痛点概述<input v-model="draft.desc" aria-label="痛点概述" required maxlength="500"
+          /></label>
+          <label
+            >详细描述<textarea
+              v-model="draft.difficultDesc"
+              aria-label="痛点详细描述"
+              rows="4"
+              required
+            />
+          </label>
+          <label
+            >预期目标<textarea v-model="draft.target" aria-label="痛点预期目标" rows="3" required />
+          </label>
+          <label
+            >解决方法<textarea v-model="draft.solveMethod" aria-label="痛点解决方法" rows="3" />
+          </label>
         </template>
         <template v-else>
           <label

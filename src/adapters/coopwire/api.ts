@@ -72,9 +72,16 @@ export interface BusinessOption {
   label: string;
 }
 export interface BusinessMutation {
-  kind: 'io' | 'exception';
+  kind: 'io' | 'exception' | 'difficult';
   action: 'save' | 'delete';
   data: Record<string, unknown>;
+}
+export interface IoOptions {
+  objects: (BusinessOption & { tableIds: string[] })[];
+  tables: (BusinessOption & { fields: BusinessOption[] })[];
+  statements: BusinessOption[];
+  documents: BusinessOption[];
+  errors: string[];
 }
 export interface ActivityOptions {
   applications: BusinessOption[];
@@ -370,6 +377,78 @@ export class CoopwireApi {
       .parse(result)
       .data.map((item) => ({ value: item.id, label: item.name }));
   }
+  async ioOptions(): Promise<IoOptions> {
+    const p = this.config.projectId,
+      form = { additionalFilters: {}, pageNum: 1, limit: 100000 };
+    const results = await Promise.allSettled([
+      this.request(`/rest/quality/investigate/core/p/${p}/queryObject`, { body: form }),
+      this.request(`/rest/quality/investigate/core/p/${p}/queryTable`, { body: form }),
+      this.request(`/rest/quality/investigate/statement/p/${p}/queryList`, { body: form }),
+      this.request(`/rest/project/p/${p}/document/getTree`, {
+        params: { isPrivateCompany: false, isJyq: false },
+      }),
+    ]);
+    const options: IoOptions = {
+      objects: [],
+      tables: [],
+      statements: [],
+      documents: [],
+      errors: [],
+    };
+    const names = ['数据对象', '数据表', '表单与单证', '附件文档'];
+    const record = z.object({ id: z.string(), name: z.string() }).passthrough();
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        options.errors.push(`${names[index]}读取失败`);
+        return;
+      }
+      try {
+        if (index === 0)
+          options.objects = z
+            .object({
+              data: z.array(
+                z.object({ coreObject: record.extend({ tables: z.array(z.string()).nullish() }) }),
+              ),
+            })
+            .parse(result.value)
+            .data.map(({ coreObject }) => ({
+              value: coreObject.id,
+              label: coreObject.name,
+              tableIds: coreObject.tables ?? [],
+            }));
+        if (index === 1)
+          options.tables = z
+            .object({
+              data: z.array(
+                z.object({ coreTable: record.extend({ tableFields: z.array(record).nullish() }) }),
+              ),
+            })
+            .parse(result.value)
+            .data.map(({ coreTable }) => ({
+              value: coreTable.id,
+              label: coreTable.name,
+              fields: (coreTable.tableFields ?? []).map((field) => ({
+                value: field.id,
+                label: field.name,
+              })),
+            }));
+        if (index === 2)
+          options.statements = z
+            .object({ data: z.array(record) })
+            .parse(result.value)
+            .data.map((item) => ({ value: item.id, label: item.name }));
+        if (index === 3)
+          options.documents = z
+            .array(record.extend({ isDocument: z.boolean().optional() }))
+            .parse(result.value)
+            .filter((item) => item.isDocument)
+            .map((item) => ({ value: item.id, label: item.name }));
+      } catch {
+        options.errors.push(`${names[index]}格式不正确`);
+      }
+    });
+    return options;
+  }
   async flowActivities(flowId: string): Promise<BusinessOption[]> {
     const result = await this.request(
       `/rest/quality/investigate/act/p/${this.config.projectId}/getByFlow`,
@@ -404,6 +483,35 @@ export class CoopwireApi {
     if (kind === 'io') {
       if (action === 'save') await this.saveIo(actId, version, data);
       else await this.deleteIo(actId, version, String(data.id));
+      return;
+    }
+    if (kind === 'difficult') {
+      const existing = typeof data.id === 'string' && !!data.id;
+      if (action === 'delete') {
+        await this.request(`${this.scope('portrait')}/delDifficult`, {
+          body: null,
+          params: { difficultId: String(data.id), version: Number(data.version) },
+        });
+      } else {
+        const value = {
+          difficultDesc: data.difficultDesc,
+          target: data.target,
+          solveMethod: data.solveMethod ?? '',
+          desc: data.desc,
+          belongType: 'activity',
+          status: data.status ?? 'notResolved',
+          belongId: actId,
+          ...(existing ? { id: data.id } : {}),
+        };
+        if (existing) {
+          const body = new FormData();
+          body.append('data', JSON.stringify(value));
+          await this.request(`${this.scope('portrait')}/editDifficult`, {
+            body,
+            params: { version: Number(data.version) },
+          });
+        } else await this.request(`${this.scope('portrait')}/addDifficult`, { body: value });
+      }
       return;
     }
     const existing = typeof data.id === 'string' && !!data.id;

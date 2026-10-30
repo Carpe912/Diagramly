@@ -360,6 +360,75 @@ test('自有输入输出弹窗保留附件信息，保存和删除后同步画�
     .toBe(false);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
+test('输入输出可选择对象表字段、单证和附件并保留原关联', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('button', { name: '输入输出', exact: true }).click();
+  await details.getByRole('button', { name: '添加输出', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '添加输出', exact: true });
+  await dialog.getByLabel('输入输出名称', { exact: true }).fill('结构化订单');
+  await dialog.getByLabel('输入输出描述', { exact: true }).fill('订单号及单证');
+  await dialog.locator('.io-data-fields > summary').click();
+  await dialog.getByLabel('数据对象', { exact: true }).selectOption('object_order');
+  await dialog.getByLabel('选择数据表：订单表', { exact: true }).check();
+  await dialog
+    .getByLabel('订单表字段（不选表示整张表）', { exact: true })
+    .selectOption('field_order_no');
+  await dialog.getByLabel('使用表单 / 单证', { exact: true }).selectOption('statement_order');
+  await dialog.getByLabel('关联附件文档', { exact: true }).selectOption('document_order');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(backend.activities.get('remote_receive')!.activity.ioputs).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        name: '结构化订单',
+        dataObjectId: 'object_order',
+        dataObjectType: 'table',
+        dataTablesWithChoosedFields: [{ tableId: 'table_order', fieldIds: ['field_order_no'] }],
+        statements: ['statement_order'],
+        attachmentIds: ['document_order'],
+      }),
+    ]),
+  );
+});
+test('痛点弹窗可独立新增编辑删除并遵循原接口契约', async ({ page }) => {
+  const backend = new FakeCoopwire();
+  await connect(page, backend);
+  await receive(page);
+  await page.getByRole('tab', { name: '业务详情', exact: true }).click();
+  const details = page.getByTestId('activity-details');
+  await details.getByRole('button', { name: '关联业务', exact: true }).click();
+  await details.getByRole('button', { name: '添加痛点', exact: true }).click();
+  let dialog = page.getByRole('dialog', { name: '添加痛点', exact: true });
+  await dialog.getByLabel('痛点概述', { exact: true }).fill('重复登记');
+  await dialog.getByLabel('痛点详细描述', { exact: true }).fill('客户信息在不同应用重复录入');
+  await dialog.getByLabel('痛点预期目标', { exact: true }).fill('一次录入');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await details
+    .locator('.related-records')
+    .filter({ has: page.locator('summary', { hasText: /^痛点/ }) })
+    .locator('summary')
+    .click();
+  await details.getByRole('button', { name: '编辑痛点', exact: true }).click();
+  dialog = page.getByRole('dialog', { name: '编辑痛点', exact: true });
+  await dialog.getByLabel('痛点解决方法', { exact: true }).fill('使用接口同步');
+  await dialog.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  expect((backend.activities.get('remote_receive')!.difficulties as any[])[0]).toMatchObject({
+    solveMethod: '使用接口同步',
+    version: 2,
+  });
+  await details.getByRole('button', { name: '删除痛点', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除业务记录' })
+    .getByRole('button', { name: '确认删除' })
+    .click();
+  await expect.poll(() => backend.activities.get('remote_receive')!.difficulties).toEqual([]);
+});
 test('自有异常弹窗支持新增编辑和删除，使用独立记录版本', async ({ page }) => {
   const backend = new FakeCoopwire();
   await connect(page, backend);

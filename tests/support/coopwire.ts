@@ -119,6 +119,29 @@ export class FakeCoopwire {
       id = query.get('actId') ?? '';
     const detail = this.activities.get(id);
     if (action === 'selectApp') result = [{ id: 'app_erp', name: '订单应用' }];
+    else if (action === 'queryObject')
+      result = {
+        data: [{ coreObject: { id: 'object_order', name: '订单对象', tables: ['table_order'] } }],
+      };
+    else if (action === 'queryTable')
+      result = {
+        data: [
+          {
+            coreTable: {
+              id: 'table_order',
+              name: '订单表',
+              tableFields: [
+                { id: 'field_order_no', name: '订单号' },
+                { id: 'field_amount', name: '金额' },
+              ],
+            },
+          },
+        ],
+      };
+    else if (action === 'queryList')
+      result = { data: [{ id: 'statement_order', name: '订单单证' }] };
+    else if (action === 'getTree')
+      result = [{ id: 'document_order', name: '订单规范', isDocument: true }];
     else if (action === 'queryDevice')
       result = { data: [{ id: 'device_scanner', name: '扫码枪' }] };
     else if (action === 'list' && new URL(request.url).pathname.includes('/interfaceDesign/'))
@@ -162,6 +185,27 @@ export class FakeCoopwire {
           ...data,
           version: Number(records[index].version) + 1,
         };
+      owner.activity.version++;
+      result = true;
+    } else if (['addDifficult', 'editDifficult', 'delDifficult'].includes(action)) {
+      const recordId = String(data?.id ?? query.get('difficultId') ?? '');
+      const owner =
+        action === 'addDifficult'
+          ? this.activities.get(String(data.belongId))
+          : [...this.activities.values()].find((row) =>
+              (row.difficulties as Record<string, unknown>[] | undefined)?.some(
+                (item) => item.id === recordId,
+              ),
+            );
+      if (!owner) return Response.json({ code: 404, msg: '痛点所属活动不存在' });
+      const rows = (owner.difficulties ??= []) as Record<string, unknown>[];
+      const index = rows.findIndex((item) => item.id === recordId);
+      if (action === 'addDifficult')
+        rows.push({ ...data, id: `difficult_${++this.sequence}`, version: 1 });
+      else if (index < 0 || rows[index].version !== Number(query.get('version')))
+        return Response.json({ code: 999, msg: '痛点版本冲突' }, { status: 409 });
+      else if (action === 'delDifficult') rows.splice(index, 1);
+      else rows[index] = { ...rows[index], ...data, version: Number(rows[index].version) + 1 };
       owner.activity.version++;
       result = true;
     } else if (action === 'addActs') {
