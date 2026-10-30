@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
+import { createShapeRegistry } from '../src/shapes/registry';
+import { validateDocument } from '../src/domain/validation';
 import { documentSchema, idSchema } from '../src/domain/model';
 export interface DocumentStore {
   list(): Promise<unknown>;
@@ -41,7 +43,13 @@ export function createServer(store: DocumentStore, credentials: string) {
       .strict()
       .parse(request.body);
     if (body.document.id !== id) return reply.code(400).send({ message: '文档 ID 不匹配' });
-    const revision = await store.save(id, body.document, body.expectedRevision);
+    let validated;
+    try {
+      validated = validateDocument(body.document, createShapeRegistry());
+    } catch {
+      return reply.code(400).send({ message: '图形引用或布局不合法' });
+    }
+    const revision = await store.save(id, validated, body.expectedRevision);
     if (revision === null)
       return reply.code(409).send({ message: '文档已在其他窗口修改，请先重新读取' });
     return { revision };

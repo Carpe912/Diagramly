@@ -22,25 +22,24 @@ const app = createServer(
     },
     async save(id, document, expected) {
       // 原子版本比较，避免多个标签页静默覆盖同一文档。
-      const result = await pool.query(
-        `INSERT INTO documents(id,title,revision,document)
-      SELECT $1,$2,1,$3 WHERE $4=0
-      ON CONFLICT(id) DO UPDATE SET title=$2,document=$3,revision=documents.revision+1,updated_at=now()
-      WHERE documents.revision=$4 RETURNING revision`,
-        [id, (document as { title: string }).title, document, expected],
-      );
-      // 已存在文档的更新不走 INSERT 条件。
-      if (result.rows[0]) return result.rows[0].revision;
-      if (expected > 0)
+      const values = [id, (document as { title: string }).title, document];
+      if (expected === 0)
         return (
           (
             await pool.query(
-              'UPDATE documents SET title=$2,document=$3,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$4 RETURNING revision',
-              [id, (document as { title: string }).title, document, expected],
+              'INSERT INTO documents(id,title,revision,document) VALUES($1,$2,1,$3) ON CONFLICT(id) DO NOTHING RETURNING revision',
+              values,
             )
           ).rows[0]?.revision ?? null
         );
-      return null;
+      return (
+        (
+          await pool.query(
+            'UPDATE documents SET title=$2,document=$3,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$4 RETURNING revision',
+            [...values, expected],
+          )
+        ).rows[0]?.revision ?? null
+      );
     },
   },
   process.env.DIAGRAMLY_CREDENTIALS ?? '',
