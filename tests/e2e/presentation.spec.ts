@@ -5,6 +5,7 @@ test('沉浸绘图只保留画布和右侧面板，可退出且缩放不变', as
   await expect(page.locator('.zoom-control > span')).not.toHaveText('100%');
   const zoom = await page.locator('.zoom-control > span').innerText();
   await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
   await expect(page.locator('.app-header')).toBeHidden();
   await expect(page.locator('.library-panel')).toBeHidden();
   await expect(page.locator('.canvas-topbar')).toBeHidden();
@@ -18,6 +19,10 @@ test('沉浸绘图只保留画布和右侧面板，可退出且缩放不变', as
   await page.getByRole('tab', { name: '属性', exact: true }).click();
   await expect(page.locator('.zoom-control > span')).toHaveText(zoom);
   await page.getByRole('button', { name: '退出沉浸绘图' }).click();
+  await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+  await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();
+  await page.evaluate(() => document.exitFullscreen());
+  await expect(page.getByRole('button', { name: '沉浸绘图', exact: true })).toBeVisible();
   await expect(page.locator('.app-header')).toBeVisible();
   await expect(page.locator('.canvas-topbar')).toBeVisible();
 });

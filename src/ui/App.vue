@@ -145,6 +145,21 @@ const panelTab = ref<'properties' | 'details' | 'agent' | 'discussions' | 'inspe
 const presentationMode = ref(
   new URLSearchParams(window.location.search).get('presentation') === '1',
 );
+const workbenchEl = ref<HTMLElement>();
+async function togglePresentation() {
+  if (presentationMode.value) {
+    presentationMode.value = false;
+    if (document.fullscreenElement === workbenchEl.value)
+      await document.exitFullscreen().catch(() => {});
+    return;
+  }
+  presentationMode.value = true;
+  if (workbenchEl.value && document.fullscreenEnabled)
+    await workbenchEl.value.requestFullscreen().catch(() => {});
+}
+function syncFullscreen() {
+  if (!document.fullscreenElement && presentationMode.value) presentationMode.value = false;
+}
 watch(presentationMode, async () => {
   await nextTick();
   viewportTick.value++;
@@ -993,6 +1008,7 @@ onMounted(async () => {
   }
   bindEditor();
   window.addEventListener('keydown', keyboard);
+  document.addEventListener('fullscreenchange', syncFullscreen);
   canvas?.fit();
   ready.value = true;
 });
@@ -1001,6 +1017,7 @@ onBeforeUnmount(() => {
   unsubscribe?.();
   canvas?.destroy();
   window.removeEventListener('keydown', keyboard);
+  document.removeEventListener('fullscreenchange', syncFullscreen);
 });
 </script>
 
@@ -1023,6 +1040,7 @@ onBeforeUnmount(() => {
     @open="openServerDocument"
   />
   <div
+    ref="workbenchEl"
     class="workbench"
     :style="{ visibility: ready ? 'visible' : 'hidden' }"
     :class="{ 'presentation-mode': presentationMode }"
@@ -1262,7 +1280,7 @@ onBeforeUnmount(() => {
             :aria-label="presentationMode ? '退出沉浸绘图' : '沉浸绘图'"
             :title="presentationMode ? '退出沉浸绘图' : '沉浸绘图'"
             :aria-pressed="presentationMode"
-            @click="presentationMode = !presentationMode"
+            @click="togglePresentation"
           >
             <PanelTop :size="14" />
           </button>
