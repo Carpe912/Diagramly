@@ -55,8 +55,11 @@ export default defineConfig(({ mode }) => {
               target,
               changeOrigin: true,
               configure(proxy) {
-                proxy.on('proxyReq', (request) => {
-                  const cookie = readCookie();
+                proxy.on('proxyReq', (request, incoming) => {
+                  // 浏览器手动配置的登录态优先，本机会话文件仅作为后备。
+                  const browserCookie = incoming.headers.cookie ?? '';
+                  const hasAccessToken = /(?:^|;)\s*access_token=[^;]+/.test(browserCookie);
+                  const cookie = hasAccessToken ? browserCookie : readCookie();
                   if (cookie) request.setHeader('cookie', cookie);
                 });
                 proxy.on('proxyRes', (response, request) => {

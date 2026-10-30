@@ -190,6 +190,11 @@ function alignSelection(mode: Alignment) {
   ]);
 }
 const remoteSession = shallowRef<CoopwireSession>();
+const browserLoggedIn = ref(false);
+function detectBrowserLogin() {
+  browserLoggedIn.value = /(?:^|;)\s*access_token=[^;]+/.test(document.cookie);
+}
+
 const hasBusinessDetails = computed(() => {
   const node = selectedNode.value;
   if (!node || !isBusinessNode(node)) return false;
@@ -995,6 +1000,8 @@ async function exportFile() {
 }
 onMounted(async () => {
   bindEditor();
+  detectBrowserLogin();
+  window.addEventListener('focus', detectBrowserLogin);
   window.addEventListener('keydown', keyboard);
   configureCoopwireAuth({ refresh: () => refreshCoopwireSession(remoteConfig.baseUrl) });
   try {
@@ -1002,6 +1009,9 @@ onMounted(async () => {
     if (context) {
       Object.assign(remoteConfig, context.config);
       await connectRemote();
+    } else if (browserLoggedIn.value) {
+      if (remoteConfig.projectId && remoteConfig.flowchartId) await connectRemote();
+      else connectionOpen.value = true;
     }
   } catch (cause) {
     showError(cause);
@@ -1013,6 +1023,7 @@ onBeforeUnmount(() => {
   unsubscribe?.();
   canvas?.destroy();
   window.removeEventListener('keydown', keyboard);
+  window.removeEventListener('focus', detectBrowserLogin);
 });
 </script>
 
@@ -1034,7 +1045,13 @@ onBeforeUnmount(() => {
       >
       <div class="header-actions">
         <button class="button secondary" @click="connectionOpen = true">
-          <GitBranch :size="14" />{{ remoteSession ? 'Coopwire 已连接' : '连接 Coopwire' }}
+          <GitBranch :size="14" />{{
+            remoteSession
+              ? 'Coopwire 已连接'
+              : browserLoggedIn
+                ? 'Coopwire 已登录'
+                : '连接 Coopwire'
+          }}
         </button>
         <button class="text-button" @click="showData = true"><Code2 :size="15" /> 文档数据</button>
         <span class="avatar">D</span>
