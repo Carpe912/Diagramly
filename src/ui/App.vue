@@ -122,6 +122,13 @@ const selection = ref<string[]>([]),
   libraryTab = ref<'shapes' | 'layers'>('shapes');
 const panelTab = ref<'properties' | 'details' | 'agent'>('properties'),
   activeTool = ref<'select' | 'hand' | 'connect'>('select');
+const presentationMode = ref(
+  new URLSearchParams(window.location.search).get('presentation') === '1',
+);
+watch(presentationMode, async () => {
+  await nextTick();
+  viewportTick.value++;
+});
 const libraryMode = ref<'sidebar' | 'toolbar'>('sidebar');
 try {
   if (localStorage.getItem('diagramly.library.mode') === 'toolbar') libraryMode.value = 'toolbar';
@@ -1100,7 +1107,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="workbench">
+  <div class="workbench" :class="{ 'presentation-mode': presentationMode }">
     <header class="app-header">
       <a class="brand" href="#" aria-label="Diagramly 首页"
         ><span class="brand-mark"><GitBranch :size="20" /></span>diagramly<span class="brand-dot"
@@ -1114,6 +1121,7 @@ onBeforeUnmount(() => {
       </div>
       <span class="local-status"><span></span>{{ saveState }}</span>
       <div class="header-actions">
+        <button class="text-button" @click="presentationMode = true">演示模式</button>
         <button class="button secondary" @click="connectionOpen = true">
           <GitBranch :size="14" />{{
             remoteSession
@@ -1138,7 +1146,7 @@ onBeforeUnmount(() => {
 
     <div class="workspace-body">
       <ResizableSidebar
-        v-show="libraryMode === 'sidebar'"
+        v-show="!presentationMode && libraryMode === 'sidebar'"
         class="library-panel"
         side="left"
         label="图形库侧栏"
@@ -1351,6 +1359,14 @@ onBeforeUnmount(() => {
         @resized="resizePanel"
       >
         <div class="panel-tabs" role="tablist" aria-label="图形面板">
+          <button
+            v-if="presentationMode"
+            class="quiet-button"
+            aria-label="退出演示模式"
+            @click="presentationMode = false"
+          >
+            退出演示
+          </button>
           <button
             role="tab"
             :aria-selected="panelTab === 'properties'"

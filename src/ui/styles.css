@@ -2059,3 +2059,16 @@ div.mxCellEditor {
   font-size: 10px;
   padding: 4px 7px;
 }
+
+.presentation-mode > .app-header,
+.presentation-mode > .status-bar,
+.presentation-mode .canvas-topbar,
+.presentation-mode .shape-toolbar {
+  display: none;
+}
+.presentation-mode .graph-container {
+  top: var(--canvas-gutter);
+}
+.presentation-mode {
+  min-height: 0;
+}
