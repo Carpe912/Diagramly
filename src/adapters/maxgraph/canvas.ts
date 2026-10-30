@@ -597,6 +597,13 @@ export class DiagramCanvas {
           style: {
             shape: part.primitive,
             fillColor: part.fill,
+            // 活动分区背景贴近外框，圆角随主体尺寸变化，避免用大边距避让。
+            rounded:
+              part.rounded ??
+              (node.type === 'activity' &&
+                style.rounded === true &&
+                ['header', 'footer'].includes(part.key)),
+            arcSize: (Math.min(b.width, b.height) * 8) / Math.max(1, part.bounds.height),
             strokeColor: part.stroke ?? 'none',
             fontColor: part.color ?? '#334155',
             fontSize: part.fontSize ?? 12,
