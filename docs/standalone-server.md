@@ -22,3 +22,17 @@
 编辑器顶部的文档库入口可以登录、新建和打开服务端文档。打开后自动保存 JSON，IndexedDB 按文档 ID 保留副本。登录凭证仅保存在内存，刷新后需重新登录。保存失败或冲突后停止远程写入，需重新打开并核对本机草稿，不会盲目重试覆盖。
 
 开发时分别启动 npm run server 和 npm run dev；Vite 的 /api 默认代理到 127.0.0.1:3000，可用 DIAGRAMLY_API_TARGET 配置。旧 Coopwire 自动连接与界面入口已停用，历史适配器尚待删除。尚未实现离线草稿合并、完整账号体系和版本管理，也尚未在目标服务器部署验证。
+
+## 当前服务器部署
+
+服务器使用现有 Node 20、PostgreSQL 和 Nginx，通过 systemd 管理 diagramly 服务（未安装 Docker）。部署目录 /opt/diagramly/current 指向 releases 内的发布目录，服务用户为 diagramly，API 仅监听 127.0.0.1:3091。
+
+站点路径 /diagramly/，构建命令：DIAGRAMLY_BASE=/diagramly/ VITE_API_BASE=/diagramly/api npm run build。Nginx 配置模板见 deploy/diagramly-location.conf，systemd 模板见 deploy/diagramly.service。独立数据库及角色均为 diagramly，不复用其他应用的业务库。
+
+环境配置 /opt/diagramly/service.env 与初始登录信息 /opt/diagramly/login.txt 仅 root 可读，不上传至源码仓库。更新时上传新发布目录、安装依赖、切换 current 链接并重启 diagramly；需要回退时将 current 切回上一发布目录。数据库备份与结构迁移必须另行管理，不通过切换代码版本回退数据库。
+
+### 首次部署验证结果
+
+已在服务器验证进程运行、Nginx 本机 HTTPS 路由返回 200、PostgreSQL JSON 创建与读取、版本冲突 409 和未登录访问 401，临时验证文档已清理。
+
+原 sunlingyue.cn 证书于 2026-10-03 过期。尝试独立 Certbot HTTP 验证时，CA 两次收到 403；服务器本机验证路径正常。未替换原证书，公网 HTTPS 仍待修复和验收。新证书需通过可用的 HTTP 验证或 DNS 验证签发后再配置，不建议绕过浏览器证书校验输入登录凭证。

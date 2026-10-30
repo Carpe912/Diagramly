@@ -5,7 +5,7 @@ export function login(username: string, password: string) {
   authorization = `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
 }
 export async function request(path: string, options: RequestInit = {}) {
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE || '/api'}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

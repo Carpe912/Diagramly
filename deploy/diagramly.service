@@ -1,0 +1,19 @@
+[Unit]
+Description=Diagramly standalone API
+After=network.target postgresql.service
+[Service]
+Type=simple
+User=diagramly
+Group=diagramly
+WorkingDirectory=/opt/diagramly/current
+EnvironmentFile=/opt/diagramly/service.env
+ExecStart=/usr/bin/node --import tsx server/index.ts
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+MemoryMax=384M
+[Install]
+WantedBy=multi-user.target

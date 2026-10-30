@@ -46,6 +46,7 @@ export default defineConfig(({ mode }) => {
   readCookie();
   const target = process.env.COOPWIRE_TARGET || env.COOPWIRE_TARGET;
   return {
+    base: process.env.DIAGRAMLY_BASE || '/',
     plugins: [
       vue(),
       {
