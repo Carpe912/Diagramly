@@ -20,7 +20,9 @@ export function nodePresentation(doc: DiagramDocument, node: DiagramNode, regist
     node.appearance.strokeEnabled === false
       ? 'none'
       : container
-        ? node.appearance.accent || '#d5deeb'
+        ? !node.appearance.accent || node.appearance.accent === '#5d72bd'
+          ? '#d5deeb'
+          : node.appearance.accent
         : node.appearance.accent;
   let parts: ShapePart[];
   if (isPoolType(node.type)) {

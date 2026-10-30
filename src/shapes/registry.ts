@@ -241,7 +241,7 @@ export function createShapeRegistry() {
         return [
           {
             key: 'header',
-            bounds: { x: 1, y: 1, width: w - 2, height: 29 },
+            bounds: { x: 8, y: 1, width: w - 16, height: 29 },
             text: `${entity.code || 'ACT'}   ${activityLabels[entity.activityType]}`,
             primitive: 'rectangle',
             fill: '#f7f8fa',
@@ -263,7 +263,7 @@ export function createShapeRegistry() {
           },
           {
             key: 'footer',
-            bounds: { x: 1, y: h - 30, width: w - 2, height: 29 },
+            bounds: { x: 8, y: h - 30, width: w - 16, height: 29 },
             text: `${entity.critical ? '★ 关键活动' : '○ 常规活动'}   ·   输入 ${entity.inputs.length} / 输出 ${entity.outputs.length}`,
             primitive: 'rectangle',
             fill: '#f3f6fb',
