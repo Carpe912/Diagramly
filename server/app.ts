@@ -5,7 +5,8 @@ import { createShapeRegistry } from '../src/shapes/registry';
 import { validateDocument } from '../src/domain/validation';
 import { documentSchema, idSchema } from '../src/domain/model';
 export interface DocumentStore {
-  list(): Promise<unknown>;
+  list(trash?: boolean): Promise<unknown>;
+  setDeleted?(id: string, expected: number, restore: boolean): Promise<number | null>;
   get(id: string): Promise<{ revision: number; document: unknown } | null>;
   save(id: string, document: unknown, expected: number): Promise<number | null>;
 }
@@ -30,7 +31,21 @@ export function createServer(store: DocumentStore, credentials: string) {
     return reply.code(500).send({ message: '服务暂时不可用' });
   });
   app.get('/api/health', async () => ({ status: 'ok' }));
-  app.get('/api/documents', () => store.list());
+  app.get('/api/documents', (request) =>
+    store.list((request.query as { trash?: string }).trash === 'true'),
+  );
+  app.post('/api/documents/:id/lifecycle', async (request, reply) => {
+    const id = idSchema.parse((request.params as { id: string }).id);
+    const body = z
+      .object({ expectedRevision: z.number().int().positive(), restore: z.boolean() })
+      .strict()
+      .parse(request.body);
+    if (!store.setDeleted) return reply.code(503).send({ message: '当前存储不支持回收站' });
+    const revision = await store.setDeleted(id, body.expectedRevision, body.restore);
+    return revision === null
+      ? reply.code(409).send({ message: '文档状态已变化，请刷新列表' })
+      : { revision };
+  });
   app.get('/api/documents/:id', async (request, reply) => {
     const id = idSchema.parse((request.params as { id: string }).id);
     const result = await store.get(id);

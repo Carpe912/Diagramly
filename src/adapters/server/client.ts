@@ -4,6 +4,7 @@ let authorization = '';
 export function login(username: string, password: string) {
   authorization = `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
 }
+export const hasServerSession = () => !!authorization;
 export async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`${import.meta.env.VITE_API_BASE || '/api'}${path}`, {
     ...options,
@@ -21,10 +22,10 @@ export async function request(path: string, options: RequestInit = {}) {
   }
   return response.json();
 }
-export const listDocuments = async () =>
+export const listDocuments = async (trash = false) =>
   z
     .array(z.object({ id: z.string(), title: z.string(), revision: z.number() }))
-    .parse(await request('/documents'));
+    .parse(await request(trash ? '/documents?trash=true' : '/documents'));
 export const getDocument = async (id: string) =>
   z
     .object({ document: documentSchema, revision: z.number().int().positive() })

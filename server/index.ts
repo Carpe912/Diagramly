@@ -5,19 +5,34 @@ await pool.query(`CREATE TABLE IF NOT EXISTS documents (
  id text PRIMARY KEY, title text NOT NULL, revision integer NOT NULL,
  document jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now()
 )`);
+await pool.query('ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted_at timestamptz');
 const app = createServer(
   {
-    async list() {
+    async list(trash = false) {
       return (
         await pool.query(
-          'SELECT id,title,revision,updated_at FROM documents ORDER BY updated_at DESC',
+          `SELECT id,title,revision,updated_at FROM documents WHERE deleted_at IS ${trash ? 'NOT NULL' : 'NULL'} ORDER BY updated_at DESC`,
         )
       ).rows;
     },
     async get(id) {
       return (
-        (await pool.query('SELECT revision,document FROM documents WHERE id=$1', [id])).rows[0] ??
-        null
+        (
+          await pool.query(
+            'SELECT revision,document FROM documents WHERE id=$1 AND deleted_at IS NULL',
+            [id],
+          )
+        ).rows[0] ?? null
+      );
+    },
+    async setDeleted(id, expected, restore) {
+      return (
+        (
+          await pool.query(
+            `UPDATE documents SET deleted_at=${restore ? 'NULL' : 'now()'},revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 AND deleted_at IS ${restore ? 'NOT NULL' : 'NULL'} RETURNING revision`,
+            [id, expected],
+          )
+        ).rows[0]?.revision ?? null
       );
     },
     async save(id, document, expected) {
@@ -35,7 +50,7 @@ const app = createServer(
       return (
         (
           await pool.query(
-            'UPDATE documents SET title=$2,document=$3,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$4 RETURNING revision',
+            'UPDATE documents SET title=$2,document=$3,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$4 AND deleted_at IS NULL RETURNING revision',
             [...values, expected],
           )
         ).rows[0]?.revision ?? null
