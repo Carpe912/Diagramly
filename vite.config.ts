@@ -10,7 +10,10 @@ export default defineConfig(({ mode }) => {
     if (!sessionFile) return '';
     try {
       return String(JSON.parse(readFileSync(sessionFile, 'utf8')).cookie || '');
-    } catch {
+    } catch (error) {
+      // 临时会话文件可能在重启后消失，允许编辑器和本机功能继续启动。
+      // 不注入 Cookie 时，代理沿用浏览器请求携带的登录态。
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return '';
       throw new Error('无法读取 Coopwire 本机鉴权文件');
     }
   };
