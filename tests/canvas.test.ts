@@ -4,7 +4,7 @@ import { Editor } from '../src/application/editor';
 import { demoDocument } from '../src/application/demo';
 import { defaultCanvasSettings } from '../src/domain/model';
 import { createShapeRegistry } from '../src/shapes/registry';
-import { readFlow, writeFlow } from '../src/adapters/coopwire/codec';
+import { readFlow, writeFlow } from '../src/adapters/formats/xml';
 const registry = createShapeRegistry();
 describe('画布设置', () => {
   it('旧文档默认透明且不显示网格，修改设置可完整撤销', () => {

@@ -5,6 +5,7 @@ test('本机活动和业务表单写入 IndexedDB，刷新恢复且不创建远�
     if (request.method() === 'POST' && request.url().includes('/rest/')) writes.push(request.url());
   });
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByTestId('shape-activity').click();
   await page.getByRole('tab', { name: '业务详情', exact: true }).click();
   await page.getByLabel('活动名称', { exact: true }).fill('IndexedDB 草稿活动');

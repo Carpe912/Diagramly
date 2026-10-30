@@ -10,6 +10,7 @@ async function readDocument(page: Page) {
 }
 test('头部只保留文档数据入口，弹窗支持 JSON、XML 和 PNG 导出', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await expect(page.locator('.app-header').getByRole('button', { name: /导入|导出/ })).toHaveCount(
     0,
   );
@@ -26,6 +27,7 @@ test('头部只保留文档数据入口，弹窗支持 JSON、XML 和 PNG 导出
 });
 test('XML 从文档数据导入后保留泳池与业务身份，错误 XML 不覆盖画布', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const before = await readDocument(page);
   await dialog(page);
   await page.getByLabel('导出格式').selectOption('xml');

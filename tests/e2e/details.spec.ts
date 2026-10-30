@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('本机业务图形可以打开自有详情，图形库明确列出四类活动', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
   await page.getByRole('tab', { name: '业务详情', exact: true }).click();
@@ -34,6 +35,7 @@ test('本机业务图形可以打开自有详情，图形库明确列出四类�
 
 test('四类活动共用业务节点结构并保留独立类型，阶段分别为一个节点', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   for (const id of ['shape-stage-horizontal', 'shape-stage-vertical']) {
     await page.getByTestId(id).click();
     const title = page.locator('[data-part-id$="::bar"] > rect[fill]').last();
@@ -76,6 +78,7 @@ test('四类活动共用业务节点结构并保留独立类型，阶段分别�
 
 test('选中阶段可调整文字颜色、大小、粗细和排版方向', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByTestId('shape-stage-horizontal').click();
   const toolbar = page.getByRole('toolbar', { name: '阶段工具栏' });
   await expect(toolbar).toBeVisible();

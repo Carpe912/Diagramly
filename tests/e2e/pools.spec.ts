@@ -1,3 +1,4 @@
+import { readStoredDraft } from '../support/drafts';
 import { expect, test, type Page } from '@playwright/test';
 import type { DiagramDocument } from '../../src/domain/model';
 import { absoluteBounds } from '../../src/domain/pools';
@@ -20,6 +21,7 @@ async function setColor(page: Page, label: string, value: string) {
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
 });
 test('selecting a pool on the actual canvas reveals the pool toolbar', async ({ page }) => {
   const root = page.locator('[data-element-id="pool_order"]').first();
@@ -279,11 +281,7 @@ test('switches direction, changes rendered themes and persists both across reloa
   expect(Object.keys(doc.edges)).toHaveLength(6);
   expect(doc.nodes.receive.parentId).toBe('lane_sales');
   await expect
-    .poll(() =>
-      page.evaluate(
-        () => JSON.parse(localStorage.getItem('diagramly.document.v1')!).nodes.pool_order.type,
-      ),
-    )
+    .poll(async () => (await readStoredDraft(page))?.nodes.pool_order.type)
     .toBe('pool-vertical');
   await page.reload();
   await poolSelection(page);

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 test('沉浸绘图只保留画布和右侧面板，可退出且缩放不变', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await expect(page.locator('.zoom-control > span')).not.toHaveText('100%');
   const zoom = await page.locator('.zoom-control > span').innerText();
   await page.getByRole('button', { name: '沉浸绘图', exact: true }).click();

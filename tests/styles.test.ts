@@ -4,7 +4,7 @@ import { Editor } from '../src/application/editor';
 import { demoDocument } from '../src/application/demo';
 import { createShapeRegistry } from '../src/shapes/registry';
 import { edgeLineAppearance, lineStyleFromXml, nodeLineAppearance } from '../src/shapes/styles';
-import { writeFlow } from '../src/adapters/coopwire/codec';
+import { writeFlow } from '../src/adapters/formats/xml';
 import { importGraphFile } from '../src/adapters/storage/files';
 import { createAgentTools } from '../src/agent/tools';
 const registry = createShapeRegistry();

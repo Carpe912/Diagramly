@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { deflateRawSync } from 'node:zlib';
 import { demoDocument } from '../src/application/demo';
 import { createShapeRegistry } from '../src/shapes/registry';
-import { writeFlow } from '../src/adapters/coopwire/codec';
+import { writeFlow } from '../src/adapters/formats/xml';
 import { importGraphFile } from '../src/adapters/storage/files';
 const registry = createShapeRegistry();
 describe('文档文件导入', () => {

@@ -9,6 +9,7 @@ async function readDocument(page: Page): Promise<DiagramDocument> {
 }
 test('多选节点对齐，单选支持吸附网格，连接关系和业务身份不变', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '接收客户订单', exact: true }).click();
   await page

@@ -1,3 +1,4 @@
+import { readStoredDraft } from '../support/drafts';
 import { expect, test, type Page } from '@playwright/test';
 async function readDocument(page: Page) {
   await page.getByRole('button', { name: '文档数据', exact: true }).click();
@@ -26,6 +27,7 @@ async function pngPixel(page: Page, doc: unknown, x = 0, y = 0) {
 }
 test('画布网格和背景可设置、持久化并撤销', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByLabel('画布设置', { exact: true }).click();
   await expect(page.getByLabel('透明背景', { exact: true })).toBeChecked();
   await page.getByLabel('显示网格', { exact: true }).check();
@@ -57,13 +59,7 @@ test('画布网格和背景可设置、持久化并撤销', async ({ page }) => 
     gridOpacity: 0.5,
   });
   await expect(page.getByTestId('canvas-area')).toHaveCSS('background-color', 'rgb(234, 244, 238)');
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => JSON.parse(localStorage.getItem('diagramly.document.v1')!).canvas?.background,
-      ),
-    )
-    .toBe('#eaf4ee');
+  await expect.poll(async () => (await readStoredDraft(page))?.canvas?.background).toBe('#eaf4ee');
   await page.reload();
   expect((await readDocument(page)).canvas).toMatchObject({
     background: '#eaf4ee',
@@ -73,6 +69,7 @@ test('画布网格和背景可设置、持久化并撤销', async ({ page }) => 
 });
 test('PNG 默认透明，设置背景和网格后真实像素随之变化', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const doc = await readDocument(page);
   expect((await pngPixel(page, doc))[3]).toBe(0);
   expect(

@@ -1,3 +1,4 @@
+import { readStoredDraft } from '../support/drafts';
 import { expect, test, type Page } from '@playwright/test';
 import type { DiagramDocument } from '../../src/domain/model';
 async function readDocument(page: Page): Promise<DiagramDocument> {
@@ -12,6 +13,7 @@ async function selectLayer(page: Page, name: string) {
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await expect(page.locator('[data-element-id="receive"]').first()).toBeVisible();
 });
 test('renders the real graph and treats a composite as one selectable business node', async ({
@@ -56,12 +58,7 @@ test('persists edits through reload and safely imports an exported document', as
   await field.fill('持久化活动');
   await field.press('Tab');
   await expect
-    .poll(async () =>
-      page.evaluate(
-        () =>
-          JSON.parse(localStorage.getItem('diagramly.document.v1')!).entities.entity_receive.name,
-      ),
-    )
+    .poll(async () => (await readStoredDraft(page))?.entities.entity_receive.name)
     .toBe('持久化活动');
   await page.reload();
   await selectLayer(page, '持久化活动');

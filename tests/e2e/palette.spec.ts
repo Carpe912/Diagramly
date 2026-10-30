@@ -8,6 +8,7 @@ async function readDocument(page: Page) {
 
 test('图形库可切换为浮动工具栏，点击、拖放和键盘菜单均可用', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const before = await readDocument(page);
   const initialWidth = (await page.getByTestId('graph').boundingBox())!.width;
   await page.getByRole('button', { name: '切换到图形库工具栏模式' }).click();
@@ -44,6 +45,7 @@ test('图形库可切换为浮动工具栏，点击、拖放和键盘菜单均�
 
 test('窄画布自动合并图形分类，顶部文件操作收进更多菜单', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByRole('button', { name: '切换到图形库工具栏模式' }).click();
   await page.setViewportSize({ width: 1100, height: 760 });
   await page.getByRole('separator', { name: '属性侧栏宽度', exact: true }).press('End');

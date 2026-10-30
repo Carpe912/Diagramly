@@ -26,6 +26,7 @@ async function drag(
 }
 test('滚轮围绕鼠标位置缩放，缩放往返不漂移且不修改文档', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const doc = await readDocument(page),
     before = await bounds(page, 'receive');
   const x = before.x + before.width / 2,
@@ -48,6 +49,7 @@ test('滚轮围绕鼠标位置缩放，缩放往返不漂移且不修改文档',
 
 test('泳池方向切换、增删移动泳道和新增图形均不触发适应画布', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const graph = (await page.getByTestId('graph').boundingBox())!;
   await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
   await page.mouse.wheel(0, -3000);
@@ -90,6 +92,7 @@ test('泳池方向切换、增删移动泳道和新增图形均不触发适应�
 
 test('新建、打开示例和导入文档保留缩放比例', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const document = await readDocument(page);
   const graph = (await page.getByTestId('graph').boundingBox())!;
   await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
@@ -113,6 +116,7 @@ test('新建、打开示例和导入文档保留缩放比例', async ({ page }) 
 });
 test('内容未溢出时与可见区域同大，放大后通过横纵滚动条找回视野外图形', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const doc = await readDocument(page),
     graph = await page.getByTestId('graph').boundingBox();
   if (!graph) throw Error('缺少画布');
@@ -177,6 +181,7 @@ test('内容未溢出时与可见区域同大，放大后通过横纵滚动条�
 });
 test('鼠标可拖动横纵滚动条并使用键盘定位，画布工具栏不随内容滚动', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const graph = (await page.getByTestId('graph').boundingBox())!,
     tools = await page.getByRole('toolbar', { name: '画布工具' }).boundingBox();
   await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
@@ -211,6 +216,7 @@ test('鼠标可拖动横纵滚动条并使用键盘定位，画布工具栏不�
 });
 test('普通拖拽恢复框选，组合图形只选择业务节点，框选不移动画布', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const fixture = demoDocument();
   fixture.edges = {};
   const ids = ['receive', 'confirm', 'deliver'];
@@ -284,6 +290,7 @@ test('普通拖拽恢复框选，组合图形只选择业务节点，框选不�
 });
 test('泳道内容区也可直接框选，标题仍可单独选择泳道', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const doc = await readDocument(page),
     a = await bounds(page, 'receive'),
     b = await bounds(page, 'confirm');
@@ -302,6 +309,7 @@ test('泳道内容区也可直接框选，标题仍可单独选择泳道', async
 });
 test('平移工具、中键与空格只滚动视口，切回选择工具后仍可框选', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const doc = await readDocument(page),
     graph = (await page.getByTestId('graph').boundingBox())!;
   await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
@@ -338,6 +346,7 @@ test('平移工具、中键与空格只滚动视口，切回选择工具后仍�
 });
 test('移动图形到可见范围外自动扩展，删除内容后滚动范围回收为空画布', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByRole('button', { name: /^图层/ }).click();
   await page.getByRole('button', { name: '订单履约泳池', exact: true }).click();
   await page.getByLabel('图形 x', { exact: true }).fill('2000');
@@ -368,6 +377,7 @@ test('移动图形到可见范围外自动扩展，删除内容后滚动范围�
 });
 test('负坐标图形也纳入滚动范围，不修改文档即可滚动到达', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const fixture = demoDocument();
   fixture.nodes.pool_order.bounds.x = -240;
   fixture.nodes.pool_order.bounds.y = -180;
@@ -399,6 +409,7 @@ test('负坐标图形也纳入滚动范围，不修改文档即可滚动到达',
 });
 test('Shift 加滚轮及触控板水平滚动可左右移动，侧栏和按钮滚动不缩放', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const graph = await page.getByTestId('graph').boundingBox();
   if (!graph) throw Error('缺少画布');
   await page.mouse.move(graph.x + graph.width / 2, graph.y + graph.height / 2);
@@ -424,6 +435,7 @@ test('Shift 加滚轮及触控板水平滚动可左右移动，侧栏和按钮�
 });
 test('滚轮缩放限制在 10% 到 400%，适应画布可以找回全部图形', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   const graph = await page.getByTestId('graph').boundingBox();
   if (!graph) throw Error('缺少画布');
   await page.mouse.move(graph.x + graph.width / 2, graph.y + 100);

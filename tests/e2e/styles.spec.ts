@@ -62,6 +62,7 @@ async function number(page: Page, name: string, value: number) {
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByTestId('graph')).toBeVisible();
   await page.getByLabel('导入文档', { exact: true }).setInputFiles({
     name: '样式.json',
     mimeType: 'application/json',
