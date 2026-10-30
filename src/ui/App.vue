@@ -1121,7 +1121,6 @@ onBeforeUnmount(() => {
       </div>
       <span class="local-status"><span></span>{{ saveState }}</span>
       <div class="header-actions">
-        <button class="text-button" @click="presentationMode = true">演示模式</button>
         <button class="button secondary" @click="connectionOpen = true">
           <GitBranch :size="14" />{{
             remoteSession
@@ -1338,12 +1337,21 @@ onBeforeUnmount(() => {
           @add="(shape) => addShape(shape.type, undefined, shape.activityType)"
           @drag="(event, shape) => dragShape(event, shape.type, shape.activityType)"
         />
-        <div class="zoom-control">
+        <div class="zoom-control canvas-view-tools" role="toolbar" aria-label="画布视图工具栏">
           <button aria-label="缩小" @click="canvas?.zoom(-1)"><Minus :size="14" /></button
           ><span>{{ Math.round(zoom * 100) }}%</span
           ><button aria-label="放大" @click="canvas?.zoom(1)"><Plus :size="14" /></button><i></i
           ><button aria-label="适应画布" title="适应画布" @click="canvas?.fit()">
             <Maximize :size="14" />
+          </button>
+          <i></i
+          ><button
+            :aria-label="presentationMode ? '退出演示模式' : '演示模式'"
+            :title="presentationMode ? '退出演示模式' : '演示模式'"
+            :aria-pressed="presentationMode"
+            @click="presentationMode = !presentationMode"
+          >
+            <PanelTop :size="14" />
           </button>
         </div>
         <div class="canvas-page"><span class="page-indicator"></span>画布 01</div>
@@ -1359,14 +1367,6 @@ onBeforeUnmount(() => {
         @resized="resizePanel"
       >
         <div class="panel-tabs" role="tablist" aria-label="图形面板">
-          <button
-            v-if="presentationMode"
-            class="quiet-button"
-            aria-label="退出演示模式"
-            @click="presentationMode = false"
-          >
-            退出演示
-          </button>
           <button
             role="tab"
             :aria-selected="panelTab === 'properties'"

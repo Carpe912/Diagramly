@@ -605,7 +605,7 @@ button:hover:not(:disabled) {
 }
 .zoom-control {
   position: absolute;
-  bottom: 66px;
+  bottom: 20px;
   right: 21px;
   display: flex;
   align-items: center;
