@@ -1361,13 +1361,14 @@ onBeforeUnmount(() => {
         class="inspector-panel"
         side="right"
         label="属性侧栏"
-        :default-width="panelTab === 'details' ? 400 : 274"
+        :default-width="presentationMode || panelTab === 'details' ? 400 : 274"
         :min-width="260"
         :max-width="600"
         @resized="resizePanel"
       >
         <div class="panel-tabs" role="tablist" aria-label="图形面板">
           <button
+            v-if="!presentationMode"
             role="tab"
             :aria-selected="panelTab === 'properties'"
             :class="{ active: panelTab === 'properties' }"
@@ -1376,15 +1377,16 @@ onBeforeUnmount(() => {
             属性
           </button>
           <button
-            v-if="hasBusinessDetails"
+            v-if="presentationMode || hasBusinessDetails"
             role="tab"
-            :aria-selected="panelTab === 'details'"
-            :class="{ active: panelTab === 'details' }"
+            :aria-selected="presentationMode || panelTab === 'details'"
+            :class="{ active: presentationMode || panelTab === 'details' }"
             @click="panelTab = 'details'"
           >
             业务详情
           </button>
           <button
+            v-if="!presentationMode"
             role="tab"
             :aria-selected="panelTab === 'agent'"
             :class="{ active: panelTab === 'agent' }"
@@ -1394,7 +1396,12 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <div
-          v-if="panelTab === 'details' && hasBusinessDetails && selectedNode && selectedEntity"
+          v-if="
+            (presentationMode || panelTab === 'details') &&
+            hasBusinessDetails &&
+            selectedNode &&
+            selectedEntity
+          "
           class="inspector-scroll"
           role="tabpanel"
           aria-label="业务详情"
@@ -1413,6 +1420,14 @@ onBeforeUnmount(() => {
             @patch="patchEntity"
             @load-options="loadBusinessOptions"
           />
+        </div>
+        <div
+          v-else-if="presentationMode"
+          class="inspector-scroll"
+          role="tabpanel"
+          aria-label="业务详情"
+        >
+          <p class="field-help" style="padding: 24px">请选择活动图形查看业务详情</p>
         </div>
         <div
           v-else-if="panelTab === 'properties'"
