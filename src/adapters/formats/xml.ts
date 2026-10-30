@@ -29,7 +29,7 @@ import {
 } from '../../shapes/styles';
 import { validateDocument } from '../../domain/validation';
 import type { ShapeRegistry } from '../../shapes/registry';
-import type { ActivityDetail, FlowDetail } from './api';
+import type { ActivityDetail, FlowDetail } from '../../domain/business';
 
 export const activityType = (node: DiagramNode, entity: DiagramDocument['entities'][string]) =>
   node.type === 'decision'

@@ -1,6 +1,6 @@
 import type { DiagramDocument } from '../../domain/model';
 import type { ShapeRegistry } from '../../shapes/registry';
-import { readFlow, writeFlow } from '../coopwire/codec';
+import { readFlow, writeFlow } from '../formats/xml';
 import { exportDiagramPng } from '../maxgraph/export';
 import { downloadBlob, parseDocument } from './local';
 const MAX_BYTES = 8 * 1024 * 1024;
