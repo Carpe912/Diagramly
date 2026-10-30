@@ -19,6 +19,7 @@ export function attachAutosave(
   editor: Editor,
   onState: (message: string, error?: boolean) => void,
   storageKey = KEY,
+  sync?: (document: Editor['snapshot']) => Promise<void>,
 ) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const save = () => {
@@ -26,7 +27,21 @@ export function attachAutosave(
     try {
       const snapshot = structuredClone(editor.snapshot);
       void writeDraft(storageKey, snapshot).then(
-        () => onState('已保存到本机草稿'),
+        async () => {
+          if (!sync) {
+            onState('已保存到本机草稿');
+            return;
+          }
+          try {
+            await sync(snapshot);
+            onState('已保存到服务端');
+          } catch (e) {
+            onState(
+              `本机草稿已保留，服务端未保存：${e instanceof Error ? e.message : '请重新读取核对'}`,
+              true,
+            );
+          }
+        },
         () => onState('草稿保存失败，请导出备份', true),
       );
     } catch {

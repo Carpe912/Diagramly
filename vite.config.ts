@@ -66,33 +66,39 @@ export default defineConfig(({ mode }) => {
     ],
     test: { include: ['tests/**/*.test.ts'] },
     server: {
-      proxy: target
-        ? {
-            '/rest': {
-              target,
-              changeOrigin: true,
-              configure(proxy) {
-                proxy.on('proxyReq', (request, incoming) => {
-                  // 浏览器手动配置的登录态优先，本机会话文件仅作为后备。
-                  const browserCookie = incoming.headers.cookie ?? '';
-                  const hasAccessToken = /(?:^|;)\s*access_token=[^;]+/.test(browserCookie);
-                  const cookie = hasAccessToken ? browserCookie : readCookie();
-                  if (cookie) request.setHeader('cookie', cookie);
-                });
-                proxy.on('proxyRes', (response, request) => {
-                  if (
-                    request.url?.startsWith('/rest/platform/refreshToken') &&
-                    response.statusCode === 200
-                  ) {
-                    const setCookies = response.headers['set-cookie'];
-                    if (setCookies) storeRefreshedCookies(setCookies);
-                  }
-                  delete response.headers['set-cookie'];
-                });
+      proxy: {
+        '/api': {
+          target: process.env.DIAGRAMLY_API_TARGET || 'http://127.0.0.1:3000',
+          changeOrigin: true,
+        },
+        ...(target
+          ? {
+              '/rest': {
+                target,
+                changeOrigin: true,
+                configure(proxy) {
+                  proxy.on('proxyReq', (request, incoming) => {
+                    // 浏览器手动配置的登录态优先，本机会话文件仅作为后备。
+                    const browserCookie = incoming.headers.cookie ?? '';
+                    const hasAccessToken = /(?:^|;)\s*access_token=[^;]+/.test(browserCookie);
+                    const cookie = hasAccessToken ? browserCookie : readCookie();
+                    if (cookie) request.setHeader('cookie', cookie);
+                  });
+                  proxy.on('proxyRes', (response, request) => {
+                    if (
+                      request.url?.startsWith('/rest/platform/refreshToken') &&
+                      response.statusCode === 200
+                    ) {
+                      const setCookies = response.headers['set-cookie'];
+                      if (setCookies) storeRefreshedCookies(setCookies);
+                    }
+                    delete response.headers['set-cookie'];
+                  });
+                },
               },
-            },
-          }
-        : undefined,
+            }
+          : {}),
+      },
     },
   };
 });

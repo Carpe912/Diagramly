@@ -1,0 +1,66 @@
+import { documentSchema, type DiagramDocument } from '../../domain/model';
+import { z } from 'zod';
+let authorization = '';
+export function login(username: string, password: string) {
+  authorization = `Basic ${btoa(String.fromCharCode(...new TextEncoder().encode(`${username}:${password}`)))}`;
+}
+export async function request(path: string, options: RequestInit = {}) {
+  const response = await fetch(`/api${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: authorization,
+      ...options.headers,
+    },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!response.ok) {
+    const message = await response.json().catch(() => ({}));
+    throw new Error(message.message ?? `服务请求失败（${response.status}）`);
+  }
+  return response.json();
+}
+export const listDocuments = async () =>
+  z
+    .array(z.object({ id: z.string(), title: z.string(), revision: z.number() }))
+    .parse(await request('/documents'));
+export const getDocument = async (id: string) =>
+  z
+    .object({ document: documentSchema, revision: z.number().int().positive() })
+    .parse(await request(`/documents/${encodeURIComponent(id)}`));
+/** 每个文档串行提交，版本冲突或响应不确定时停止写入，避免覆盖与重复重试。 */
+export class DocumentSync {
+  private queue: Promise<void> = Promise.resolve();
+  private failure?: Error;
+  private last: string;
+  constructor(
+    private revision: number,
+    document: DiagramDocument,
+  ) {
+    this.last = JSON.stringify(document);
+  }
+  save(document: DiagramDocument) {
+    const snapshot = structuredClone(document);
+    const next = this.queue.then(async () => {
+      if (this.failure) throw this.failure;
+      const serialized = JSON.stringify(snapshot);
+      if (serialized === this.last) return;
+      try {
+        const result = z.object({ revision: z.number().int().positive() }).parse(
+          await request(`/documents/${encodeURIComponent(snapshot.id)}`, {
+            method: 'PUT',
+            body: JSON.stringify({ document: snapshot, expectedRevision: this.revision }),
+          }),
+        );
+        this.revision = result.revision;
+        this.last = serialized;
+      } catch (e) {
+        this.failure = e instanceof Error ? e : new Error('远程保存失败');
+        throw this.failure;
+      }
+    });
+    this.queue = next.catch(() => {});
+    return next;
+  }
+}

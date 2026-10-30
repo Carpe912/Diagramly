@@ -39,6 +39,8 @@ import {
   Square,
   X,
 } from '@lucide/vue';
+import ServerDocuments from './ServerDocuments.vue';
+import { DocumentSync } from '../adapters/server/client';
 import PoolToolbar from './PoolToolbar.vue';
 import LaneToolbar from './LaneToolbar.vue';
 import StageToolbar from './StageToolbar.vue';
@@ -77,8 +79,6 @@ import {
   type ActivityOptions,
   type ActivityDetail,
   type BusinessMutation,
-  configureCoopwireAuth,
-  refreshCoopwireSession,
 } from '../adapters/coopwire/api';
 import { isBusinessNode } from '../adapters/coopwire/codec';
 import { CoopwireSession, type RemoteStatus } from '../adapters/coopwire/session';
@@ -98,6 +98,15 @@ import {
 import type { Command, Operation } from '../application/commands';
 
 const registry = createShapeRegistry();
+const showServerDocuments = ref(false);
+let serverSync: DocumentSync | undefined;
+function openServerDocument(document: DiagramDocument, revision: number) {
+  stopAutosave?.();
+  stopAutosave = undefined;
+  serverSync = new DocumentSync(revision, document);
+  replaceDocument(document);
+  showServerDocuments.value = false;
+}
 const error = ref(''),
   saveState = ref('已保存到本机');
 const showError = (e: unknown) => {
@@ -532,14 +541,19 @@ function bindEditor(viewport?: Viewport) {
       saveState.value = message;
       if (failed) error.value = message;
     },
-    remoteSession.value
-      ? `diagramly.remote.cache:${JSON.stringify(remoteSession.value.api.config)}`
-      : undefined,
+    serverSync
+      ? `diagramly.server.draft:${editor.value.snapshot.id}`
+      : remoteSession.value
+        ? `diagramly.remote.cache:${JSON.stringify(remoteSession.value.api.config)}`
+        : undefined,
+    serverSync ? serverSync.save.bind(serverSync) : undefined,
   );
   if (viewport) canvas.restoreViewport(viewport);
 }
 function replaceDocument(document: DiagramDocument, session?: CoopwireSession) {
   const viewport = canvas?.getViewport();
+  if (document.id !== editor.value.snapshot.id && !showServerDocuments.value)
+    serverSync = undefined;
   stopAutosave?.();
   unsubscribe?.();
   canvas?.destroy();
@@ -1077,23 +1091,8 @@ onMounted(async () => {
     showError(e);
   }
   bindEditor();
-  await detectBrowserLogin();
-  loginTimer = setInterval(() => void refreshBrowserLogin(), 3000);
-  window.addEventListener('focus', refreshBrowserLogin);
-  window.addEventListener('keydown', keyboard);
-  configureCoopwireAuth({ refresh: () => refreshCoopwireSession(remoteConfig.baseUrl) });
-  try {
-    const context = flowchartContext(window.location.href);
-    if (context) {
-      Object.assign(remoteConfig, context.config);
-      await connectRemote();
-    } else if (browserLoggedIn.value) {
-      if (remoteConfig.projectId && remoteConfig.flowchartId) await connectRemote();
-      else connectionOpen.value = true;
-    }
-  } catch (cause) {
-    showError(cause);
-  }
+  void refreshBrowserLogin;
+  void flowchartContext;
   canvas?.fit();
 });
 onBeforeUnmount(() => {
@@ -1107,6 +1106,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <ServerDocuments
+    v-if="showServerDocuments"
+    @close="showServerDocuments = false"
+    @open="openServerDocument"
+  />
   <div class="workbench" :class="{ 'presentation-mode': presentationMode }">
     <header class="app-header">
       <a class="brand" href="#" aria-label="Diagramly 首页"
@@ -1121,7 +1125,8 @@ onBeforeUnmount(() => {
       </div>
       <span class="local-status"><span></span>{{ saveState }}</span>
       <div class="header-actions">
-        <button class="button secondary" @click="connectionOpen = true">
+        <button class="button secondary" @click="showServerDocuments = true">文档库</button>
+        <button v-if="false" class="button secondary" @click="connectionOpen = true">
           <GitBranch :size="14" />{{
             remoteSession
               ? 'Coopwire 已连接'
